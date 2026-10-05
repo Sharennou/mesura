@@ -168,28 +168,15 @@ textarea {
 .brand {
   display: flex;
   align-items: center;
-  gap: 9px;
   padding: 0;
-  font-size: 30px;
-  font-weight: 900;
-  letter-spacing: -1.4px;
 }
-.brand-mark {
-  width: 36px;
-  height: 36px;
-  border: 2px solid var(--ink);
-  border-radius: 9px;
-  display: grid;
-  place-items: center;
-  background: var(--volt);
-  box-shadow: 2px 2px 0 var(--ink);
-}
-.brand-mark svg {
-  width: 28px;
-  height: 28px;
-}
-.brand-dot {
-  color: var(--cobalt);
+.brand-logo {
+  width: 100px;
+  height: 58px;
+  display: block;
+  /* Le fichier original comporte de larges marges transparentes latérales. */
+  object-fit: cover;
+  object-position: center;
 }
 .header-actions {
   display: flex;

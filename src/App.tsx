@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import type { AccountData, Capabilities, Entry } from "../shared/types";
 import { APP_NAME } from "../shared/config";
+import logo from "./assets/mesura-logo.png";
 import { api, useSession } from "./api";
 import { CLOUD } from "./deployment";
 import { emptyAccountData } from "./account-data";
@@ -260,21 +261,7 @@ export default function App() {
             onClick={() => navigate(canAccess ? "measure" : "account")}
             aria-label={`${APP_NAME}, accueil`}
           >
-            <span className="brand-mark">
-              <svg viewBox="0 0 28 28" aria-hidden="true">
-                <path
-                  d="M6 21V7h5l4 8 4-8h3v14M6 11h3M6 15h3M6 19h3"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.8"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-            <span>
-              {APP_NAME}
-              <span className="brand-dot">.</span>
-            </span>
+            <img className="brand-logo" src={logo} alt="" />
           </button>
           {canAccess && !isPending && (
             <div className="header-actions">

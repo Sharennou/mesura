@@ -70,7 +70,7 @@ Les tests couvrent les calculs, calendriers, deux comptes isolés, photos et tâ
 
 ## Architecture et documentation
 
-React / TypeScript / Vite, Fastify, SQLite WAL, Better Auth, Sharp, Luxon et Web Push. Les versions sont figées par le lockfile. Le nom est centralisé dans **`shared/config.ts`** ; les icônes et le manifest sont régénérés avant lancement et compilation.
+React / TypeScript / Vite, Fastify, SQLite WAL, Better Auth, Sharp, Luxon et Web Push. Les versions sont figées par le lockfile. Le nom est centralisé dans **`shared/config.ts`** ; les icônes et le manifest sont régénérés avant lancement et compilation. Le logo fourni est conservé dans `src/assets/mesura-logo.png` et affiché dans l’en-tête de tous les écrans. Lors d’un changement de nom, remplacer aussi ce fichier puisqu’il contient le texte Mesura.
 
 - [Architecture, modèle et règles d’accès](docs/architecture.md)
 - [Calculs et conventions](docs/calculs.md)
