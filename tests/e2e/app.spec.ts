@@ -159,13 +159,11 @@ test("compte réel : accessibilité, consentement, sauvegarde, photos, correctio
   })
     .png()
     .toBuffer();
-  await page
-    .locator('input[type="file"]')
-    .setInputFiles({
-      name: "profil.png",
-      mimeType: "image/png",
-      buffer: avatarBytes,
-    });
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "profil.png",
+    mimeType: "image/png",
+    buffer: avatarBytes,
+  });
   await expect(page.getByAltText("Votre photo de profil")).toBeVisible();
   await page.getByRole("button", { name: "Enregistrer mon profil" }).click();
   await expect(
@@ -174,6 +172,11 @@ test("compte réel : accessibilité, consentement, sauvegarde, photos, correctio
   await page.reload();
   await expect(page.getByAltText("Votre photo de profil")).toBeVisible();
   const withAvatar = await (await page.request.get("/api/account")).json();
+  await expect(
+    page
+      .getByRole("button", { name: "Mon compte et mes réglages" })
+      .locator("img"),
+  ).toHaveAttribute("src", withAvatar.profile.avatar);
   expect(withAvatar.profile.avatar).toMatch(/^data:image\/jpeg;base64,/);
   expect(withAvatar.profile.timezone).toBe(setup.profile.timezone);
   await page.getByRole("button", { name: "Retirer la photo" }).click();
@@ -183,6 +186,11 @@ test("compte réel : accessibilité, consentement, sauvegarde, photos, correctio
   ).toBeVisible();
   await page.reload();
   await expect(page.getByAltText("Votre photo de profil")).toHaveCount(0);
+  await expect(
+    page
+      .getByRole("button", { name: "Mon compte et mes réglages" })
+      .locator("img"),
+  ).toHaveCount(0);
   await page.goto("/#measure");
   await expect(page.getByLabel("Poids", { exact: true })).toHaveValue("");
   await expect(page.getByLabel("Tour de taille en cm")).toHaveValue("");

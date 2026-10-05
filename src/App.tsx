@@ -294,7 +294,15 @@ export default function App() {
                 aria-label="Mon compte et mes réglages"
                 onClick={() => navigate("account")}
               >
-                <Icon as={UserRound} />
+                {accountOwner === session?.user.id && data.profile.avatar ? (
+                  <img
+                    className="header-avatar"
+                    src={data.profile.avatar}
+                    alt=""
+                  />
+                ) : (
+                  <Icon as={UserRound} />
+                )}
               </button>
             </div>
           )}
