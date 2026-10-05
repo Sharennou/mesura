@@ -26,13 +26,18 @@ async function setup(page: Page) {
   return headers;
 }
 
-async function screenshot(page: Page, name: string, project: string) {
+async function screenshot(
+  page: Page,
+  name: string,
+  project: string,
+  scrollToTop = true,
+) {
   await expect(page.locator(".toast")).toHaveCount(0);
-  await page.evaluate(() => {
+  await page.evaluate((resetScroll) => {
     if (document.activeElement instanceof HTMLElement)
       document.activeElement.blur();
-    window.scrollTo(0, 0);
-  });
+    if (resetScroll) window.scrollTo(0, 0);
+  }, scrollToTop);
   await mkdir(".runtime/ux-captures", { recursive: true });
   await page.screenshot({
     path: `.runtime/ux-captures/${project}-${name}-phone.png`,
@@ -150,6 +155,123 @@ test("première mesure, brouillon et réponse perdue : sauvegarde sans doublon",
     "placeholder",
     "Saisir",
   );
+});
+
+test("guide illustré : repères, côtés, mesure personnalisée et brouillon conservé", async ({
+  page,
+}, info) => {
+  const account = emptyAccountData();
+  account.profile.onboardingCompleted = true;
+  account.consents.body = true;
+  account.measures.push({
+    id: "custom-test",
+    name: "Mon repère",
+    unit: "cm",
+    custom: true,
+  });
+  await page.route("**/api/auth/get-session**", (route) =>
+    route.fulfill({
+      json: {
+        session: {
+          id: "guide-session",
+          userId: "guide-user",
+          expiresAt: "2099-01-01T00:00:00Z",
+        },
+        user: {
+          id: "guide-user",
+          email: "guide@example.test",
+          name: "Test guide",
+          emailVerified: false,
+        },
+      },
+    }),
+  );
+  await page.route("**/api/account", (route) =>
+    route.fulfill({ json: account }),
+  );
+  await page.goto("/#measure");
+  const waist = page.getByLabel("Tour de taille en cm");
+  await waist.fill("82,4");
+  const guide = page.locator(".measurement-guide");
+  const summary = guide.locator(":scope > summary");
+  await expect(guide).not.toHaveAttribute("open", "");
+  const grid = await page.locator(".measurement-grid").first().boundingBox();
+  const box = await guide.boundingBox();
+  expect(box!.y).toBeGreaterThanOrEqual(grid!.y + grid!.height);
+  await summary.click();
+  const choose = page.getByLabel("Quelle mensuration ?");
+  await expect(choose).toHaveValue("waist");
+  await expect(page.locator(".guide-landmark")).toContainText("dernière côte");
+  await expect(choose.locator("optgroup").first()).toHaveAttribute(
+    "label",
+    "Vos favorites",
+  );
+  await guide.evaluate((el) => el.scrollIntoView({ block: "start" }));
+  await screenshot(page, "guide-taille", info.project.name, false);
+  for (const measure of account.measures.filter(
+    (m) => m.id !== "weight" && !m.custom,
+  )) {
+    await choose.selectOption(measure.id);
+    await expect(
+      guide.getByRole("img", {
+        name: new RegExp(`${measure.name} : placement du ruban`),
+      }),
+    ).toBeVisible();
+    await expect(guide.locator(".guide-steps li")).toHaveCount(3);
+    if (measure.id.endsWith("-left"))
+      await expect(guide.locator(".guide-side")).toContainText("Côté gauche");
+    if (measure.id.endsWith("-right"))
+      await expect(guide.locator(".guide-side")).toContainText("Côté droit");
+  }
+  await choose.selectOption("abdomen");
+  await expect(guide.locator(".guide-landmark")).toContainText("nombril");
+  await choose.selectOption("custom-test");
+  await expect(guide.getByText(/Son nom ne suffit pas/)).toBeVisible();
+  await expect(guide.getByRole("img")).toHaveCount(0);
+  await choose.selectOption("biceps-right");
+  await guide.evaluate((el) => el.scrollIntoView({ block: "start" }));
+  await screenshot(page, "guide-bras", info.project.name, false);
+  await page.getByRole("button", { name: "Analyse", exact: true }).click();
+  await page.goBack();
+  await expect(choose).toHaveValue("biceps-right");
+  await expect(guide).toHaveAttribute("open", "");
+  await expect(waist).toHaveValue("82,4");
+  await choose.selectOption("thigh-left");
+  await guide.evaluate((el) => el.scrollIntoView({ block: "start" }));
+  await screenshot(page, "guide-cuisse", info.project.name, false);
+  await guide
+    .getByText("Bien mesurer à chaque séance", { exact: true })
+    .click();
+  await guide.getByText("Méthodes et sources", { exact: true }).click();
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  for (const control of await guide.locator("summary,select,a").all()) {
+    const bounds = await control.boundingBox();
+    expect(bounds!.height).toBeGreaterThanOrEqual(44);
+  }
+  await summary.click();
+  await expect(guide).not.toHaveAttribute("open", "");
+  await page
+    .getByRole("button", { name: "Personnaliser", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Mesures favorites", exact: true }),
+  ).toBeVisible();
+  await page.goBack();
+  await expect(waist).toHaveValue("82,4");
+  await expect(
+    page.getByText("Ajouter d’autres mensurations", { exact: true }),
+  ).toHaveCount(0);
 });
 
 test("historique, analyse et outils : dates, photos et contexte restaurés", async ({

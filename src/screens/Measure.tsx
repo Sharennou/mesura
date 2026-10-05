@@ -14,6 +14,7 @@ import {
   ImagePlus,
 } from "lucide-react";
 import { useViewState } from "../useViewState";
+import { MeasurementGuide } from "../components/MeasurementGuide";
 import { useApp } from "../context";
 import {
   ActionBar,
@@ -458,6 +459,10 @@ export function MeasureScreen() {
             visible.filter((m) => data.profile.visible.includes(m.id)),
           )}
         </div>
+        <MeasurementGuide
+          measures={data.measures}
+          favorites={data.profile.visible}
+        />
         {visible.some((m) => !data.profile.visible.includes(m.id)) && (
           <>
             <div className="section-heading">

@@ -2254,6 +2254,232 @@ caption {
 .optional-panel .measure-chips {
   margin-top: 4px;
 }
+.measurement-guide {
+  margin: 18px 0 20px;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  background: var(--white);
+  overflow: clip;
+}
+.measurement-guide > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 76px;
+  padding: 12px;
+  cursor: pointer;
+}
+.measurement-guide > summary::-webkit-details-marker {
+  display: none;
+}
+.guide-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  height: 44px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: var(--volt);
+}
+.measurement-guide > summary strong {
+  display: block;
+  font-size: 17px;
+  letter-spacing: -0.025em;
+}
+.measurement-guide > summary small {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.measurement-guide > summary > svg {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.measurement-guide[open] > summary {
+  border-bottom: 2px solid var(--ink);
+}
+.measurement-guide[open] > summary > svg {
+  transform: rotate(180deg);
+}
+.guide-content {
+  padding: 16px 12px 4px;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.guide-intro {
+  margin-bottom: 16px;
+}
+.guide-select-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.guide-content > select {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  font-size: 16px;
+  padding: 10px 8px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--white);
+}
+.guide-measure-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 24px 0 8px;
+}
+.guide-measure-heading h3 {
+  font-size: 24px;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.guide-measure-heading > span {
+  font-weight: 800;
+  background: var(--volt);
+  border: 1px solid var(--ink);
+  border-radius: 5px;
+  padding: 0 7px;
+  overflow-wrap: anywhere;
+}
+.guide-side {
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+.guide-landmark {
+  font-weight: 800;
+}
+.guide-figure {
+  margin: 16px 0;
+  border: 1px solid var(--ink);
+  border-radius: 10px;
+  background: var(--paper);
+  padding: 8px;
+}
+.guide-figure svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.guide-body {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.guide-body > path {
+  fill: none;
+}
+.guide-reference {
+  stroke: var(--cobalt);
+  stroke-dasharray: 4 4;
+  fill: none;
+}
+.guide-tape {
+  fill: var(--volt);
+  stroke: var(--ink);
+}
+.guide-tape path {
+  fill: none;
+  stroke-width: 1.5;
+}
+.guide-target-label,
+.guide-landmark-label {
+  fill: var(--ink);
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+.guide-target-label path,
+.guide-landmark-label path {
+  fill: none;
+}
+.guide-target-label text,
+.guide-landmark-label text {
+  stroke: none;
+  font-size: 13px;
+  font-weight: 700;
+}
+.guide-target-label text {
+  font-weight: 900;
+}
+.guide-figure figcaption {
+  font-size: 11px;
+  line-height: 1.5;
+  padding: 8px 2px 2px;
+}
+.guide-tape-key {
+  display: inline-block;
+  width: 15px;
+  height: 8px;
+  border: 1px solid var(--ink);
+  background: var(--volt);
+  margin-right: 4px;
+}
+.guide-steps {
+  padding-left: 24px;
+  margin: 18px 0;
+}
+.guide-steps li {
+  margin-bottom: 12px;
+  padding-left: 3px;
+}
+.guide-steps li::marker {
+  font-weight: 900;
+}
+.guide-avoid {
+  border-left: 4px solid var(--cobalt);
+  padding: 8px 0 8px 12px;
+  margin: 16px 0 20px;
+}
+.guide-avoid strong {
+  display: block;
+  margin-bottom: 4px;
+}
+.guide-basics {
+  border-top: 1px solid var(--ink);
+}
+.guide-basics > summary {
+  min-height: 48px;
+  padding: 12px 0;
+  font-weight: 800;
+  cursor: pointer;
+}
+.guide-basics ul {
+  padding-left: 20px;
+  margin: 0 0 16px;
+}
+.guide-basics li {
+  margin-bottom: 10px;
+}
+.guide-sources p {
+  margin-bottom: 12px;
+}
+.guide-sources a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  text-underline-offset: 3px;
+}
+.guide-custom-illustration {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 16px 0;
+  padding: 20px;
+  border: 1px solid var(--ink);
+  border-radius: 10px;
+  background: var(--paper);
+}
 .graph-compact {
   padding-bottom: 16px;
 }
