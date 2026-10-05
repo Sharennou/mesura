@@ -199,30 +199,6 @@ export function AnalysisScreen() {
             );
           })}
       </div>
-      <details className="data-details">
-        <summary>Consulter les données du graphique</summary>
-        {points.length ? (
-          <table>
-            <caption>{measure.name} · moyenne par jour</caption>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Valeur ({measure.unit})</th>
-              </tr>
-            </thead>
-            <tbody>
-              {points.map((p) => (
-                <tr key={p.date}>
-                  <td>{p.date}</td>
-                  <td>{number(p.value)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p>Aucune mesure sur cette période.</p>
-        )}
-      </details>
       <div className="section-heading">
         <h2>Quelques indicateurs</h2>
         <Icon as={Info} size={18} />
