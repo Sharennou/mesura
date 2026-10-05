@@ -8,9 +8,9 @@ Le workflow GitHub compile React puis publie uniquement `dist/` à l’adresse *
 
 Les comptes, mesures et photos privées utilisent le projet Supabase Free fourni par le propriétaire. Les paramètres publics sont centralisés dans `shared/cloud-config.ts`. Les secrets restent dans Supabase. La version locale Fastify / SQLite reste disponible.
 
-1. Installer les deux migrations du dossier `supabase/migrations/` dans Supabase.
+1. Installer toutes les migrations du dossier `supabase/migrations/` dans Supabase.
 2. Déployer la fonction `mesura-api` avec vérification JWT de la passerelle désactivée : la fonction vérifie elle-même chaque utilisateur et sa session. `npm run bundle:cloud` prépare aussi un fichier autonome pour l’éditeur Supabase.
-3. Supabase Auth : définir l’URL du site et les URLs de retour sur `https://sharennou.github.io/mesura/`, puis configurer les emails de confirmation. Le mailer Supabase par défaut est limité aux membres du projet ; un SMTP gratuit configuré est nécessaire pour ouvrir l’inscription à d’autres utilisateurs.
+3. Supabase Auth : définir l’URL du site et les URLs de retour sur `https://sharennou.github.io/mesura/`, désactiver « Confirm email » et définir le minimum de mot de passe à six caractères. Le SMTP sert à la récupération de mot de passe ; Brevo est configuré pour Auth.
 4. Dans GitHub, choisir « Settings → Pages → Source → GitHub Actions », puis pousser sur `main`. Le workflow « Publier Mesura sur GitHub Pages » lance les contrôles et le déploiement.
 
 Voir le [guide complet](docs/deploiement.md) pour les instructions exactes et les rappels. L’offre gratuite comporte des quotas et peut mettre un projet en pause après une semaine sans activité. Elle ne fournit pas de sauvegardes automatiques. Les comptes et photos sont conservés dans Supabase, indépendamment d’un redéploiement GitHub.
@@ -39,7 +39,7 @@ npm run dev
 1. L’accueil impose la création d’un compte ou la connexion. Aucun écran de suivi n’est accessible sans connexion, y compris par lien direct.
 2. Créer un compte : la session s’ouvre immédiatement, sans email de confirmation. Ou se connecter à son compte existant.
 3. Le SMTP reste utilisé pour la récupération du mot de passe et les rappels facultatifs.
-4. Après l’inscription, Renseigner sa taille, choisir une cible ou le suivi sans cible et cocher une seule autorisation sur l’écran de démarrage. Le tout est sauvegardé ensemble ; cet écran ne revient pas après sa validation.
+4. Après l’inscription, renseigner sa taille, choisir une cible ou le suivi sans cible et cocher une seule autorisation sur l’écran de démarrage. Le tout est sauvegardé ensemble ; cet écran ne revient pas après sa validation.
 5. Enregistrer une mesure, une note ou une photo, puis consulter l’analyse.
 
 Les nouveaux comptes commencent sans mesure, note ni photo. Leur taille et leur éventuel objectif viennent du formulaire de démarrage. Les photos et les rappels sont autorisés au moment de leur activation ; les choix restent indépendants et modifiables en une action dans « Données et confidentialité ». Le mode découverte et ses données fictives ont été supprimés. Une ancienne valeur personnelle est seulement un placeholder. Le serveur bloque toute collecte sans consentement et n’annonce la réussite qu’après une sauvegarde réelle. Un fichier invalide empêche la sauvegarde complète, sans perdre les champs.
@@ -50,10 +50,10 @@ Les nouveaux comptes commencent sans mesure, note ni photo. Leur taille et leur 
 - Poids, 14 mensurations standard, mesures personnalisées, favoris ordonnés et archivage avec historique.
 - Notes privées et photos Face / Profil / Dos ; galerie et comparaison accessible, sans recadrage.
 - Historique, modification, correction explicite de la stature historique et suppression.
-- Courbes réelles, cinq périodes, moyennes journalières et alternative textuelle.
+- Courbes réelles, cinq périodes et moyennes journalières.
 - IMC, ratios, objectifs dans les deux directions ou de maintien et projection conditionnelle.
 - Comparaison de périodes, bilan mensuel recalculé et notes du mois.
-- PWA, Web Push et email facultatif ; rythmes hebdomadaire, **15 jours calendaires** et mensuel.
+- PWA, Web Push et email facultatif ; rappels hebdomadaires sur un ou plusieurs jours.
 - Consentements versionnés, export JSON / CSV / ZIP, retrait effectif et suppression avec identité vérifiée.
 - Purge d’inactivité et ledger indépendant empêchant la réactivation d’un compte après restauration.
 
@@ -69,6 +69,8 @@ npm run test:e2e
 Les tests couvrent les calculs, calendriers, deux comptes isolés, photos et tâches de fond. Playwright vérifie les écrans à 390 et 360 px, les contrôles axe et le parcours d’un vrai compte. Les livraisons push sont simulées dans les tests, sans envoi à un appareil.
 
 ## Architecture et documentation
+
+Lire [le contexte de l’application](CONTEXTE.md) pour reprendre le projet et retrouver les décisions validées.
 
 React / TypeScript / Vite, Fastify, SQLite WAL, Better Auth, Sharp, Luxon et Web Push. Les versions sont figées par le lockfile. Le nom est centralisé dans **`shared/config.ts`** ; les icônes et le manifest sont régénérés avant lancement et compilation. Le logo fourni est conservé dans `src/assets/mesura-logo.png` et affiché dans l’en-tête de tous les écrans. Lors d’un changement de nom, remplacer aussi ce fichier puisqu’il contient le texte Mesura.
 

@@ -21,7 +21,7 @@ npx supabase functions deploy mesura-api --no-verify-jwt
 
 Ou depuis le tableau de bord :
 
-1. SQL Editor : exécuter dans l’ordre les fichiers de `supabase/migrations/` : `20261005000100_mesura.sql`, `20261005000200_jobs.sql`, puis `20261005000300_push.sql`. Ces migrations sont additives et ne suppriment aucune table existante. Elles créent les tables Mesura, le bucket privé, les contrôles de session, les transactions et le planificateur.
+1. SQL Editor : exécuter dans l’ordre les fichiers de `supabase/migrations/` : `20261005000100_mesura.sql`, `20261005000200_jobs.sql`, `20261005000300_push.sql`, puis `20261005000400_email_optional.sql`. Ces migrations sont additives et ne suppriment aucune table existante. Elles créent les tables Mesura, le bucket privé, les contrôles de session, les transactions et le planificateur.
 2. Exécuter `npm run bundle:cloud`. Edge Functions → nouvelle fonction `mesura-api` → coller `.runtime/mesura-api.ts` comme `index.ts` et déployer. Désactiver « Verify JWT » dans les réglages de la fonction. Ce réglage permet l’emploi des nouvelles clés publiques ; les opérations privées restent protégées par `Auth.getUser`, le contrôle de la session en base.
 3. Vérifier `https://duselqsuvkwbwkhmljkh.supabase.co/functions/v1/mesura-api/health` : réponse `{"status":"ok"}`. Une requête anonyme à `/account` doit répondre 401, et la clé publique ne doit pouvoir lire aucune ligne de compte ni aucun fichier photo.
 
@@ -35,7 +35,7 @@ Dans Authentication → URL Configuration :
 
 - Site URL : `https://sharennou.github.io/mesura/`.
 - Redirect URLs : `https://sharennou.github.io/mesura/` et `https://sharennou.github.io/mesura/?reset=1`.
-- Conserver la confirmation email activée.
+- Désactiver la confirmation email.
 - Définir une longueur minimale de mot de passe de 6 caractères, comme `MIN_PASSWORD_LENGTH` dans `shared/config.ts`. Supabase hébergé refuse un minimum inférieur à 6 ([schéma officiel de configuration](https://raw.githubusercontent.com/supabase/supabase/master/apps/docs/spec/api_v1_openapi.json)).
 
 Dans Auth → Sign In / Providers → Email, désactiver « Confirm email ». L’inscription ouvre immédiatement une session sans envoyer de confirmation. Configurer un SMTP pour les liens de récupération de mot de passe ; le SMTP Brevo est configuré dans le projet. Référence : [emails Supabase](https://supabase.com/docs/guides/auth/auth-smtp).

@@ -2,7 +2,9 @@
 
 ## Choix et organisation
 
-React et TypeScript portent l’interface ; Vite compile ses ressources. Fastify sert l’API et le bundle en production sur une seule origine. Better Auth assure mots de passe, cookies HttpOnly, vérification, récupération et sessions, selon sa [documentation Fastify](https://better-auth.com/docs/integrations/fastify). Son cache de session est désactivé pour une révocation immédiate.
+La production utilise GitHub Pages et Supabase ; voir [l’état technique](etat-projet.md) et [le déploiement](deploiement.md). Les sections SQLite / Better Auth décrivent la version locale maintenue pour les essais et un hébergement autonome.
+
+React et TypeScript portent l’interface ; Vite compile ses ressources. Fastify sert l’API et le bundle en production sur une seule origine. Better Auth assure mots de passe, cookies HttpOnly, inscription avec session immédiate, récupération et sessions, selon sa [documentation Fastify](https://better-auth.com/docs/integrations/fastify). Son cache de session est désactivé pour une révocation immédiate.
 
 SQLite en WAL apporte une sauvegarde transactionnelle réelle sans service externe. Cette version convient à une instance avec volume persistant. Ne pas partager le fichier entre plusieurs machines. Pour augmenter la capacité : repositories PostgreSQL avec RLS, stockage objet privé et worker permanent séparé. Les types et calculs partagés restent réutilisables.
 
@@ -39,7 +41,7 @@ erDiagram
 ```
 
 - Tables Better Auth : `user`, `account`, `session`, `verification`, `rateLimit`.
-- `profiles` : stature facultative, fuseau, ordre des favoris et dernière activité.
+- `profiles` : taille facultative, avatar privé, démarrage terminé, fuseau, ordre des favoris et dernière activité.
 - `consents` : événements avec finalité, texte, version, statut et date UTC. Le dernier événement fait autorité.
 - `measures` : personnalisations, unité et archive. Les quinze mesures standard, poids inclus, viennent du catalogue partagé.
 - `entries` : jour local ISO, stature historique, valeurs présentes en JSON, note, dates techniques et clé d’idempotence.

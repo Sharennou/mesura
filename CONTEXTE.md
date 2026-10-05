@@ -1,0 +1,25 @@
+# Contexte de Mesura
+
+Dernière mise à jour : 5 octobre 2026.
+
+Mesura est une application web de suivi corporel conçue pour le téléphone, entièrement en français. Le projet existe déjà et est publié : les prochaines modifications doivent prolonger cette application et ses données réelles.
+
+## Documents à lire
+
+- [Produit et parcours](docs/contexte-produit.md) : fonctionnalités et comportement attendu.
+- [Décisions d’interface](docs/decisions-interface.md) : préférences validées et éléments retirés.
+- [État technique et reprise du travail](docs/etat-projet.md) : fichiers, déploiement, commandes et limites connues.
+- [Architecture](docs/architecture.md), [déploiement](docs/deploiement.md), [calculs](docs/calculs.md), [exploitation](docs/exploitation.md), [confidentialité](docs/confidentialite.md) et [vérifications](docs/verification.md) : détails spécialisés.
+
+## Repères essentiels
+
+- Application : https://sharennou.github.io/mesura/ ; dépôt : `Sharennou/mesura`, branche `main`.
+- Production : GitHub Pages + Supabase Free. Version locale : Fastify + SQLite + Better Auth.
+- Deux destinations principales : Mesures et Analyse.
+- Compte obligatoire, aucune donnée fictive, aucune confirmation d’email à l’inscription.
+- Après inscription : connexion immédiate, puis taille et objectifs avant le suivi.
+- Photo de profil privée, ronde, sans fond noir ; elle remplace l’icône du compte dans l’en-tête.
+- Les rappels proposés sont hebdomadaires, avec plusieurs jours possibles et une heure commune.
+- Nom centralisé dans `shared/config.ts`. Logo fourni dans `src/assets/mesura-logo.png`.
+
+Ces documents décrivent la version actuelle. Pour un travail futur, les instructions nouvelles du propriétaire et le code effectivement présent prennent priorité sur une information documentaire devenue obsolète. Mettre à jour le contexte après une modification du parcours ou du déploiement. Ne jamais y enregistrer de mots de passe, clés privées, jetons ou données personnelles d’utilisateurs.
