@@ -177,6 +177,14 @@ test("compte réel : accessibilité, consentement, sauvegarde, photos, correctio
       .getByRole("button", { name: "Mon compte et mes réglages" })
       .locator("img"),
   ).toHaveAttribute("src", withAvatar.profile.avatar);
+  const accountButton = page.getByRole("button", {
+    name: "Mon compte et mes réglages",
+  });
+  const buttonBounds = await accountButton.boundingBox();
+  const imageBounds = await accountButton.locator("img").boundingBox();
+  expect(imageBounds).toEqual(buttonBounds);
+  expect(imageBounds!.width).toBe(imageBounds!.height);
+  await expect(accountButton).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   expect(withAvatar.profile.avatar).toMatch(/^data:image\/jpeg;base64,/);
   expect(withAvatar.profile.timezone).toBe(setup.profile.timezone);
   await page.getByRole("button", { name: "Retirer la photo" }).click();

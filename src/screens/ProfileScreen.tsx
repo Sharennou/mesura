@@ -62,7 +62,7 @@ export function ProfileScreen() {
     <>
       <PageTitle title="Mon espace" />
       <section className="profile-id">
-        <span className="intro-icon">
+        <span className={`intro-icon ${avatar ? "has-avatar" : ""}`}>
           {avatar ? (
             <img
               className="profile-avatar"

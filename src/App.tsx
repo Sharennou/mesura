@@ -290,7 +290,7 @@ export default function App() {
                   )}
               </button>
               <button
-                className="circle account-circle"
+                className={`circle account-circle ${accountOwner === session?.user.id && data.profile.avatar ? "has-avatar" : ""}`}
                 aria-label="Mon compte et mes réglages"
                 onClick={() => navigate("account")}
               >
