@@ -4,16 +4,14 @@ import {
   Ruler,
   ChartNoAxesCombined,
   UserRound,
-  ArrowUpRight,
   WifiOff,
   X,
 } from "lucide-react";
 import type { AccountData, Capabilities, Entry } from "../shared/types";
 import { APP_NAME } from "../shared/config";
 import { api, useSession } from "./api";
-import { PREVIEW_ONLY } from "./deployment";
-import { PreviewAccountScreen } from "./screens/PreviewAccountScreen";
-import { demoData } from "./demo";
+import { CLOUD } from "./deployment";
+import { emptyAccountData } from "./account-data";
 import { AppContext, type Screen, type MeasurementDraft } from "./context";
 import { Icon } from "./components";
 import { MeasureScreen, SuccessScreen } from "./screens/Measure";
@@ -51,12 +49,12 @@ const screens: Screen[] = [
 ];
 export default function App() {
   useModalFocus();
-  const [screen, setScreen] = useState<Screen>(() =>
+  const [route, setRoute] = useState<Screen>(() =>
     screens.includes(location.hash.slice(1) as Screen)
       ? (location.hash.slice(1) as Screen)
       : "measure",
   );
-  const [data, setData] = useState<AccountData>(demoData);
+  const [data, setData] = useState<AccountData>(emptyAccountData);
   const [capabilities, setCapabilities] = useState<Capabilities>({
     pushConfigured: false,
     emailConfigured: false,
@@ -76,11 +74,17 @@ export default function App() {
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(false);
   const { data: session, isPending } = useSession();
-  const demo = !session?.user?.emailVerified;
+  const authenticated = Boolean(session?.user?.emailVerified);
+  const search = new URLSearchParams(location.search);
+  const recovering = Boolean(
+    search.get("token") || (CLOUD && search.get("reset") === "1"),
+  );
+  const canAccess = authenticated && !recovering;
+  const screen = canAccess || route === "legal" ? route : "account";
   const mainRef = useRef<HTMLElement>(null);
-  const [initialized, setInitialized] = useState(false);
+  const [sessionResolved, setSessionResolved] = useState(false);
   useEffect(() => {
-    if (!isPending) setInitialized(true);
+    if (!isPending) setSessionResolved(true);
   }, [isPending]);
   useEffect(() => {
     setDraft(null);
@@ -90,7 +94,7 @@ export default function App() {
     if (next === "measure") setEditing(null);
     if (next === "history") setHistoryMonth(null);
     location.hash = next;
-    setScreen(next);
+    setRoute(next);
     window.scrollTo(0, 0);
   }
   async function reload() {
@@ -100,18 +104,17 @@ export default function App() {
     } else setCapabilities(await api<Capabilities>("/config"));
   }
   useEffect(() => {
-    if (PREVIEW_ONLY) return;
     api<Capabilities>("/config")
       .then(setCapabilities)
       .catch(() =>
         setLoadError(
-          "Le serveur est indisponible. Vous pouvez parcourir l’aperçu.",
+          "Le serveur est indisponible. Réessayez dans quelques instants.",
         ),
       );
   }, []);
   useEffect(() => {
     const controller = new AbortController();
-    if (session?.user.emailVerified) {
+    if (canAccess && session && !isPending) {
       setLoading(true);
       setLoadError("");
       api<AccountData>("/account", { signal: controller.signal })
@@ -128,27 +131,29 @@ export default function App() {
           if (!controller.signal.aborted) setLoading(false);
         });
     } else if (!isPending) {
-      setData(demoData());
+      setData(emptyAccountData());
       setAccountOwner(null);
       setLoading(false);
       setEditing(null);
       setSuccess(null);
+      setLoadError("");
+      setMessage("");
     }
     return () => controller.abort();
-  }, [session?.user.id, isPending]);
+  }, [session?.user.id, authenticated, isPending, recovering]);
   useEffect(() => {
-    if (!demo && !data.consents.body) {
+    if (!data.consents.body) {
       setDraft(null);
       setSuccess(null);
       setEditing(null);
-    } else if (!demo && !data.consents.photos)
+    } else if (!data.consents.photos)
       setDraft((d) => (d ? { ...d, photos: {} } : null));
-  }, [demo, data.consents.body, data.consents.photos]);
+  }, [data.consents.body, data.consents.photos]);
   useEffect(() => {
     const change = () => {
       const next = location.hash.slice(1) as Screen;
       if (screens.includes(next)) {
-        setScreen(next);
+        setRoute(next);
         window.scrollTo(0, 0);
       }
     };
@@ -160,7 +165,7 @@ export default function App() {
     mainRef.current
       ?.querySelector<HTMLElement>("h1")
       ?.focus({ preventScroll: true });
-  }, [screen]);
+  }, [screen, isPending, loading, accountOwner]);
   useEffect(() => {
     if (!message) return;
     const t = setTimeout(() => setMessage(""), 4500);
@@ -187,21 +192,19 @@ export default function App() {
     return () => viewport.removeEventListener("resize", update);
   }, []);
   function requireAccount() {
-    if (demo) {
+    if (!canAccess) {
       navigate("account");
-      setMessage(
-        PREVIEW_ONLY
-          ? "L’aperçu ne sauvegarde pas de données personnelles."
-          : "Créez votre espace privé pour enregistrer vos données.",
-      );
+      setMessage("Connectez-vous pour accéder à votre espace privé.");
       return false;
     }
     return true;
   }
   const context = {
-    data: demo && accountOwner !== null ? demoData() : data,
+    data:
+      canAccess && accountOwner === session?.user.id
+        ? data
+        : emptyAccountData(),
     setData,
-    demo,
     screen,
     navigate,
     capabilities,
@@ -217,7 +220,7 @@ export default function App() {
       setEditing(entry);
       setDraft(null);
       location.hash = "measure";
-      setScreen("measure");
+      setRoute("measure");
       window.scrollTo(0, 0);
     },
     success,
@@ -240,17 +243,13 @@ export default function App() {
     "monthly",
     "goal",
   ].includes(screen);
-  const hasAction = [
-    "measure",
-    "reminder",
-    "success",
-    "goal",
-    "favorites",
-  ].includes(screen);
+  const hasAction =
+    ["measure", "reminder", "success", "goal", "favorites"].includes(screen) &&
+    canAccess;
   return (
     <AppContext value={context}>
       <div
-        className={`app-shell ${screen === "success" ? "success-shell" : ""} ${hasAction ? "with-action" : ""}`}
+        className={`app-shell ${canAccess ? "" : "auth-shell"} ${screen === "success" ? "success-shell" : ""} ${hasAction ? "with-action" : ""}`}
       >
         <a className="skip-link" href="#main-content">
           Aller au contenu
@@ -258,7 +257,7 @@ export default function App() {
         <header className="app-header">
           <button
             className="brand"
-            onClick={() => navigate("measure")}
+            onClick={() => navigate(canAccess ? "measure" : "account")}
             aria-label={`${APP_NAME}, accueil`}
           >
             <span className="brand-mark">
@@ -277,32 +276,29 @@ export default function App() {
               <span className="brand-dot">.</span>
             </span>
           </button>
-          <div className="header-actions">
-            <button
-              className="circle"
-              aria-label="Régler mon rappel"
-              onClick={() => navigate("reminder")}
-            >
-              <Icon as={Bell} />
-              {data.reminder?.enabled && <span className="notification-dot" />}
-            </button>
-            <button
-              className="circle account-circle"
-              aria-label="Mon compte et mes réglages"
-              onClick={() => navigate("account")}
-            >
-              <Icon as={UserRound} />
-            </button>
-          </div>
+          {canAccess && !isPending && (
+            <div className="header-actions">
+              <button
+                className="circle"
+                aria-label="Régler mon rappel"
+                onClick={() => navigate("reminder")}
+              >
+                <Icon as={Bell} />
+                {accountOwner === session?.user.id &&
+                  data.reminder?.enabled && (
+                    <span className="notification-dot" />
+                  )}
+              </button>
+              <button
+                className="circle account-circle"
+                aria-label="Mon compte et mes réglages"
+                onClick={() => navigate("account")}
+              >
+                <Icon as={UserRound} />
+              </button>
+            </div>
+          )}
         </header>
-        {demo && (
-          <aside aria-label="Mode découverte" className="demo-banner">
-            <span>Aperçu · données fictives</span>
-            <button onClick={() => navigate("account")}>
-              Mon espace <Icon as={ArrowUpRight} size={14} />
-            </button>
-          </aside>
-        )}
         {offline && (
           <div className="connection-banner" role="status">
             <Icon as={WifiOff} />
@@ -324,13 +320,21 @@ export default function App() {
           </div>
         )}
         <main ref={mainRef} id="main-content" className="main-content">
-          {(!initialized && isPending) ||
-          loading ||
-          (!demo && accountOwner !== session?.user.id && !loadError) ? (
+          {isPending && (!sessionResolved || canAccess) ? (
+            <div className="loading" role="status">
+              Vérification de votre connexion…
+            </div>
+          ) : !canAccess ? (
+            screen === "legal" ? (
+              <LegalScreen />
+            ) : (
+              <AccountScreen />
+            )
+          ) : loading || (accountOwner !== session?.user.id && !loadError) ? (
             <div className="loading" role="status">
               Votre espace se prépare…
             </div>
-          ) : loadError && !demo ? (
+          ) : loadError ? (
             <div className="empty">
               <h1>Connexion interrompue</h1>
               <p>Réessayez pour retrouver vos mesures.</p>
@@ -339,20 +343,13 @@ export default function App() {
             <>
               {screen === "measure" && (
                 <MeasureScreen
-                  key={`${session?.user.id ?? "demo"}-${editing?.id ?? "new"}`}
+                  key={`${session?.user.id}-${editing?.id ?? "new"}`}
                 />
               )}
               {screen === "analysis" && <AnalysisScreen />}
               {screen === "success" && <SuccessScreen />}
               {screen === "reminder" && <ReminderScreen />}
-              {screen === "account" &&
-                (PREVIEW_ONLY ? (
-                  <PreviewAccountScreen />
-                ) : demo ? (
-                  <AccountScreen />
-                ) : (
-                  <ProfileScreen />
-                ))}
+              {screen === "account" && <ProfileScreen />}
               {screen === "privacy" && <PrivacyScreen />}
               {screen === "history" && <HistoryScreen />}
               {screen === "photos" && <PhotosScreen />}
@@ -375,24 +372,26 @@ export default function App() {
             </button>
           </div>
         )}
-        <nav className="bottom-nav" aria-label="Navigation principale">
-          <button
-            aria-current={!analysisActive ? "page" : undefined}
-            className={!analysisActive ? "active" : ""}
-            onClick={() => navigate("measure")}
-          >
-            <Icon as={Ruler} />
-            <span>Mesures</span>
-          </button>
-          <button
-            aria-current={analysisActive ? "page" : undefined}
-            className={analysisActive ? "active" : ""}
-            onClick={() => navigate("analysis")}
-          >
-            <Icon as={ChartNoAxesCombined} />
-            <span>Analyse</span>
-          </button>
-        </nav>
+        {canAccess && !isPending && (
+          <nav className="bottom-nav" aria-label="Navigation principale">
+            <button
+              aria-current={!analysisActive ? "page" : undefined}
+              className={!analysisActive ? "active" : ""}
+              onClick={() => navigate("measure")}
+            >
+              <Icon as={Ruler} />
+              <span>Mesures</span>
+            </button>
+            <button
+              aria-current={analysisActive ? "page" : undefined}
+              className={analysisActive ? "active" : ""}
+              onClick={() => navigate("analysis")}
+            >
+              <Icon as={ChartNoAxesCombined} />
+              <span>Analyse</span>
+            </button>
+          </nav>
+        )}
       </div>
     </AppContext>
   );

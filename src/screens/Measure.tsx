@@ -42,7 +42,6 @@ import { api } from "../api";
 export function MeasureScreen() {
   const {
     data,
-    demo,
     editing,
     navigate,
     requireAccount,
@@ -52,20 +51,11 @@ export function MeasureScreen() {
     setDraft,
   } = useApp();
   const today = localDate(data.profile.timezone);
-  const latestDemo = latest(data.entries, "weight");
   const initial = editing
     ? Object.fromEntries(
         Object.entries(editing.values).map(([id, v]) => [id, number(v)]),
       )
-    : (draft?.values ??
-      (demo
-        ? Object.fromEntries(
-            Object.entries(latestDemo?.values ?? {}).map(([id, v]) => [
-              id,
-              number(v),
-            ]),
-          )
-        : {}));
+    : (draft?.values ?? {});
   const [values, setValues] = useState<Record<string, string>>(initial);
   const [date, setDate] = useState(editing?.date ?? draft?.date ?? today);
   const [note, setNote] = useState(editing?.note ?? draft?.note ?? "");
@@ -215,7 +205,7 @@ export function MeasureScreen() {
       setBusy(false);
     }
   }
-  if (!demo && !data.consents.body)
+  if (!data.consents.body)
     return (
       <>
         <PageTitle
@@ -300,13 +290,11 @@ export function MeasureScreen() {
             <span className="hero-unit">kg</span>
           </div>
           <p id="weight-hint" className="weight-hint">
-            {demo
-              ? "Un exemple pour découvrir votre suivi."
-              : values.weight
-                ? "Votre mesure, à votre rythme."
-                : latest(data.entries, "weight")
-                  ? "Dernière valeur en repère. Touchez pour saisir."
-                  : "Touchez pour saisir votre premier poids."}
+            {values.weight
+              ? "Votre mesure, à votre rythme."
+              : latest(data.entries, "weight")
+                ? "Dernière valeur en repère. Touchez pour saisir."
+                : "Touchez pour saisir votre premier poids."}
           </p>
           <div className="stepper">
             <button
@@ -436,7 +424,7 @@ export function MeasureScreen() {
               key={orientation}
               className={`photo-upload ${photos[orientation] ? "selected" : ""}`}
               onClick={(e) => {
-                if (demo || !data.consents.photos) {
+                if (!data.consents.photos) {
                   e.preventDefault();
                   if (requireAccount()) setPhotoConsent(true);
                 }

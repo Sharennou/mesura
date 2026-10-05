@@ -15,7 +15,7 @@ import { firstOccurrence, nextOccurrences } from "../../shared/recurrence";
 import type { Reminder, AccountData } from "../../shared/types";
 import { APP_NAME, CONSENT_TEXTS, CONSENT_VERSION } from "../../shared/config";
 export function ReminderScreen() {
-  const { data, setData, demo, requireAccount, capabilities, navigate, toast } =
+  const { data, setData, requireAccount, capabilities, navigate, toast } =
     useApp();
   const initial = data.reminder;
   const [enabled, setEnabled] = useState(initial?.enabled ?? false);
@@ -47,7 +47,7 @@ export function ReminderScreen() {
     matchMedia("(display-mode: standalone)").matches ||
     (navigator as any).standalone;
   useEffect(() => {
-    if (supportsPush && !demo)
+    if (supportsPush)
       void navigator.serviceWorker.ready
         .then((r) => r.pushManager.getSubscription())
         .then(async (s) => {
@@ -62,7 +62,7 @@ export function ReminderScreen() {
             );
         })
         .catch(() => {});
-  }, [demo, supportsPush]);
+  }, [supportsPush]);
   const operational =
     channel === "email"
       ? capabilities.emailConfigured && data.consents.email

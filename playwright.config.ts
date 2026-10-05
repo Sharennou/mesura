@@ -1,11 +1,14 @@
 import { defineConfig } from "@playwright/test";
+import { resolve } from "node:path";
+const baseURL = "http://127.0.0.1:5181";
+const testDataDir = resolve(".runtime", `e2e-${Date.now()}`);
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: false,
   workers: 1,
   timeout: 45000,
   use: {
-    baseURL: "http://localhost:5173",
+    baseURL,
     locale: "fr-FR",
     timezoneId: "Europe/Paris",
     trace: "retain-on-failure",
@@ -16,8 +19,17 @@ export default defineConfig({
   ],
   webServer: {
     command: "npm run dev",
-    url: "http://localhost:5173",
-    reuseExistingServer: true,
+    url: baseURL,
+    env: {
+      APP_URL: baseURL,
+      PORT: "3011",
+      MESURA_WEB_PORT: "5181",
+      MESURA_API_URL: "http://127.0.0.1:3011",
+      DATA_DIR: testDataDir,
+      SMTP_HOST: "",
+      MAIL_FROM: "",
+    },
+    reuseExistingServer: false,
     timeout: 30000,
   },
 });

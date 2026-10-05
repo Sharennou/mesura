@@ -2,9 +2,9 @@
 
 ## Automatisé
 
-Les données sont fictives et les tests d’API utilisent une base temporaire supprimée à la fin.
+Les jeux de données des tests sont fictifs ; l’application ne contient aucune donnée de démonstration. Les tests d’API utilisent une base temporaire supprimée à la fin. Les parcours mobiles démarrent leur propre serveur sur les ports 5181 / 3011, avec une base isolée dans `.runtime/e2e-*` et sans email externe. Ils créent puis suppriment leur compte de test. Ils ne réutilisent pas le serveur ni les données personnelles de développement.
 
-Validation de cette livraison : compilation de production réussie, **55 tests de calculs / API** et **4 parcours Playwright** réussis, avec contrôles axe sur les écrans parcourus à 390 et 360 px.
+Validation : compilation locale et GitHub Pages, **79 tests de calculs / API / Postgres cloud** et **4 parcours Playwright**, avec contrôles axe sur les écrans parcourus à 390 et 360 px.
 
 - Point / virgule, valeurs manquantes ou invalides, précision et affichage.
 - IMC, ratios d’une même entrée, stature historique et divisions par zéro.
@@ -18,6 +18,8 @@ Validation de cette livraison : compilation de production réussie, **55 tests d
 - Déduplication du worker, contrôle du consentement à l’envoi, expiration d’abonnement et texte discret.
 - Ledger sur compte restauré et purge d’inactivité.
 - Playwright à 390 × 844 et 360 × 800 : navigation, débordements, axe WCAG, compte / vérification, saisie, sauvegarde, rechargement, correction, note comme texte, photo, export et suppression.
+- Connexion obligatoire au premier affichage, aucun accès aux écrans de suivi pendant la vérification de session, liens directs protégés, confirmation email conservée, compte initial vide et retour au formulaire après déconnexion ou suppression.
+- Compilation cloud sous `/mesura/` : formulaire de compte, bascule vers la connexion, rechargement, protection des liens directs et portée du service worker.
 
 Captures et traces sont dans `test-results/`, ignoré par Git. Les contrôles axe ne remplacent pas une revue humaine et un lecteur d’écran.
 

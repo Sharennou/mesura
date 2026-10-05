@@ -14,7 +14,7 @@ const labels: Record<ConsentPurpose, string> = {
 };
 
 export function PrivacyScreen() {
-  const { data, setData, demo, requireAccount, navigate, toast, capabilities } =
+  const { data, setData, requireAccount, navigate, toast, capabilities } =
     useApp();
   const [choices, setChoices] = useState(data.consents);
   const [error, setError] = useState("");
@@ -26,11 +26,10 @@ export function PrivacyScreen() {
   const [includePhotos, setIncludePhotos] = useState(false);
   const [audit, setAudit] = useState<any[]>([]);
   useEffect(() => {
-    if (!demo)
-      void api<any[]>("/consents")
-        .then(setAudit)
-        .catch(() => {});
-  }, [data.consents, demo]);
+    void api<any[]>("/consents")
+      .then(setAudit)
+      .catch(() => {});
+  }, [data.consents]);
   async function change(purpose: ConsentPurpose, granted: boolean) {
     if (!requireAccount()) return;
     setBusy(true);

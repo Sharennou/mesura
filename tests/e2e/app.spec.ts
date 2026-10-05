@@ -1,73 +1,97 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import sharp from "sharp";
-test("les écrans mobiles gardent une navigation et une mise en page accessibles", async ({
+
+test("la connexion est obligatoire, y compris pendant le chargement et par lien direct", async ({
   page,
-}, testInfo) => {
-  await page.goto("/");
+}) => {
+  let releaseSession!: () => void;
+  const sessionReady = new Promise<void>((resolve) => {
+    releaseSession = resolve;
+  });
+  await page.route("**/api/auth/get-session**", async (route) => {
+    await sessionReady;
+    await route.continue();
+  });
+  await page.goto("/", { waitUntil: "domcontentloaded" });
   await expect(
-    page.getByRole("heading", { name: "Nouvelle mesure" }),
+    page.getByText("Vérification de votre connexion…"),
   ).toBeVisible();
+  await expect(page.getByLabel("Poids", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("navigation")).toHaveCount(0);
+  releaseSession();
   await expect(
-    page.getByRole("button", { name: "Mesures", exact: true }),
-  ).toHaveAttribute("aria-current", "page");
-  const before = await page.getByLabel("Poids", { exact: true }).inputValue();
+    page.getByRole("button", { name: "Créer mon espace", exact: true }),
+  ).toBeVisible();
+  await page.unroute("**/api/auth/get-session**");
   await page
-    .getByRole("button", { name: "Augmenter le poids de 0,1 kilogramme" })
+    .getByRole("button", { name: "Déjà un compte ? Me connecter" })
     .click();
-  expect(await page.getByLabel("Poids", { exact: true }).inputValue()).not.toBe(
-    before,
-  );
+  await expect(
+    page.getByRole("button", { name: "Me connecter", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Mot de passe oublié ?" }).click();
+  await expect(
+    page.getByRole("button", { name: "Recevoir un lien", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Créer mon espace", exact: true })
+    .click();
   for (const screen of [
     "measure",
     "analysis",
     "reminder",
+    "success",
+    "privacy",
+    "history",
+    "photos",
     "compare",
     "monthly",
-    "photos",
-    "favorites",
     "goal",
-    "history",
-    "account",
-    "legal",
+    "favorites",
   ]) {
     await page.goto(`/#${screen}`);
-    await expect(page.locator("h1")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Votre espace à vous.", exact: true }),
+    ).toBeVisible();
+    await expect(page.getByRole("navigation")).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Régler mon rappel" }),
+    ).toHaveCount(0);
+    await expect(page.getByLabel("Poids", { exact: true })).toHaveCount(0);
+    await expect(page.locator(".graph-card,.demo-banner")).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: /Continuer la découverte/ }),
+    ).toHaveCount(0);
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
-      `Pas de débordement : ${screen}`,
     ).toBe(true);
-    const violations = (
+  }
+  expect((await page.request.get("/api/account")).status()).toBe(401);
+  await page
+    .getByRole("button", { name: "conditions d’utilisation", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", {
+      name: "Conditions d’utilisation",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(page.getByRole("navigation")).toHaveCount(0);
+  await page.getByRole("button", { name: "Revenir", exact: true }).click();
+  await expect(page.getByLabel("Adresse email", { exact: true })).toBeVisible();
+  expect(
+    (
       await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
         .analyze()
-    ).violations;
-    expect(
-      violations.map(
-        (v) => `${v.id}: ${v.nodes.map((n) => n.target).join(", ")}`,
-      ),
-      screen,
-    ).toEqual([]);
-  }
-  await page.goto("/#analysis");
-  await page.screenshot({
-    path: `test-results/${testInfo.project.name}-analysis.png`,
-    fullPage: true,
-  });
-  await page.goto("/#measure");
-  await page.screenshot({
-    path: `test-results/${testInfo.project.name}-measure.png`,
-    fullPage: true,
-  });
-  await page.goto("/#reminder");
-  await page.screenshot({
-    path: `test-results/${testInfo.project.name}-reminder.png`,
-    fullPage: true,
-  });
+    ).violations,
+  ).toEqual([]);
 });
-test("compte réel : consentement, sauvegarde, photos, correction, export et suppression", async ({
+
+test("compte réel : accessibilité, consentement, sauvegarde, photos, correction, export et suppression", async ({
   page,
   context,
 }, testInfo) => {
@@ -81,6 +105,8 @@ test("compte réel : consentement, sauvegarde, photos, correction, export et sup
   await page
     .getByRole("button", { name: "Créer mon espace", exact: true })
     .click();
+  await expect(page.getByRole("navigation")).toHaveCount(0);
+  expect((await page.request.get("/api/account")).status()).toBe(401);
   await page.getByRole("link", { name: "Vérifier mon adresse" }).click();
   await expect(
     page.getByRole("heading", { name: "Mon espace", exact: true }),
@@ -98,6 +124,14 @@ test("compte réel : consentement, sauvegarde, photos, correction, export et sup
   ).toBeVisible();
   await page.getByRole("button", { name: "Mesures", exact: true }).click();
   await expect(page.getByLabel("Poids", { exact: true })).toHaveValue("");
+  await expect(page.getByLabel("Tour de taille en cm")).toHaveValue("");
+  await expect(page.getByLabel("Note de cette entrée")).toHaveValue("");
+  expect(
+    (await (await page.request.get("/api/account")).json()).entries,
+  ).toEqual([]);
+  expect(
+    (await (await page.request.get("/api/account")).json()).goal,
+  ).toBeNull();
   await page.getByLabel("Poids", { exact: true }).fill("78,4");
   await page.getByLabel("Tour de taille en cm").fill("84.0");
   await page
@@ -136,7 +170,13 @@ test("compte réel : consentement, sauvegarde, photos, correction, export et sup
     .getByRole("button", { name: "Mon compte et mes réglages" })
     .click();
   await page.getByRole("button", { name: "Me déconnecter" }).click();
-  await page.getByRole("button", { name: "Mon espace", exact: true }).click();
+  await expect(page.getByLabel("Adresse email", { exact: true })).toBeVisible();
+  await expect(page.getByRole("navigation")).toHaveCount(0);
+  await page.goto("/#analysis");
+  await expect(
+    page.getByRole("heading", { name: "Votre espace à vous.", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator(".graph-value")).toHaveCount(0);
   await page
     .getByRole("button", { name: "Déjà un compte ? Me connecter" })
     .click();
@@ -197,6 +237,39 @@ test("compte réel : consentement, sauvegarde, photos, correction, export et sup
       .length;
   });
   expect(cachedPrivate).toBe(0);
+  for (const screen of [
+    "measure",
+    "analysis",
+    "reminder",
+    "compare",
+    "monthly",
+    "photos",
+    "favorites",
+    "goal",
+    "history",
+    "account",
+    "legal",
+  ]) {
+    await page.goto(`/#${screen}`);
+    await expect(page.locator("h1")).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      `Pas de débordement : ${screen}`,
+    ).toBe(true);
+    const violations = (
+      await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .analyze()
+    ).violations;
+    expect(
+      violations.map(
+        (v) => `${v.id}: ${v.nodes.map((n) => n.target).join(", ")}`,
+      ),
+      screen,
+    ).toEqual([]);
+  }
   await page.goto("/#privacy");
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Télécharger mes données" }).click();
@@ -206,7 +279,9 @@ test("compte réel : consentement, sauvegarde, photos, correction, export et sup
     .click();
   await page.getByLabel("Mot de passe actuel").fill(password);
   await page.getByRole("button", { name: "Supprimer définitivement" }).click();
-  await expect(page.getByText("Aperçu · données fictives")).toBeVisible();
+  await expect(page.getByLabel("Adresse email", { exact: true })).toBeVisible();
+  await expect(page.getByRole("navigation")).toHaveCount(0);
+  await expect(page.locator(".demo-banner")).toHaveCount(0);
   const cookie = await context.cookies();
   expect(cookie.filter((c) => c.name.includes("session_token")).length).toBe(0);
 });

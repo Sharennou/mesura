@@ -43,19 +43,34 @@ try {
       }),
     );
     await page.goto(`http://127.0.0.1:4177${base}`);
-    await page.getByRole("heading", { name: "Nouvelle mesure" }).waitFor();
-    await page.getByRole("button", { name: "Analyse", exact: true }).click();
-    await page.getByRole("heading", { name: "Analyse", exact: true }).waitFor();
+    await page.getByLabel("Adresse email", { exact: true }).waitFor();
+    assert.equal(await page.getByRole("navigation").count(), 0);
+    assert.equal(await page.getByLabel("Poids", { exact: true }).count(), 0);
     assert.equal(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
       true,
     );
+    for (const route of [
+      "analysis",
+      "measure",
+      "photos",
+      "privacy",
+      "history",
+      "reminder",
+    ]) {
+      await page.goto(`http://127.0.0.1:4177${base}#${route}`);
+      await page.getByLabel("Adresse email", { exact: true }).waitFor();
+      assert.equal(await page.getByRole("navigation").count(), 0);
+      assert.equal(await page.locator(".graph-card,.demo-banner").count(), 0);
+    }
     await page
-      .getByRole("button", { name: "Mon compte et mes réglages" })
+      .getByRole("button", { name: "Déjà un compte ? Me connecter" })
       .click();
-    await page.getByLabel("Adresse email", { exact: true }).waitFor();
+    await page
+      .getByRole("button", { name: "Me connecter", exact: true })
+      .waitFor();
     await page.reload();
     await page.getByLabel("Adresse email", { exact: true }).waitFor();
     const scope = await page.evaluate(
@@ -71,7 +86,7 @@ try {
     await context.close();
   }
   console.log(
-    "Publication /mesura/ vérifiée à 390 et 360 px : navigation, recharge, assets et PWA.",
+    "Publication /mesura/ vérifiée à 390 et 360 px : connexion obligatoire, liens directs protégés, recharge, assets et PWA.",
   );
 } finally {
   await browser.close();

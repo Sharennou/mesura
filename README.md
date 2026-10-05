@@ -36,13 +36,13 @@ npm run dev
 
 ## Essayer un vrai compte
 
-1. L’accueil propose un **aperçu clairement fictif** ; ses valeurs ne sont jamais copiées dans un nouveau compte.
-2. Ouvrir « Mon espace », créer un compte et vérifier l’email.
+1. L’accueil impose la création d’un compte ou la connexion. Aucun écran de suivi n’est accessible sans connexion et vérification de l’adresse email, y compris par lien direct.
+2. Créer un compte et vérifier l’email, ou se connecter à son compte existant.
 3. Sans SMTP, la messagerie **locale de développement** propose le lien de test. Aucun email n’est annoncé comme envoyé.
 4. Choisir séparément les consentements dans « Données et confidentialité ».
 5. Enregistrer une mesure, une note ou une photo, puis consulter l’analyse.
 
-Les champs d’un compte réel sont vides. Une ancienne valeur est seulement un placeholder. Le serveur bloque toute collecte sans consentement et n’annonce la réussite qu’après une sauvegarde réelle. Un fichier invalide empêche la sauvegarde complète, sans perdre les champs.
+Les nouveaux comptes commencent sans mesure, note, photo, stature ni objectif. Le mode découverte et ses données fictives ont été supprimés. Une ancienne valeur personnelle est seulement un placeholder. Le serveur bloque toute collecte sans consentement et n’annonce la réussite qu’après une sauvegarde réelle. Un fichier invalide empêche la sauvegarde complète, sans perdre les champs.
 
 ## Fonctionnalités
 

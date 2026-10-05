@@ -15,8 +15,8 @@ export default defineConfig({
     },
   ],
   server: {
-    port: 5173,
+    port: Number(process.env.MESURA_WEB_PORT || 5173),
     strictPort: true,
-    proxy: { "/api": "http://127.0.0.1:3001" },
+    proxy: { "/api": process.env.MESURA_API_URL || "http://127.0.0.1:3001" },
   },
 });

@@ -185,7 +185,7 @@ export function ProfileScreen() {
       <Button
         onClick={async () => {
           await authClient.signOut();
-          navigate("measure");
+          navigate("account");
         }}
       >
         Me déconnecter

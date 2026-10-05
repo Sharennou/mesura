@@ -1,6 +1,6 @@
 import { createAuthClient } from "better-auth/react";
 import { APP_NAME, APP_SLUG } from "../shared/config";
-import { CLOUD, PREVIEW_ONLY } from "./deployment";
+import { CLOUD } from "./deployment";
 import { cloudAuthClient, cloudEndpoint, cloudHeaders } from "./cloud-auth";
 import { prepareCloudPhotos } from "./cloud-photos";
 const localAuthClient = CLOUD
@@ -9,9 +9,7 @@ const localAuthClient = CLOUD
 export const authClient = (
   CLOUD ? cloudAuthClient : localAuthClient
 ) as NonNullable<typeof localAuthClient>;
-export const useSession = PREVIEW_ONLY
-  ? () => ({ data: null, isPending: false })
-  : authClient.useSession;
+export const useSession = authClient.useSession;
 export async function api<T = unknown>(
   path: string,
   options: RequestInit = {},
@@ -22,8 +20,6 @@ export async function apiResponse(
   path: string,
   options: RequestInit = {},
 ): Promise<Response> {
-  if (PREVIEW_ONLY)
-    throw new Error("L’aperçu ne sauvegarde pas de données personnelles.");
   const headers = new Headers(options.headers);
   headers.set("X-Requested-With", APP_NAME);
   headers.set("X-Timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);

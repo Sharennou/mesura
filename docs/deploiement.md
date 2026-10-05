@@ -42,6 +42,8 @@ Configurer un serveur SMTP dans les réglages Auth si d’autres personnes doive
 
 L’adaptation utilise des sessions Supabase avec PKCE et renouvellement. Seuls les jetons d’authentification persistent dans le stockage du navigateur ; les mesures, notes et photos ne sont pas stockées dans localStorage ni dans le cache PWA. Le serveur valide aussi `session_id` dans `auth.sessions` : fermer une session lui retire immédiatement l’accès à l’API et à la lecture directe RLS. La version locale utilise des cookies HttpOnly Better Auth.
 
+L’accueil impose la création de compte ou la connexion ; les écrans de suivi sont réservés aux comptes avec adresse vérifiée. Les conditions d’utilisation restent consultables depuis le formulaire d’inscription. Aucun mode découverte ni données corporelles de démonstration n’est proposé.
+
 ## GitHub Pages
 
 Pousser les modifications avec GitHub Desktop (« Commit », puis « Push origin »). Dépôt → Settings → Pages → Source : **GitHub Actions**. Le workflow `.github/workflows/pages.yml` :

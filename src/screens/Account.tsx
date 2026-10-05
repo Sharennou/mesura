@@ -326,9 +326,6 @@ export function AccountScreen() {
             ? "Déjà un compte ? Me connecter"
             : "Créer mon espace"}
         </button>
-        <button className="text-button" onClick={() => navigate("measure")}>
-          Continuer la découverte <Icon as={ArrowRight} size={16} />
-        </button>
       </div>
       <p className="privacy-caption">
         <Icon as={ShieldCheck} size={14} />

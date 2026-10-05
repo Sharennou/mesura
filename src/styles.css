@@ -228,29 +228,12 @@ textarea {
   border-radius: 50%;
   background: var(--volt);
 }
-.demo-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  min-height: 38px;
-  background: var(--badge);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-}
-.demo-banner button {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 0;
-  min-height: 36px;
-  font-size: 11px;
-  font-weight: 800;
-}
 .main-content {
   padding: 24px 16px
     calc(var(--nav-height) + env(safe-area-inset-bottom) + 32px);
+}
+.auth-shell .main-content {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 32px);
 }
 .with-action .main-content {
   padding-bottom: calc(
@@ -2130,9 +2113,6 @@ caption {
     transition: none !important;
     scroll-behavior: auto !important;
   }
-}
-.demo-banner button {
-  min-height: 44px;
 }
 .date-chip {
   min-height: 44px;

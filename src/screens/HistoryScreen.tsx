@@ -17,7 +17,6 @@ export function HistoryScreen() {
   const {
     data,
     setData,
-    demo,
     edit,
     requireAccount,
     navigate,

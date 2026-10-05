@@ -28,7 +28,6 @@ export interface MeasurementDraft {
 export interface AppContextValue {
   data: AccountData;
   setData: Dispatch<SetStateAction<AccountData>>;
-  demo: boolean;
   screen: Screen;
   navigate: (screen: Screen) => void;
   capabilities: Capabilities;
