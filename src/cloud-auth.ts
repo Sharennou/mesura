@@ -8,7 +8,12 @@ export const cloud = CLOUD
       import.meta.env.VITE_SUPABASE_PUBLIC_KEY || SUPABASE_PUBLIC_KEY,
       {
         auth: {
-          flowType: "pkce",
+          // Application statique : le lien email établit la session dans le
+          // navigateur qui l’ouvre, sans dépendre du navigateur d’inscription.
+          // Les anciens liens PKCE déjà envoyés restent échangeables.
+          flowType: new URLSearchParams(location.search).has("code")
+            ? "pkce"
+            : "implicit",
           persistSession: true,
           autoRefreshToken: true,
           detectSessionInUrl: true,
@@ -53,6 +58,40 @@ function sessionView(s: Session | null) {
       }
     : null;
 }
+let initialSession: Promise<Session | null> | null = null;
+let initializing = true;
+function resolveInitialSession() {
+  if (!initialSession)
+    initialSession = (async () => {
+      const url = new URL(location.href);
+      try {
+        const { error } = await cloud!.auth.initialize();
+        if (error) {
+          history.replaceState(
+            null,
+            "",
+            `${url.pathname}?auth_error=confirmation#account`,
+          );
+          return null;
+        }
+        // Le SDK vérifie le jeton auprès d’Auth et nettoie le fragment de l’URL.
+        const { data } = await cloud!.auth.getSession();
+        return data.session;
+      } catch {
+        history.replaceState(
+          null,
+          "",
+          `${url.pathname}?auth_error=confirmation#account`,
+        );
+        return null;
+      } finally {
+        initializing = false;
+      }
+    })();
+  return initializing
+    ? initialSession
+    : cloud!.auth.getSession().then(({ data }) => data.session);
+}
 function useCloudSession() {
   const [value, setValue] = useState<{
     data: ReturnType<typeof sessionView>;
@@ -60,12 +99,12 @@ function useCloudSession() {
   }>({ data: null, isPending: true });
   useEffect(() => {
     let active = true;
-    void cloud!.auth.getSession().then(({ data }) => {
-      if (active)
-        setValue({ data: sessionView(data.session), isPending: false });
+    void resolveInitialSession().then((session) => {
+      if (active) setValue({ data: sessionView(session), isPending: false });
     });
     const { data } = cloud!.auth.onAuthStateChange((_event, session) => {
-      if (active) setValue({ data: sessionView(session), isPending: false });
+      if (active && !initializing)
+        setValue({ data: sessionView(session), isPending: false });
     });
     return () => {
       active = false;

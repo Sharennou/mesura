@@ -16,7 +16,6 @@ const labels: Record<ConsentPurpose, string> = {
 export function PrivacyScreen() {
   const { data, setData, requireAccount, navigate, toast, capabilities } =
     useApp();
-  const [choices, setChoices] = useState(data.consents);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [withdraw, setWithdraw] = useState<ConsentPurpose | null>(null);
@@ -40,7 +39,6 @@ export function PrivacyScreen() {
         body: JSON.stringify({ purpose, granted, version: CONSENT_VERSION }),
       });
       setData(next);
-      setChoices(next.consents);
       setWithdraw(null);
       toast(
         granted
@@ -73,38 +71,19 @@ export function PrivacyScreen() {
               </span>
             </div>
             <p>{CONSENT_TEXTS[p]}</p>
-            {data.consents[p] ? (
-              <Button
-                disabled={busy}
-                onClick={() =>
-                  p === "body" || p === "photos"
-                    ? setWithdraw(p)
-                    : void change(p, false)
-                }
-              >
-                Retirer mon consentement
-              </Button>
-            ) : (
-              <>
-                <label className="check-label">
-                  <input
-                    type="checkbox"
-                    checked={choices[p]}
-                    disabled={busy || (p !== "body" && !data.consents.body)}
-                    onChange={(e) =>
-                      setChoices((c) => ({ ...c, [p]: e.target.checked }))
-                    }
-                  />
-                  <span>J’accepte explicitement cette finalité.</span>
-                </label>
-                <Button
-                  disabled={!choices[p] || busy}
-                  onClick={() => void change(p, true)}
-                >
-                  Enregistrer mon choix
-                </Button>
-              </>
-            )}
+            <label className="check-label">
+              <input
+                type="checkbox"
+                checked={data.consents[p]}
+                disabled={busy || (p !== "body" && !data.consents.body)}
+                onChange={(e) => {
+                  if (!e.target.checked && (p === "body" || p === "photos"))
+                    setWithdraw(p);
+                  else void change(p, e.target.checked);
+                }}
+              />
+              <span>J’autorise {labels[p].toLocaleLowerCase("fr-FR")}.</span>
+            </label>
           </section>
         ))}
       </div>

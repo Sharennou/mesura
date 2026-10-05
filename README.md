@@ -39,10 +39,10 @@ npm run dev
 1. L’accueil impose la création d’un compte ou la connexion. Aucun écran de suivi n’est accessible sans connexion et vérification de l’adresse email, y compris par lien direct.
 2. Créer un compte et vérifier l’email, ou se connecter à son compte existant.
 3. Sans SMTP, la messagerie **locale de développement** propose le lien de test. Aucun email n’est annoncé comme envoyé.
-4. Choisir séparément les consentements dans « Données et confidentialité ».
+4. La vérification ouvre automatiquement une session. Renseigner sa taille, choisir une cible ou le suivi sans cible et cocher une seule autorisation sur l’écran de démarrage. Le tout est sauvegardé ensemble ; cet écran ne revient pas après sa validation.
 5. Enregistrer une mesure, une note ou une photo, puis consulter l’analyse.
 
-Les nouveaux comptes commencent sans mesure, note, photo, stature ni objectif. Le mode découverte et ses données fictives ont été supprimés. Une ancienne valeur personnelle est seulement un placeholder. Le serveur bloque toute collecte sans consentement et n’annonce la réussite qu’après une sauvegarde réelle. Un fichier invalide empêche la sauvegarde complète, sans perdre les champs.
+Les nouveaux comptes commencent sans mesure, note ni photo. Leur taille et leur éventuel objectif viennent du formulaire de démarrage. Les photos et les rappels sont autorisés au moment de leur activation ; les choix restent indépendants et modifiables en une action dans « Données et confidentialité ». Le mode découverte et ses données fictives ont été supprimés. Une ancienne valeur personnelle est seulement un placeholder. Le serveur bloque toute collecte sans consentement et n’annonce la réussite qu’après une sauvegarde réelle. Un fichier invalide empêche la sauvegarde complète, sans perdre les champs.
 
 ## Fonctionnalités
 

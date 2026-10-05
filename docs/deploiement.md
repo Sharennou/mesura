@@ -40,9 +40,9 @@ Dans Authentication → URL Configuration :
 
 Configurer un serveur SMTP dans les réglages Auth si d’autres personnes doivent s’inscrire. Le service intégré Supabase n’envoie par défaut qu’aux adresses autorisées des membres du projet, avec une limite basse. Ne pas désactiver la vérification pour contourner cette limite. Référence : [emails Supabase](https://supabase.com/docs/guides/auth/auth-smtp).
 
-L’adaptation utilise des sessions Supabase avec PKCE et renouvellement. Seuls les jetons d’authentification persistent dans le stockage du navigateur ; les mesures, notes et photos ne sont pas stockées dans localStorage ni dans le cache PWA. Le serveur valide aussi `session_id` dans `auth.sessions` : fermer une session lui retire immédiatement l’accès à l’API et à la lecture directe RLS. La version locale utilise des cookies HttpOnly Better Auth.
+L’application statique utilise le flux email « implicit » de Supabase avec renouvellement. Le lien standard vérifie l’adresse puis ouvre une session dans le navigateur qui reçoit le lien, même si l’inscription a commencé ailleurs. Le SDK valide la session auprès d’Auth et retire les jetons du fragment de l’URL avant d’afficher l’espace ; aucun modèle email personnalisé n’est nécessaire. Référence : [flux email Supabase](https://supabase.com/docs/guides/auth/passwords). Seuls les jetons d’authentification persistent dans le stockage du navigateur ; les mesures, notes et photos ne sont pas stockées dans localStorage ni dans le cache PWA. Le serveur valide aussi `session_id` dans `auth.sessions` : fermer une session lui retire immédiatement l’accès à l’API et à la lecture directe RLS. La version locale utilise des cookies HttpOnly Better Auth.
 
-L’accueil impose la création de compte ou la connexion ; les écrans de suivi sont réservés aux comptes avec adresse vérifiée. Les conditions d’utilisation restent consultables depuis le formulaire d’inscription. Aucun mode découverte ni données corporelles de démonstration n’est proposé.
+L’accueil impose la création de compte ou la connexion ; les écrans de suivi sont réservés aux comptes avec adresse vérifiée. La confirmation renvoie à l’URL de l’application, puis à l’écran de démarrage pour les comptes non configurés : taille, objectif (ou suivi sans cible) et une autorisation de suivi. `/onboarding` valide et sauvegarde ces informations ensemble dans une transaction SQLite ou une révision cloud. Le marqueur de fin est conservé dans le profil. Les comptes existants ayant déjà une taille ou des entrées n’ont pas à recommencer. Les autorisations photos et rappels restent facultatives et sont demandées à l’usage. Les conditions d’utilisation restent consultables depuis le formulaire d’inscription. Aucun mode découverte ni données corporelles de démonstration n’est proposé.
 
 ## GitHub Pages
 
@@ -64,7 +64,7 @@ npm run check:cloud
 npm test
 ```
 
-Le test de publication contrôle les chemins et l’interface sur 390 et 360 px ; il simule seulement la réponse publique `/config`. Les règles métier, les conflits d’écriture et les autorisations SQL sont testés séparément, dans un Postgres réel embarqué (PGlite). Un parcours complet en ligne reste à vérifier avec une adresse email autorisée par le projet.
+Le test de publication contrôle les chemins et l’interface sur 390 et 360 px ; son contrôle anonyme simule seulement la réponse publique `/config`. Un deuxième contrôle simule le retour de confirmation Auth, la récupération et les réponses de compte pour vérifier la session automatique et le démarrage dans le bundle compilé. Les transactions métier réelles, les conflits d’écriture et les autorisations SQL sont testés séparément (SQLite et Postgres embarqué PGlite). Un parcours complet en ligne avec email réel reste à vérifier avec une adresse email autorisée par le projet.
 
 ## Rappels et données
 

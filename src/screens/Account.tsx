@@ -1,12 +1,5 @@
 import { useState, type FormEvent } from "react";
-import {
-  ArrowRight,
-  LockKeyhole,
-  Mail,
-  ShieldCheck,
-  Eye,
-  EyeOff,
-} from "lucide-react";
+import { ArrowRight, Mail, ShieldCheck, Eye, EyeOff } from "lucide-react";
 import { useApp } from "../context";
 import { Button, ErrorMessage, Icon, PageTitle } from "../components";
 import { api, authClient } from "../api";
@@ -39,7 +32,11 @@ export function AccountScreen() {
   const [terms, setTerms] = useState(false);
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(
+    search.has("auth_error")
+      ? "Ce lien de vérification est expiré ou invalide. Connectez-vous si votre adresse est déjà vérifiée, ou demandez un nouveau lien."
+      : "",
+  );
   const [sent, setSent] = useState(false);
   const [localMail, setLocalMail] = useState<{
     url: string;
@@ -69,7 +66,7 @@ export function AccountScreen() {
           email,
           password,
           name: name.trim() || "Mon espace",
-          callbackURL: `${appURL()}#account`,
+          callbackURL: appURL(),
         });
       } else if (mode === "signin")
         response = await authClient.signIn.email({ email, password });
@@ -125,16 +122,6 @@ export function AccountScreen() {
         eyebrow="Privé. Personnel. À votre rythme."
         back={false}
       />
-      <div className="account-intro">
-        <span className="intro-icon">
-          <Icon as={LockKeyhole} size={30} />
-        </span>
-        <p>
-          Des repères pour vous.
-          <br />
-          Un suivi qui vous appartient.
-        </p>
-      </div>
       {sent ? (
         <section className="plain-card">
           <Icon as={Mail} size={28} />
@@ -146,7 +133,7 @@ export function AccountScreen() {
           <p>
             {mode === "reset"
               ? "Si un compte existe à cette adresse, un lien de récupération vous a été envoyé."
-              : `Un lien de vérification a été préparé pour ${email}. Ouvrez-le pour activer votre espace.`}
+              : `Un lien de vérification a été préparé pour ${email}. Ouvrez-le : vous serez connecté automatiquement pour renseigner votre taille et votre objectif.`}
           </p>
           {localMail && (
             <div className="development-mail">
@@ -180,7 +167,7 @@ export function AccountScreen() {
                 try {
                   const response = await authClient.sendVerificationEmail({
                     email,
-                    callbackURL: `${appURL()}#account`,
+                    callbackURL: appURL(),
                   });
                   if (response.error)
                     throw new Error(
@@ -281,8 +268,8 @@ export function AccountScreen() {
                 >
                   conditions d’utilisation
                 </button>
-                . Mes consentements au suivi, aux photos et aux rappels seront
-                choisis séparément.
+                . Mon suivi sera configuré à la prochaine étape. Les photos et
+                les rappels restent facultatifs.
               </span>
             </label>
           )}

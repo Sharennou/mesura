@@ -14,7 +14,7 @@
     "start": "NODE_ENV=production tsx server/index.ts",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:pages": "tsx scripts/smoke-pages.ts",
+    "test:pages": "tsx scripts/smoke-pages.ts && tsx scripts/smoke-auth-callback.ts",
     "check:cloud": "deno check --config supabase/functions/deno.json supabase/functions/mesura-api/index.ts",
     "bundle:cloud": "tsx scripts/bundle-cloud.ts",
     "check": "npm run build && npm test",

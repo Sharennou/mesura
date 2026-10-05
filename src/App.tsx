@@ -33,6 +33,7 @@ import {
   FavoritesScreen,
 } from "./screens/Explore";
 import { useModalFocus } from "./useModalFocus";
+import { OnboardingScreen } from "./screens/OnboardingScreen";
 const screens: Screen[] = [
   "measure",
   "analysis",
@@ -81,7 +82,19 @@ export default function App() {
     search.get("token") || (CLOUD && search.get("reset") === "1"),
   );
   const canAccess = authenticated && !recovering;
-  const screen = canAccess || route === "legal" ? route : "account";
+  const onboarding =
+    canAccess &&
+    accountOwner === session?.user.id &&
+    !(
+      data.profile.onboardingCompleted ??
+      Boolean(data.profile.height || data.entries.length)
+    );
+  const screen =
+    canAccess || route === "legal"
+      ? onboarding && route !== "legal"
+        ? "onboarding"
+        : route
+      : "account";
   const mainRef = useRef<HTMLElement>(null);
   const [sessionResolved, setSessionResolved] = useState(false);
   useEffect(() => {
@@ -250,7 +263,7 @@ export default function App() {
   return (
     <AppContext value={context}>
       <div
-        className={`app-shell ${canAccess ? "" : "auth-shell"} ${screen === "success" ? "success-shell" : ""} ${hasAction ? "with-action" : ""}`}
+        className={`app-shell ${canAccess && !onboarding ? "" : "auth-shell"} ${screen === "success" ? "success-shell" : ""} ${hasAction ? "with-action" : ""}`}
       >
         <a className="skip-link" href="#main-content">
           Aller au contenu
@@ -263,7 +276,7 @@ export default function App() {
           >
             <img className="brand-logo" src={logo} alt="" />
           </button>
-          {canAccess && !isPending && (
+          {canAccess && !isPending && !onboarding && (
             <div className="header-actions">
               <button
                 className="circle"
@@ -326,6 +339,8 @@ export default function App() {
               <h1>Connexion interrompue</h1>
               <p>Réessayez pour retrouver vos mesures.</p>
             </div>
+          ) : screen === "onboarding" ? (
+            <OnboardingScreen key={session?.user.id} />
           ) : (
             <>
               {screen === "measure" && (
@@ -359,7 +374,7 @@ export default function App() {
             </button>
           </div>
         )}
-        {canAccess && !isPending && (
+        {canAccess && !isPending && !onboarding && (
           <nav className="bottom-nav" aria-label="Navigation principale">
             <button
               aria-current={!analysisActive ? "page" : undefined}

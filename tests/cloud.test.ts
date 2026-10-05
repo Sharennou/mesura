@@ -39,6 +39,50 @@ const consent = (
   change(a, "POST", "/consents", { purpose, granted, version: CONSENT_VERSION })
     .account;
 describe("Sauvegarde distante", () => {
+  it("enregistre le démarrage en un seul changement sans activer les options", () => {
+    const before = emptyCloudAccount("Alice", "Europe/Paris");
+    const payload = {
+      height: 175.5,
+      consent: true,
+      version: CONSENT_VERSION,
+      goal: { measureId: "weight", start: 80, target: 75 },
+    };
+    expect(() =>
+      change(before, "POST", "/onboarding", { ...payload, consent: false }),
+    ).toThrow();
+    expect(() =>
+      change(before, "POST", "/onboarding", {
+        ...payload,
+        goal: { ...payload.goal, measureId: "unknown" },
+      }),
+    ).toThrow();
+    expect(before.consents.body).toBe(false);
+    const after = change(before, "POST", "/onboarding", payload).account;
+    expect(after.profile).toMatchObject({
+      height: 175.5,
+      onboardingCompleted: true,
+    });
+    expect(after.consents).toEqual({
+      body: true,
+      photos: false,
+      push: false,
+      email: false,
+    });
+    expect(after.goal).toEqual({ ...payload.goal, startDate: "2026-10-05" });
+    expect(after.entries).toEqual([]);
+    expect(after.audit).toHaveLength(1);
+    const updated = change(after, "PATCH", "/profile", {
+      ...after.profile,
+      name: "Alice modifiée",
+    }).account;
+    expect(updated.profile.onboardingCompleted).toBe(true);
+    const noTarget = change(before, "POST", "/onboarding", {
+      ...payload,
+      goal: null,
+    }).account;
+    expect(noTarget.goal).toBeNull();
+    expect(noTarget.profile.onboardingCompleted).toBe(true);
+  });
   it("commence vide sans reprendre les exemples", () => {
     const a = emptyCloudAccount("Alice");
     expect(a.entries).toEqual([]);

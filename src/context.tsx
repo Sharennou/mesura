@@ -6,6 +6,7 @@ import {
 } from "react";
 import type { AccountData, Capabilities, Entry } from "../shared/types";
 export type Screen =
+  | "onboarding"
   | "measure"
   | "analysis"
   | "reminder"

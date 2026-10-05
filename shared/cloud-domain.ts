@@ -3,6 +3,7 @@ import { DateTime } from "luxon";
 import { STANDARD_MEASURES, DEFAULT_VISIBLE } from "./catalog.ts";
 import { CONSENT_TEXTS, CONSENT_VERSION } from "./config.ts";
 import { firstOccurrence, nextOccurrences } from "./recurrence.ts";
+import { onboardingSchema } from "./onboarding.ts";
 import type {
   AccountData,
   Capabilities,
@@ -33,6 +34,7 @@ export function emptyCloudAccount(
 ): CloudAccount {
   return {
     profile: {
+      onboardingCompleted: false,
       name: name || "Mon espace",
       height: null,
       timezone: DateTime.now().setZone(timezone).isValid ? timezone : "UTC",
@@ -53,7 +55,12 @@ export function emptyCloudAccount(
 export function publicCloudAccount(a: CloudAccount): AccountData {
   const { profile, entries, measures, goal, consents, reminder } = a;
   return {
-    profile,
+    profile: {
+      ...profile,
+      onboardingCompleted:
+        profile.onboardingCompleted ??
+        Boolean(profile.height || entries.length),
+    },
     entries,
     measures,
     goal,
@@ -91,12 +98,41 @@ export function mutateCloudAccount(
   now: DateTime = DateTime.now(),
 ) {
   const a = structuredClone(input);
+  a.profile.onboardingCompleted ??= Boolean(
+    a.profile.height || a.entries.length,
+  );
   let result: unknown = { ok: true };
   const [, resource, id] = path.split("/");
   const bodyRequired = () => {
     if (!a.consents.body) cloudFail("Le suivi corporel est désactivé.", 403);
   };
-  if (resource === "profile" && method === "PATCH") {
+  if (resource === "onboarding" && method === "POST") {
+    const setup = onboardingSchema.parse(raw);
+    if (
+      setup.goal &&
+      !a.measures.some((m) => m.id === setup.goal!.measureId && !m.archived)
+    )
+      cloudFail("Mesure inconnue.");
+    if (!a.consents.body) {
+      a.consents.body = true;
+      a.audit.unshift({
+        purpose: "body",
+        granted: true,
+        version: setup.version,
+        text: CONSENT_TEXTS.body,
+        date: now.toISO()!,
+      });
+    }
+    a.profile.height = setup.height;
+    a.profile.onboardingCompleted = true;
+    a.goal = setup.goal
+      ? {
+          ...setup.goal,
+          startDate: now.setZone(a.profile.timezone).toISODate()!,
+        }
+      : null;
+    result = publicCloudAccount(a);
+  } else if (resource === "profile" && method === "PATCH") {
     const p = z
       .object({
         name: z.string().trim().min(1).max(100),
@@ -116,7 +152,7 @@ export function mutateCloudAccount(
       )
     )
       cloudFail("Sélection de mesures invalide.");
-    a.profile = p;
+    a.profile = { ...a.profile, ...p };
     result = publicCloudAccount(a);
   } else if (resource === "consents" && method === "POST") {
     const c = z

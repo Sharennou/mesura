@@ -5,10 +5,10 @@ export const APP_SLUG =
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "") || "application";
-export const CONSENT_VERSION = "2026-10-05.1";
+export const CONSENT_VERSION = "2026-10-05.2";
 export const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 export const CONSENT_TEXTS = {
-  body: "Je consens explicitement à enregistrer mes mesures corporelles et mes notes privées pour suivre leur évolution. Je peux retirer ce consentement et supprimer mes données à tout moment.",
+  body: "J’autorise explicitement l’enregistrement de ma taille, de mes mesures, de mes objectifs et de mes notes privées pour suivre mon évolution. Je peux retirer cette autorisation et supprimer mes données à tout moment.",
   photos:
     "Je consens à stocker mes photos corporelles, privées, pour les consulter et les comparer. Les métadonnées sont supprimées ; aucune analyse par IA n’est effectuée.",
   push: "Je souhaite recevoir des rappels discrets par notification sur cet appareil. Ce choix est indépendant de l’autorisation du navigateur.",

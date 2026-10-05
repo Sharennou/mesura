@@ -30,6 +30,7 @@ test("la connexion est obligatoire, y compris pendant le chargement et par lien 
   await expect(
     page.getByRole("button", { name: "Me connecter", exact: true }),
   ).toBeVisible();
+  await expect(page.getByText("Des repères pour vous.")).toHaveCount(0);
   await page.getByRole("button", { name: "Mot de passe oublié ?" }).click();
   await expect(
     page.getByRole("button", { name: "Recevoir un lien", exact: true }),
@@ -109,20 +110,49 @@ test("compte réel : accessibilité, consentement, sauvegarde, photos, correctio
   expect((await page.request.get("/api/account")).status()).toBe(401);
   await page.getByRole("link", { name: "Vérifier mon adresse" }).click();
   await expect(
-    page.getByRole("heading", { name: "Mon espace", exact: true }),
+    page.getByRole("heading", { name: "Votre point de départ.", exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Choisir mes consentements" }).click();
-  const bodyConsent = page.locator(".consent-card").filter({
-    has: page.getByRole("heading", { name: "Suivi corporel", exact: true }),
-  });
-  await bodyConsent.getByRole("checkbox").check();
-  await bodyConsent
-    .getByRole("button", { name: "Enregistrer mon choix" })
-    .click();
+  await expect(page.getByRole("checkbox")).toHaveCount(1);
+  await expect(page.getByRole("navigation")).toHaveCount(0);
+  await page.getByLabel("Votre taille en cm").fill("175,5");
+  await page
+    .getByLabel("Votre objectif")
+    .selectOption("observe");
+  await page.getByRole("checkbox").check();
+  await page.route("**/api/onboarding", (route) => route.abort());
+  await page.getByRole("button", { name: "Commencer mon suivi" }).click();
+  await expect(page.getByRole("alert")).toContainText("connexion");
+  await expect(page.getByLabel("Votre taille en cm")).toHaveValue("175,5");
+  expect(
+    (await (await page.request.get("/api/account")).json()).consents.body,
+  ).toBe(false);
+  await page.unroute("**/api/onboarding");
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
+  await page.getByRole("button", { name: "Commencer mon suivi" }).click();
   await expect(
-    bodyConsent.getByText("Autorisé", { exact: true }),
+    page.getByRole("heading", { name: "Nouvelle mesure", exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Mesures", exact: true }).click();
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "Nouvelle mesure", exact: true }),
+  ).toBeVisible();
+  const setup = await (await page.request.get("/api/account")).json();
+  expect(setup.profile).toMatchObject({
+    height: 175.5,
+    onboardingCompleted: true,
+  });
+  expect(setup.consents).toEqual({
+    body: true,
+    photos: false,
+    push: false,
+    email: false,
+  });
   await expect(page.getByLabel("Poids", { exact: true })).toHaveValue("");
   await expect(page.getByLabel("Tour de taille en cm")).toHaveValue("");
   await expect(page.getByLabel("Note de cette entrée")).toHaveValue("");

@@ -128,6 +128,51 @@ describe("Comptes et contrôle d’accès", () => {
       ).statusCode,
     ).toBe(403);
   });
+  it("valide tout le démarrage avant d’autoriser et sauvegarde le choix sans cible", async () => {
+    const setup = {
+      height: 175.5,
+      consent: true,
+      version: CONSENT_VERSION,
+      goal: null,
+    };
+    expect((await call("POST", "/api/onboarding", setup, "")).statusCode).toBe(
+      401,
+    );
+    expect(
+      (await call("POST", "/api/onboarding", { ...setup, consent: false }))
+        .statusCode,
+    ).toBe(400);
+    expect(
+      (await call("POST", "/api/onboarding", { ...setup, height: 301 }))
+        .statusCode,
+    ).toBe(400);
+    expect(
+      (
+        await call("POST", "/api/onboarding", {
+          ...setup,
+          goal: { measureId: "unknown", start: 80, target: 70 },
+        })
+      ).statusCode,
+    ).toBe(400);
+    let current = (await call("GET", "/api/account")).json();
+    expect(current.consents.body).toBe(false);
+    expect(current.profile.height).toBeNull();
+    const response = await call("POST", "/api/onboarding", setup);
+    expect(response.statusCode).toBe(200);
+    current = (await call("GET", "/api/account")).json();
+    expect(current.profile).toMatchObject({
+      height: 175.5,
+      onboardingCompleted: true,
+    });
+    expect(current.consents).toEqual({
+      body: true,
+      photos: false,
+      push: false,
+      email: false,
+    });
+    expect(current.entries).toEqual([]);
+    expect(current.goal).toBeNull();
+  });
   it("enregistre un consentement traçable puis des valeurs persistantes", async () => {
     await call("POST", "/api/consents", {
       purpose: "body",

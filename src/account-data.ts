@@ -4,6 +4,7 @@ import { STANDARD_MEASURES, DEFAULT_VISIBLE } from "../shared/catalog";
 export function emptyAccountData(): AccountData {
   return {
     profile: {
+      onboardingCompleted: false,
       name: "Mon espace",
       height: null,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,

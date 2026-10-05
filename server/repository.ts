@@ -90,6 +90,7 @@ export function accountData(userId: string, name: string): AccountData {
     .get(userId) as any;
   return {
     profile: {
+      onboardingCompleted: Boolean(p?.onboarding_completed),
       name,
       height: p?.height ?? null,
       timezone: p?.timezone ?? "Europe/Paris",

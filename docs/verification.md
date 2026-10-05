@@ -4,7 +4,7 @@
 
 Les jeux de données des tests sont fictifs ; l’application ne contient aucune donnée de démonstration. Les tests d’API utilisent une base temporaire supprimée à la fin. Les parcours mobiles démarrent leur propre serveur sur les ports 5181 / 3011, avec une base isolée dans `.runtime/e2e-*` et sans email externe. Ils créent puis suppriment leur compte de test. Ils ne réutilisent pas le serveur ni les données personnelles de développement.
 
-Validation : compilation locale et GitHub Pages, **79 tests de calculs / API / Postgres cloud** et **4 parcours Playwright**, avec contrôles axe sur les écrans parcourus à 390 et 360 px.
+Validation : compilation locale et GitHub Pages, **81 tests de calculs / API / Postgres cloud** et **4 parcours Playwright**, avec contrôles axe sur les écrans parcourus à 390 et 360 px.
 
 - Point / virgule, valeurs manquantes ou invalides, précision et affichage.
 - IMC, ratios d’une même entrée, stature historique et divisions par zéro.
@@ -20,6 +20,8 @@ Validation : compilation locale et GitHub Pages, **79 tests de calculs / API / P
 - Playwright à 390 × 844 et 360 × 800 : navigation, débordements, axe WCAG, compte / vérification, saisie, sauvegarde, rechargement, correction, note comme texte, photo, export et suppression.
 - Connexion obligatoire au premier affichage, aucun accès aux écrans de suivi pendant la vérification de session, liens directs protégés, confirmation email conservée, compte initial vide et retour au formulaire après déconnexion ou suppression.
 - Compilation cloud sous `/mesura/` : formulaire de compte, bascule vers la connexion, rechargement, protection des liens directs et portée du service worker.
+- Démarrage après confirmation : taille obligatoire, cible ou suivi sans cible, une autorisation de suivi, conservation des champs après échec, transaction sans activation partielle et reprise sans afficher le démarrage une deuxième fois.
+- Bundle cloud : confirmation email dans un navigateur neuf sans vérificateur PKCE, validation de session auprès d’Auth, nettoyage des jetons dans l’URL, objectif enregistré, lien expiré et séparation du parcours de récupération. Ces réponses Auth sont simulées ; elles ne constituent pas un test d’envoi d’email externe.
 
 Captures et traces sont dans `test-results/`, ignoré par Git. Les contrôles axe ne remplacent pas une revue humaine et un lecteur d’écran.
 

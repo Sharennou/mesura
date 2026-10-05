@@ -33,6 +33,7 @@ import { pushConfigured } from "./jobs";
 import { enforceDeletionLedger, eraseAccount } from "./retention";
 import { firstOccurrence, nextOccurrences } from "../shared/recurrence";
 import { localDate } from "../shared/calculations";
+import { onboardingSchema } from "../shared/onboarding";
 import {
   APP_NAME,
   APP_SLUG,
@@ -246,6 +247,44 @@ export async function buildApp() {
       ).run(s.user.id, p.height, p.timezone, JSON.stringify(p.visible));
     })();
     return accountData(s.user.id, p.name);
+  });
+  app.post("/api/onboarding", async (req) => {
+    const s = await owner(req);
+    const setup = onboardingSchema.parse(req.body);
+    if (
+      setup.goal &&
+      !getMeasures(s.user.id).some(
+        (m) => m.id === setup.goal!.measureId && !m.archived,
+      )
+    )
+      fail("Mesure inconnue.");
+    db.transaction(() => {
+      if (!consent(s.user.id, "body"))
+        db.prepare("INSERT INTO consents VALUES (?, ?, ?, ?, ?, ?, ?)").run(
+          randomUUID(),
+          s.user.id,
+          "body",
+          setup.version,
+          CONSENT_TEXTS.body,
+          1,
+          new Date().toISOString(),
+        );
+      db.prepare(
+        "UPDATE profiles SET height = ?, onboarding_completed = 1 WHERE user_id = ?",
+      ).run(setup.height, s.user.id);
+      if (setup.goal)
+        db.prepare(
+          "INSERT INTO goals VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET measure_id=excluded.measure_id, start=excluded.start, target=excluded.target, start_date=excluded.start_date",
+        ).run(
+          s.user.id,
+          setup.goal.measureId,
+          setup.goal.start,
+          setup.goal.target,
+          localDate(accountData(s.user.id, s.user.name).profile.timezone),
+        );
+      else db.prepare("DELETE FROM goals WHERE user_id = ?").run(s.user.id);
+    })();
+    return accountData(s.user.id, s.user.name);
   });
   app.get("/api/consents", async (req) => {
     const s = await owner(req);
