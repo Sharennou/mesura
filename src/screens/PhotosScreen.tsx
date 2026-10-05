@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Camera, Columns2, Plus, Trash2 } from "lucide-react";
 import { useApp } from "../context";
 import { api } from "../api";
+import { PhotoImage } from "../PhotoImage";
 import {
   Button,
   Confirm,
@@ -92,8 +93,8 @@ export function PhotosScreen() {
                   <>
                     {[pa, pb].map((p, i) => (
                       <figure key={p.id}>
-                        <img
-                          src={`/api/photos/${p.id}`}
+                        <PhotoImage
+                          photoId={p.id}
                           alt={`${orientation}, photo ${i === 0 ? "A" : "B"} du ${p.date}`}
                         />
                         <figcaption>
@@ -104,16 +105,16 @@ export function PhotosScreen() {
                   </>
                 ) : (
                   <>
-                    <img
-                      src={`/api/photos/${pa.id}`}
+                    <PhotoImage
+                      photoId={pa.id}
                       alt={`${orientation}, photo A du ${pa.date}`}
                     />
                     <div
                       className="photo-reveal"
                       style={{ clipPath: `inset(0 ${100 - slider}% 0 0)` }}
                     >
-                      <img
-                        src={`/api/photos/${pb.id}`}
+                      <PhotoImage
+                        photoId={pb.id}
                         alt={`${orientation}, photo B du ${pb.date}`}
                       />
                     </div>
@@ -155,9 +156,9 @@ export function PhotosScreen() {
           <div className="photo-gallery">
             {[...photos].reverse().map((p) => (
               <figure key={p.id}>
-                <img
+                <PhotoImage
                   loading="lazy"
-                  src={`/api/photos/${p.id}`}
+                  photoId={p.id}
                   alt={`Vue ${orientation} du ${p.date}`}
                 />
                 <figcaption>

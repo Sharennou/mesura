@@ -10,7 +10,9 @@ import {
 } from "lucide-react";
 import type { AccountData, Capabilities, Entry } from "../shared/types";
 import { APP_NAME } from "../shared/config";
-import { api, authClient } from "./api";
+import { api, useSession } from "./api";
+import { PREVIEW_ONLY } from "./deployment";
+import { PreviewAccountScreen } from "./screens/PreviewAccountScreen";
 import { demoData } from "./demo";
 import { AppContext, type Screen, type MeasurementDraft } from "./context";
 import { Icon } from "./components";
@@ -73,7 +75,7 @@ export default function App() {
   const [offline, setOffline] = useState(!navigator.onLine);
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending } = useSession();
   const demo = !session?.user?.emailVerified;
   const mainRef = useRef<HTMLElement>(null);
   const [initialized, setInitialized] = useState(false);
@@ -98,6 +100,7 @@ export default function App() {
     } else setCapabilities(await api<Capabilities>("/config"));
   }
   useEffect(() => {
+    if (PREVIEW_ONLY) return;
     api<Capabilities>("/config")
       .then(setCapabilities)
       .catch(() =>
@@ -186,7 +189,11 @@ export default function App() {
   function requireAccount() {
     if (demo) {
       navigate("account");
-      setMessage("Créez votre espace privé pour enregistrer vos données.");
+      setMessage(
+        PREVIEW_ONLY
+          ? "L’aperçu ne sauvegarde pas de données personnelles."
+          : "Créez votre espace privé pour enregistrer vos données.",
+      );
       return false;
     }
     return true;
@@ -339,7 +346,13 @@ export default function App() {
               {screen === "success" && <SuccessScreen />}
               {screen === "reminder" && <ReminderScreen />}
               {screen === "account" &&
-                (demo ? <AccountScreen /> : <ProfileScreen />)}
+                (PREVIEW_ONLY ? (
+                  <PreviewAccountScreen />
+                ) : demo ? (
+                  <AccountScreen />
+                ) : (
+                  <ProfileScreen />
+                ))}
               {screen === "privacy" && <PrivacyScreen />}
               {screen === "history" && <HistoryScreen />}
               {screen === "photos" && <PhotosScreen />}

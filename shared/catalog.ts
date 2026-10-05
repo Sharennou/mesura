@@ -1,4 +1,4 @@
-import type { Measure } from "./types";
+import type { Measure } from "./types.ts";
 export const STANDARD_MEASURES: Measure[] = [
   { id: "weight", name: "Poids", unit: "kg" },
   { id: "waist", name: "Tour de taille", unit: "cm" },

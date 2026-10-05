@@ -1,1 +1,1 @@
-self.MESURA_CONFIG = {"name":"Mesura","version":"1791185722278"};
+self.MESURA_CONFIG = {"name":"Mesura","basePath":"/","version":"1791190236337"};

@@ -2,7 +2,20 @@
 
 Application web mobile de suivi corporel, en français. Deux destinations : **Mesures** et **Analyse**. Archivo variable locale, neuf couleurs centralisées, contours de 2 px et ombres sans flou.
 
-## Lancement
+## Publication gratuite : GitHub Pages et Supabase
+
+Le workflow GitHub compile React puis publie uniquement `dist/` à l’adresse **https://sharennou.github.io/mesura/**. La page vide venait de la publication du fichier TypeScript source sans compilation et de chemins sans le préfixe `/mesura/`.
+
+Les comptes, mesures et photos privées utilisent le projet Supabase Free fourni par le propriétaire. Les paramètres publics sont centralisés dans `shared/cloud-config.ts`. Les secrets restent dans Supabase. La version locale Fastify / SQLite reste disponible.
+
+1. Installer les deux migrations du dossier `supabase/migrations/` dans Supabase.
+2. Déployer la fonction `mesura-api` avec vérification JWT de la passerelle désactivée : la fonction vérifie elle-même chaque utilisateur et sa session. `npm run bundle:cloud` prépare aussi un fichier autonome pour l’éditeur Supabase.
+3. Supabase Auth : définir l’URL du site et les URLs de retour sur `https://sharennou.github.io/mesura/`, puis configurer les emails de confirmation. Le mailer Supabase par défaut est limité aux membres du projet ; un SMTP gratuit configuré est nécessaire pour ouvrir l’inscription à d’autres utilisateurs.
+4. Dans GitHub, choisir « Settings → Pages → Source → GitHub Actions », puis pousser sur `main`. Le workflow « Publier Mesura sur GitHub Pages » lance les contrôles et le déploiement.
+
+Voir le [guide complet](docs/deploiement.md) pour les instructions exactes et les rappels. L’offre gratuite comporte des quotas et peut mettre un projet en pause après une semaine sans activité. Elle ne fournit pas de sauvegardes automatiques. Les comptes et photos sont conservés dans Supabase, indépendamment d’un redéploiement GitHub.
+
+## Lancement local
 
 Node.js **24 LTS** et npm sont nécessaires.
 

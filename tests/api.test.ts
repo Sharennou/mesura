@@ -81,6 +81,12 @@ afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 describe("Comptes et contrôle d’accès", () => {
+  it("expose la santé du serveur sans donnée privée", async () => {
+    const r = await call("GET", "/api/health", undefined, "");
+    expect(r.statusCode).toBe(200);
+    expect(r.json()).toEqual({ status: "ok" });
+    expect(r.headers["cache-control"]).toBe("no-store, private");
+  });
   it("refuse les requêtes anonymes et les origines tierces", async () => {
     expect((await call("GET", "/api/account", undefined, "")).statusCode).toBe(
       401,

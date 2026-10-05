@@ -1,0 +1,686 @@
+import { createClient, type User } from "@supabase/supabase-js";
+import { Image } from "imagescript";
+import { z } from "zod";
+import { DateTime } from "luxon";
+import { zipSync, strToU8 } from "fflate";
+import webpush from "web-push";
+import {
+  cloudCommit,
+  cloudFail,
+  emptyCloudAccount,
+  mutateCloudAccount,
+  photoIds,
+  publicCloudAccount,
+  type CloudAccount,
+} from "../../../shared/cloud-domain.ts";
+import { cloudImageDimensions } from "../../../shared/cloud-images.ts";
+import { APP_NAME, APP_SLUG } from "../../../shared/config.ts";
+import { nextOccurrences } from "../../../shared/recurrence.ts";
+import type { Capabilities, Photo } from "../../../shared/types.ts";
+
+const projectURL = Deno.env.get("SUPABASE_URL")!;
+const service = createClient(
+  projectURL,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  { auth: { persistSession: false, autoRefreshToken: false } },
+);
+const appURL =
+  Deno.env.get("MESURA_APP_URL") || "https://sharennou.github.io/mesura/";
+const appOrigin = new URL(appURL).origin;
+const photos = service.storage.from("mesura-photos");
+const vapidPublic = Deno.env.get("VAPID_PUBLIC_KEY");
+const vapidPrivate = Deno.env.get("VAPID_PRIVATE_KEY");
+const vapidSubject = Deno.env.get("VAPID_SUBJECT");
+if (vapidPublic && vapidPrivate && vapidSubject)
+  webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
+const envCaps: Capabilities = {
+  pushConfigured: Boolean(vapidPublic && vapidPrivate && vapidSubject),
+  emailConfigured: Boolean(
+    Deno.env.get("RESEND_API_KEY") && Deno.env.get("MAIL_FROM"),
+  ),
+  development: false,
+  privacyContact: Deno.env.get("PRIVACY_CONTACT") || null,
+};
+const check = <T>(r: { data: T; error: unknown }) => {
+  if (r.error)
+    cloudFail("Le service de sauvegarde est indisponible. Réessayez.", 503);
+  return r.data;
+};
+async function caps(): Promise<Capabilities> {
+  const scheduled = await service.rpc("mesura_jobs_ready");
+  return {
+    ...envCaps,
+    pushConfigured: envCaps.pushConfigured && scheduled.data === true,
+    emailConfigured: envCaps.emailConfigured && scheduled.data === true,
+  };
+}
+async function loadAccount(user: User, zone = "UTC") {
+  const tombstone = check(
+    await service
+      .from("mesura_tombstones")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+  );
+  if (tombstone) cloudFail("Ce compte a été supprimé.", 401);
+  let row = check(
+    await service
+      .from("mesura_accounts")
+      .select("data,revision")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+  );
+  if (!row) {
+    const data = emptyCloudAccount(
+      String(user.user_metadata?.name || "Mon espace").slice(0, 100),
+      zone,
+    );
+    check(
+      await service
+        .from("mesura_accounts")
+        .upsert(
+          { user_id: user.id, data },
+          { onConflict: "user_id", ignoreDuplicates: true },
+        ),
+    );
+    row = check(
+      await service
+        .from("mesura_accounts")
+        .select("data,revision")
+        .eq("user_id", user.id)
+        .single(),
+    );
+  }
+  return row as { data: CloudAccount; revision: number };
+}
+async function apply(
+  user: User,
+  change: (a: CloudAccount) => { account: CloudAccount; result: unknown },
+  active = true,
+) {
+  return cloudCommit(
+    () => loadAccount(user),
+    async (revision, data) =>
+      check(
+        await service.rpc("mesura_commit", {
+          p_user_id: user.id,
+          p_revision: revision,
+          p_data: data,
+          p_active: active,
+        }),
+      ) === true,
+    change,
+  );
+}
+async function authenticate(req: Request) {
+  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+  if (!token) cloudFail("Connectez-vous pour accéder à votre espace.", 401);
+  const { data, error } = await service.auth.getUser(token);
+  if (error || !data.user || !data.user.email_confirmed_at)
+    cloudFail("Connectez-vous avec une adresse vérifiée.", 401);
+  let sid = "";
+  try {
+    sid = JSON.parse(
+      atob(token.split(".")[1].replaceAll("-", "+").replaceAll("_", "/")),
+    ).session_id;
+  } catch {}
+  if (
+    !z.uuid().safeParse(sid).success ||
+    check(
+      await service.rpc("mesura_session_active", {
+        p_user_id: data.user.id,
+        p_session_id: sid,
+      }),
+    ) !== true
+  )
+    cloudFail("Cette session a expiré. Connectez-vous à nouveau.", 401);
+  return data.user;
+}
+async function rate(user: User, scope: string, max: number, seconds: number) {
+  if (
+    check(
+      await service.rpc("mesura_rate_limit", {
+        p_user_id: user.id,
+        p_scope: scope,
+        p_max: max,
+        p_seconds: seconds,
+      }),
+    ) !== true
+  )
+    cloudFail(
+      "Trop de tentatives. Patientez quelques instants puis réessayez.",
+      429,
+    );
+}
+async function queue(userId: string, ids: string[], delayed = false) {
+  if (ids.length)
+    check(
+      await service.from("mesura_photo_gc").upsert(
+        ids.map((id) => ({
+          user_id: userId,
+          path: `${userId}/${id}.jpg`,
+          not_before: new Date(
+            Date.now() + (delayed ? 3600000 : 0),
+          ).toISOString(),
+        })),
+        { onConflict: "path" },
+      ),
+    );
+}
+async function cleanup(userId?: string) {
+  let query = service
+    .from("mesura_photo_gc")
+    .select("path,user_id")
+    .lte("not_before", new Date().toISOString())
+    .limit(100);
+  if (userId) query = query.eq("user_id", userId);
+  const rows = check(await query);
+  for (const item of rows || []) {
+    const account = check(
+      await service
+        .from("mesura_accounts")
+        .select("data")
+        .eq("user_id", item.user_id)
+        .maybeSingle(),
+    );
+    const id = item.path.split("/")[1]?.replace(/\.jpg$/, "");
+    if (!account || !photoIds(account.data).includes(id))
+      check(await photos.remove([item.path]));
+    check(await service.from("mesura_photo_gc").delete().eq("path", item.path));
+  }
+}
+async function erase(userId: string) {
+  check(await service.rpc("mesura_mark_deleted", { p_user_id: userId }));
+  await cleanup(userId);
+  const result = await service.auth.admin.deleteUser(userId);
+  if (result.error && result.error.status !== 404)
+    cloudFail("La suppression est en cours. Réessayez dans un instant.", 503);
+}
+async function prepareUploads(req: Request) {
+  let raw: unknown;
+  const uploads: { photo: Photo; bytes: Uint8Array }[] = [];
+  if (req.headers.get("content-type")?.includes("multipart/form-data")) {
+    const length = Number(req.headers.get("content-length"));
+    if (length > 32 * 1024 * 1024) cloudFail("Photos trop volumineuses.", 413);
+    const form = await req.formData();
+    raw = JSON.parse(String(form.get("data")));
+    for (const [orientation, file] of form) {
+      if (orientation === "data") continue;
+      if (
+        !["face", "profil", "dos"].includes(orientation) ||
+        !(file instanceof File) ||
+        uploads.some((u) => u.photo.orientation === orientation)
+      )
+        cloudFail("Orientation de photo invalide.");
+      if (file.size > 10 * 1024 * 1024)
+        cloudFail("Photo trop volumineuse. Maximum : 10 Mo.", 413);
+      try {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        cloudImageDimensions(bytes);
+        const image = await Image.decode(bytes);
+        if (!(image instanceof Image)) cloudFail("Photo invalide.");
+        const ratio = Math.min(1, 1600 / image.width, 2200 / image.height);
+        if (ratio < 1)
+          image.resize(
+            Math.max(1, Math.round(image.width * ratio)),
+            Math.max(1, Math.round(image.height * ratio)),
+          );
+        uploads.push({
+          photo: {
+            id: crypto.randomUUID(),
+            entryId: "",
+            orientation: orientation as Photo["orientation"],
+          },
+          bytes: await image.encodeJPEG(88),
+        });
+      } catch {
+        cloudFail(
+          "Cette photo ne peut pas être lue. Choisissez une photo JPEG, PNG ou WebP valide.",
+        );
+      }
+    }
+  } else raw = await req.json();
+  return { raw, uploads };
+}
+const csv = (a: CloudAccount) =>
+  "\uFEFF" +
+  [
+    ["date", "fuseau", "mesure", "valeur", "unité", "stature_cm", "note"],
+    ...a.entries.flatMap((e) =>
+      Object.keys(e.values).length
+        ? Object.entries(e.values).map(([id, v]) => [
+            e.date,
+            a.profile.timezone,
+            a.measures.find((m) => m.id === id)?.name || id,
+            v,
+            a.measures.find((m) => m.id === id)?.unit,
+            e.height,
+            e.note,
+          ])
+        : [[e.date, a.profile.timezone, "", "", "", e.height, e.note]],
+    ),
+  ]
+    .map((row) =>
+      row
+        .map((v) => {
+          let s = String(v ?? "");
+          if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+          return `"${s.replaceAll('"', '""')}"`;
+        })
+        .join(";"),
+    )
+    .join("\r\n");
+async function exportData(
+  req: Request,
+  user: User,
+  a: CloudAccount,
+  headers: Headers,
+) {
+  const opts = z
+    .object({
+      format: z.enum(["json", "csv", "zip"]),
+      includePhotos: z.boolean().default(false),
+    })
+    .parse(await req.json());
+  const json = JSON.stringify(
+    {
+      exportedAt: new Date().toISOString(),
+      ...publicCloudAccount(a),
+      consentHistory: a.audit,
+    },
+    null,
+    2,
+  );
+  headers.set(
+    "Content-Disposition",
+    `attachment; filename="${APP_SLUG}-${new Date().toISOString().slice(0, 10)}.${opts.format}"`,
+  );
+  if (opts.format === "json" || opts.format === "csv") {
+    headers.set(
+      "Content-Type",
+      opts.format === "json" ? "application/json" : "text/csv; charset=utf-8",
+    );
+    return new Response(opts.format === "json" ? json : csv(a), { headers });
+  }
+  const files: Record<string, Uint8Array> = {
+    "donnees.json": strToU8(json),
+    "mesures.csv": strToU8(csv(a)),
+  };
+  let size = files["donnees.json"].length;
+  if (opts.includePhotos && a.consents.photos)
+    for (const e of a.entries)
+      for (const p of e.photos) {
+        const blob = check(await photos.download(`${user.id}/${p.id}.jpg`));
+        if (!blob) cloudFail("L’export d’une photo a échoué.", 503);
+        const bytes = new Uint8Array(await blob.arrayBuffer());
+        size += bytes.length;
+        if (size > 20 * 1024 * 1024)
+          cloudFail(
+            "Cet export dépasse 20 Mo. Exportez les données sans photos et téléchargez les photos séparément.",
+            413,
+          );
+        files[`photos/${e.id}-${p.orientation}.jpg`] = bytes;
+      }
+  headers.set("Content-Type", "application/zip");
+  return new Response(zipSync(files, { level: 3 }), { headers });
+}
+async function runJobs() {
+  const now = DateTime.now();
+  check(
+    await service
+      .from("mesura_system")
+      .upsert({ id: "jobs", heartbeat: now.toISO() }),
+  );
+  const accounts = check(
+    await service
+      .from("mesura_accounts")
+      .select("user_id,data")
+      .eq("data->reminder->>enabled", "true")
+      .lte("data->reminder->>nextAt", now.toISO()!)
+      .limit(100),
+  );
+  for (const row of accounts || []) {
+    let a = row.data as CloudAccount;
+    const reminder = a.reminder!;
+    const occurrence = reminder.nextAt!;
+    const revision = a.reminderRevision;
+    const userResult = await service.auth.admin.getUserById(row.user_id);
+    const user = userResult.data.user;
+    if (!user) continue;
+    if (
+      now.toMillis() - DateTime.fromISO(occurrence).toMillis() <= 3600000 &&
+      a.consents.body &&
+      a.consents[reminder.channel]
+    ) {
+      const devices =
+        reminder.channel === "email"
+          ? [{ endpoint: "email" }]
+          : a.subscriptions;
+      for (const device of devices) {
+        const hash = Array.from(
+          new Uint8Array(
+            await crypto.subtle.digest(
+              "SHA-256",
+              new TextEncoder().encode(device.endpoint),
+            ),
+          ),
+        )
+          .map((v) => v.toString(16).padStart(2, "0"))
+          .join("");
+        const claim = check(
+          await service.rpc("mesura_claim_delivery", {
+            p_user_id: user.id,
+            p_occurrence: occurrence,
+            p_revision: revision,
+            p_device: hash,
+          }),
+        );
+        if (!claim) continue;
+        a = (await loadAccount(user)).data;
+        if (
+          !a.consents.body ||
+          !a.consents[reminder.channel] ||
+          !a.reminder?.enabled ||
+          a.reminderRevision !== revision
+        )
+          continue;
+        let status = "sent";
+        try {
+          if (
+            reminder.channel === "push" &&
+            envCaps.pushConfigured &&
+            a.subscriptions.some((s) => s.endpoint === device.endpoint)
+          )
+            await webpush.sendNotification(
+              device as any,
+              JSON.stringify({ tag: `mesura-${occurrence}` }),
+              { TTL: 3600 },
+            );
+          else if (reminder.channel === "email" && envCaps.emailConfigured) {
+            const r = await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${Deno.env.get("RESEND_API_KEY")}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                from: Deno.env.get("MAIL_FROM"),
+                to: user.email,
+                subject: `${APP_NAME} — Votre repère du jour`,
+                text: "Votre rendez-vous de mesures vous attend.",
+              }),
+            });
+            if (!r.ok) throw new Error("Email indisponible");
+          } else status = "unavailable";
+        } catch (error: any) {
+          status = "failed";
+          if ([404, 410].includes(error.statusCode))
+            await apply(
+              user,
+              (current) => ({
+                account: {
+                  ...current,
+                  subscriptions: current.subscriptions.filter(
+                    (s) => s.endpoint !== device.endpoint,
+                  ),
+                },
+                result: null,
+              }),
+              false,
+            );
+        }
+        check(
+          await service
+            .from("mesura_deliveries")
+            .update({ status })
+            .eq("user_id", user.id)
+            .eq("occurrence", occurrence)
+            .eq("revision", revision)
+            .eq("device", hash),
+        );
+      }
+    }
+    await apply(
+      user,
+      (current) => {
+        if (current.reminderRevision === revision && current.reminder)
+          current.reminder.nextAt =
+            nextOccurrences(current.reminder, now, 1)[0] || null;
+        return { account: current, result: null };
+      },
+      false,
+    );
+  }
+  const tombstones = check(
+    await service.from("mesura_tombstones").select("user_id").limit(100),
+  );
+  for (const row of tombstones || []) {
+    const r = await service.auth.admin.deleteUser(row.user_id);
+    if (r.error && r.error.status !== 404) continue;
+  }
+  const inactive = check(
+    await service
+      .from("mesura_accounts")
+      .select("user_id")
+      .lt("last_active", now.minus({ months: 24 }).toISO()!)
+      .limit(100),
+  );
+  for (const row of inactive || []) await erase(row.user_id);
+  await cleanup();
+  check(
+    await service
+      .from("mesura_deliveries")
+      .delete()
+      .lt("created_at", now.minus({ days: 30 }).toISO()!),
+  );
+  check(
+    await service
+      .from("mesura_rate_limits")
+      .delete()
+      .lt("window_started", now.minus({ days: 1 }).toISO()!),
+  );
+  check(
+    await service
+      .from("mesura_tombstones")
+      .delete()
+      .lt("deleted_at", now.minus({ days: 35 }).toISO()!),
+  );
+}
+
+Deno.serve(async (req) => {
+  const origin = req.headers.get("origin");
+  const headers = new Headers({
+    "Cache-Control": "no-store, private",
+    Vary: "Origin",
+    "X-Content-Type-Options": "nosniff",
+    "Content-Type": "application/json",
+  });
+  if (origin === appOrigin) {
+    headers.set("Access-Control-Allow-Origin", origin);
+    headers.set(
+      "Access-Control-Allow-Headers",
+      "authorization,apikey,content-type,x-requested-with,x-timezone",
+    );
+    headers.set(
+      "Access-Control-Allow-Methods",
+      "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+    );
+  }
+  const json = (value: unknown, status = 200) =>
+    new Response(JSON.stringify(value), { status, headers });
+  try {
+    const path = new URL(req.url).pathname.split("/mesura-api")[1] || "/";
+    if (req.method === "OPTIONS")
+      return new Response(null, {
+        status: origin === appOrigin ? 204 : 403,
+        headers,
+      });
+    if (path === "/jobs") {
+      if (
+        req.method !== "POST" ||
+        check(
+          await service.rpc("mesura_check_job_secret", {
+            p_secret: req.headers.get("x-mesura-jobs-secret") || "",
+          }),
+        ) !== true
+      )
+        cloudFail("Accès refusé.", 403);
+      await runJobs();
+      return json({ status: "ok" });
+    }
+    if (origin && origin !== appOrigin)
+      cloudFail("Origine non autorisée.", 403);
+    if (path === "/config" && req.method === "GET") return json(await caps());
+    if (path === "/health" && req.method === "GET") {
+      check(await service.from("mesura_accounts").select("user_id").limit(1));
+      return json({ status: "ok" });
+    }
+    if (
+      !["GET", "HEAD"].includes(req.method) &&
+      req.headers.get("x-requested-with") !== APP_NAME
+    )
+      cloudFail("Requête non autorisée.", 403);
+    const user = await authenticate(req);
+    await rate(user, "api", 120, 60);
+    let current = await loadAccount(
+      user,
+      req.headers.get("x-timezone") || "UTC",
+    );
+    check(
+      await service
+        .from("mesura_accounts")
+        .update({ last_active: new Date().toISOString() })
+        .eq("user_id", user.id),
+    );
+    if (path === "/account" && req.method === "GET")
+      return json(publicCloudAccount(current.data));
+    if (path === "/consents" && req.method === "GET")
+      return json(current.data.audit);
+    if (path === "/push-key" && req.method === "GET")
+      return json({ key: (await caps()).pushConfigured ? vapidPublic : null });
+    if (path === "/device-status" && req.method === "POST") {
+      const v = z
+        .object({ endpoint: z.string().max(2000) })
+        .parse(await req.json());
+      return json({
+        active: current.data.subscriptions.some(
+          (s) => s.endpoint === v.endpoint,
+        ),
+      });
+    }
+    if (path.startsWith("/photos/") && req.method === "GET") {
+      const id = path.split("/")[2];
+      if (
+        !current.data.consents.body ||
+        !current.data.consents.photos ||
+        !photoIds(current.data).includes(id)
+      )
+        cloudFail("Photo introuvable.", 404);
+      const blob = check(await photos.download(`${user.id}/${id}.jpg`));
+      if (!blob) cloudFail("Photo indisponible.", 404);
+      headers.set("Content-Type", "image/jpeg");
+      return new Response(blob, { headers });
+    }
+    if (path === "/export" && req.method === "POST") {
+      await rate(user, "export", 5, 60);
+      return await exportData(req, user, current.data, headers);
+    }
+    if (path === "/account" && req.method === "DELETE") {
+      await rate(user, "delete", 5, 600);
+      const v = z
+        .object({ password: z.string().min(1).max(128) })
+        .parse(await req.json());
+      const verifier = createClient(
+        projectURL,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { auth: { persistSession: false, autoRefreshToken: false } },
+      );
+      const verified = await verifier.auth.signInWithPassword({
+        email: user.email!,
+        password: v.password,
+      });
+      if (verified.error || verified.data.user?.id !== user.id)
+        cloudFail("Le mot de passe actuel ne correspond pas.", 403);
+      await verifier.auth.signOut();
+      await erase(user.id);
+      return json({ ok: true });
+    }
+    if (path.startsWith("/entries") && ["POST", "PUT"].includes(req.method)) {
+      await rate(user, "entries", 30, 300);
+      if (!current.data.consents.body)
+        cloudFail("Le suivi corporel est désactivé.", 403);
+      const { raw, uploads } = await prepareUploads(req);
+      // Validate consent and values before any storage request.
+      mutateCloudAccount(
+        current.data,
+        req.method,
+        path,
+        raw,
+        await caps(),
+        uploads.map((u) => u.photo),
+      );
+      const ids = uploads.map((u) => u.photo.id);
+      await queue(user.id, ids, true);
+      let committed = false;
+      try {
+        for (const item of uploads)
+          check(
+            await photos.upload(`${user.id}/${item.photo.id}.jpg`, item.bytes, {
+              contentType: "image/jpeg",
+              cacheControl: "0",
+              upsert: false,
+            }),
+          );
+        const next = await apply(user, (a) =>
+          mutateCloudAccount(
+            a,
+            req.method,
+            path,
+            raw,
+            envCaps,
+            uploads.map((u) => u.photo),
+          ),
+        );
+        committed = true;
+        const used = photoIds(next.account);
+        await queue(
+          user.id,
+          ids.filter((id) => !used.includes(id)),
+        );
+        await cleanup(user.id);
+        return json(next.result);
+      } finally {
+        if (!committed) {
+          await queue(user.id, ids);
+          await cleanup(user.id);
+        }
+      }
+    }
+    const raw =
+      req.method === "DELETE" && path !== "/subscriptions"
+        ? {}
+        : await req.json();
+    const next = await apply(user, (a) =>
+      mutateCloudAccount(a, req.method, path, raw, envCaps),
+    );
+    await cleanup(user.id);
+    return json(next.result);
+  } catch (error: any) {
+    const status =
+      error instanceof z.ZodError || error instanceof SyntaxError
+        ? 400
+        : error.statusCode || 503;
+    return json(
+      {
+        error:
+          status === 400 &&
+          (error instanceof z.ZodError || error instanceof SyntaxError)
+            ? "Vérifiez les informations saisies."
+            : error.statusCode
+              ? error.message
+              : "Le service est indisponible. Vos champs sont conservés ; réessayez.",
+      },
+      status,
+    );
+  }
+});

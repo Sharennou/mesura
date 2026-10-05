@@ -10,6 +10,8 @@ import {
 import { useApp } from "../context";
 import { Button, ErrorMessage, Icon, PageTitle } from "../components";
 import { api, authClient } from "../api";
+import { CLOUD } from "../deployment";
+import { appURL } from "../cloud-auth";
 const authErrors: Record<string, string> = {
   INVALID_EMAIL_OR_PASSWORD: "L’adresse ou le mot de passe ne correspond pas.",
   EMAIL_NOT_VERIFIED: "Vérifiez votre adresse email avant de vous connecter.",
@@ -18,12 +20,18 @@ const authErrors: Record<string, string> = {
     "Un compte existe déjà avec cette adresse.",
   PASSWORD_TOO_SHORT: "Choisissez un mot de passe d’au moins 12 caractères.",
   INVALID_TOKEN: "Ce lien est expiré ou invalide. Demandez un nouveau lien.",
+  email_address_not_authorized:
+    "Le service d’email doit être configuré pour autoriser cette adresse. Contactez le responsable du service.",
+  over_email_send_rate_limit:
+    "Trop d’emails demandés. Attendez quelques minutes avant de réessayer.",
 };
 export function AccountScreen() {
   const { capabilities, navigate } = useApp();
   const search = new URLSearchParams(location.search);
   const [mode, setMode] = useState<"signup" | "signin" | "reset" | "newpass">(
-    search.get("token") ? "newpass" : "signup",
+    search.get("token") || (CLOUD && search.get("reset") === "1")
+      ? "newpass"
+      : "signup",
   );
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -61,14 +69,14 @@ export function AccountScreen() {
           email,
           password,
           name: name.trim() || "Mon espace",
-          callbackURL: `${location.origin}/#account`,
+          callbackURL: `${appURL()}#account`,
         });
       } else if (mode === "signin")
         response = await authClient.signIn.email({ email, password });
       else if (mode === "reset")
         response = await authClient.requestPasswordReset({
           email,
-          redirectTo: `${location.origin}/?reset=1#account`,
+          redirectTo: `${appURL()}?reset=1#account`,
         });
       else
         response = await authClient.resetPassword({
@@ -84,7 +92,7 @@ export function AccountScreen() {
         setSent(true);
         await getLocalMail();
       } else if (mode === "newpass") {
-        history.replaceState(null, "", "/#account");
+        history.replaceState(null, "", `${appURL()}#account`);
         setMode("signin");
         setSent(false);
         setPassword("");
@@ -172,7 +180,7 @@ export function AccountScreen() {
                 try {
                   const response = await authClient.sendVerificationEmail({
                     email,
-                    callbackURL: `${location.origin}/#account`,
+                    callbackURL: `${appURL()}#account`,
                   });
                   if (response.error)
                     throw new Error(

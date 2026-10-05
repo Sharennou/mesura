@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import type { Reminder } from "./types";
+import type { Reminder } from "./types.ts";
 export function firstOccurrence(
   weekday: number,
   time: string,

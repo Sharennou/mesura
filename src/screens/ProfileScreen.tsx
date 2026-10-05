@@ -13,6 +13,7 @@ import { Button, ErrorMessage, Icon, LinkCard, PageTitle } from "../components";
 import { api, authClient } from "../api";
 import type { AccountData } from "../../shared/types";
 import { number, parseDecimal } from "../../shared/calculations";
+import { CLOUD } from "../deployment";
 
 export function ProfileScreen() {
   const { data, setData, navigate, toast } = useApp();
@@ -162,8 +163,10 @@ export function ProfileScreen() {
         <h2>Mes sessions</h2>
         <p>
           {sessions.length} session{sessions.length > 1 ? "s" : ""} ouverte
-          {sessions.length > 1 ? "s" : ""}. Les connexions expirent après sept
-          jours d’inactivité.
+          {sessions.length > 1 ? "s" : ""}.{" "}
+          {CLOUD
+            ? "Vous pouvez fermer les autres connexions à votre compte."
+            : "Les connexions expirent après sept jours d’inactivité."}
         </p>
         <Button
           onClick={async () => {

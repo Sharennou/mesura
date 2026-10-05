@@ -1,0 +1,8 @@
+project_id = "duselqsuvkwbwkhmljkh"
+
+[functions.mesura-api]
+# La fonction vérifie le JWT avec Auth, puis contrôle sa session en base.
+# Compatible avec les nouvelles clés publiques sb_publishable_*.
+verify_jwt = false
+import_map = "./functions/deno.json"
+entrypoint = "./functions/mesura-api/index.ts"

@@ -1,21 +1,45 @@
 import { createAuthClient } from "better-auth/react";
 import { APP_NAME, APP_SLUG } from "../shared/config";
-export const authClient = createAuthClient({ baseURL: window.location.origin });
+import { CLOUD, PREVIEW_ONLY } from "./deployment";
+import { cloudAuthClient, cloudEndpoint, cloudHeaders } from "./cloud-auth";
+import { prepareCloudPhotos } from "./cloud-photos";
+const localAuthClient = CLOUD
+  ? null
+  : createAuthClient({ baseURL: window.location.origin });
+export const authClient = (
+  CLOUD ? cloudAuthClient : localAuthClient
+) as NonNullable<typeof localAuthClient>;
+export const useSession = PREVIEW_ONLY
+  ? () => ({ data: null, isPending: false })
+  : authClient.useSession;
 export async function api<T = unknown>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
+  return (await apiResponse(path, options)).json();
+}
+export async function apiResponse(
+  path: string,
+  options: RequestInit = {},
+): Promise<Response> {
+  if (PREVIEW_ONLY)
+    throw new Error("L’aperçu ne sauvegarde pas de données personnelles.");
   const headers = new Headers(options.headers);
   headers.set("X-Requested-With", APP_NAME);
   headers.set("X-Timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
   if (options.body && !(options.body instanceof FormData))
     headers.set("Content-Type", "application/json");
+  if (CLOUD) {
+    await cloudHeaders(headers);
+    if (options.body instanceof FormData)
+      options = { ...options, body: await prepareCloudPhotos(options.body) };
+  }
   let response: Response;
   try {
-    response = await fetch(`/api${path}`, {
+    response = await fetch(CLOUD ? `${cloudEndpoint}${path}` : `/api${path}`, {
       ...options,
       headers,
-      credentials: "same-origin",
+      credentials: CLOUD ? "omit" : "same-origin",
       cache: "no-store",
     });
   } catch {
@@ -27,10 +51,10 @@ export async function api<T = unknown>(
     const error = await response.json().catch(() => null);
     throw new Error(error?.error || "Le service est indisponible. Réessayez.");
   }
-  return response.json();
+  return response;
 }
 export async function downloadExport(format: string, includePhotos: boolean) {
-  const response = await fetch("/api/export", {
+  const response = await apiResponse("/export", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

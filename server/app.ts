@@ -151,6 +151,14 @@ export async function buildApp() {
       return reply.send(response.body ? await response.text() : null);
     },
   });
+  app.get("/api/health", async (_req, reply) => {
+    try {
+      db.prepare("SELECT 1").get();
+      return { status: "ok" };
+    } catch {
+      return reply.code(503).send({ status: "indisponible" });
+    }
+  });
   app.get("/api/config", async () => ({
     pushConfigured,
     emailConfigured,
