@@ -149,6 +149,25 @@ test("compte réel : accessibilité, consentement, sauvegarde, photos, correctio
     push: false,
     email: false,
   });
+  await page.goto("/#reminder");
+  await page.getByRole("button", { name: "Mercredi", exact: true }).click();
+  await page.getByRole("button", { name: "Vendredi", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Lundi", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Enregistrer le rappel" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Nouvelle mesure", exact: true }),
+  ).toBeVisible();
+  await page.goto("/#reminder");
+  await page.reload();
+  for (const day of ["Lundi", "Mercredi", "Vendredi"])
+    await expect(
+      page.getByRole("button", { name: day, exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+  expect(
+    (await (await page.request.get("/api/account")).json()).reminder.weekdays,
+  ).toEqual([1, 3, 5]);
   await page.goto("/#account");
   await expect(page.getByLabel("Pseudo", { exact: true })).toBeVisible();
   await expect(page.getByText("Fuseau horaire", { exact: true })).toHaveCount(

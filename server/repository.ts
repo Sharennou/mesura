@@ -72,6 +72,7 @@ export function getReminder(userId: string): Reminder | null {
     ? {
         enabled: !!r.enabled,
         weekday: r.weekday,
+        weekdays: r.weekdays ? JSON.parse(r.weekdays) : [r.weekday],
         frequency: r.frequency,
         time: r.time,
         timezone: r.timezone,

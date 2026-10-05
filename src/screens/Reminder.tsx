@@ -11,7 +11,11 @@ import {
   Switch,
 } from "../components";
 import { api } from "../api";
-import { firstOccurrence, nextOccurrences } from "../../shared/recurrence";
+import {
+  nextOccurrences,
+  reminderDays,
+  reminderAnchor,
+} from "../../shared/recurrence";
 import type { Reminder, AccountData } from "../../shared/types";
 import { APP_NAME, CONSENT_TEXTS, CONSENT_VERSION } from "../../shared/config";
 export function ReminderScreen() {
@@ -20,6 +24,9 @@ export function ReminderScreen() {
   const initial = data.reminder;
   const [enabled, setEnabled] = useState(initial?.enabled ?? false);
   const [weekday, setWeekday] = useState(initial?.weekday ?? 1);
+  const [weekdays, setWeekdays] = useState(
+    initial ? reminderDays(initial) : [1],
+  );
   const [frequency, setFrequency] = useState<Reminder["frequency"]>(
     initial?.frequency ?? "week",
   );
@@ -83,6 +90,7 @@ export function ReminderScreen() {
   const current: Reminder = {
     enabled,
     weekday,
+    weekdays,
     frequency,
     time,
     timezone,
@@ -92,9 +100,11 @@ export function ReminderScreen() {
       initial.weekday === weekday &&
       initial.frequency === frequency &&
       initial.time === time &&
-      initial.timezone === timezone
+      initial.timezone === timezone &&
+      (frequency !== "week" ||
+        JSON.stringify(reminderDays(initial)) === JSON.stringify(weekdays))
         ? initial.anchor
-        : firstOccurrence(weekday, time, timezone),
+        : reminderAnchor({ weekday, weekdays, frequency, time, timezone }),
   };
   const dates = nextOccurrences(current, DateTime.now());
   async function activate() {
@@ -179,6 +189,7 @@ export function ReminderScreen() {
         body: JSON.stringify({
           enabled,
           weekday,
+          weekdays,
           frequency,
           time,
           timezone,
@@ -200,13 +211,9 @@ export function ReminderScreen() {
   }
   return (
     <>
-      <PageTitle
-        title="Rappel"
-        eyebrow="Gardez le rythme · votre rendez-vous"
-      />
+      <PageTitle title="Rappel" />
       <section className="reminder-main">
         <div>
-          <span className="eyebrow">Un moment pour vous</span>
           <h2>Mon rappel</h2>
           <p>La régularité commence par un petit rendez-vous.</p>
         </div>
@@ -217,7 +224,7 @@ export function ReminderScreen() {
         />
       </section>
       <div className="section-heading">
-        <h2>Quel jour ?</h2>
+        <h2>{frequency === "week" ? "Quels jours ?" : "Quel jour ?"}</h2>
       </div>
       <div className="day-selector">
         {[
@@ -232,8 +239,23 @@ export function ReminderScreen() {
           <button
             key={d}
             aria-label={d}
-            aria-pressed={weekday === i + 1}
-            onClick={() => setWeekday(i + 1)}
+            aria-pressed={
+              frequency === "week"
+                ? weekdays.includes(i + 1)
+                : weekday === i + 1
+            }
+            onClick={() => {
+              const day = i + 1;
+              if (frequency === "week")
+                setWeekdays((days) =>
+                  days.includes(day)
+                    ? days.length > 1
+                      ? days.filter((d) => d !== day)
+                      : days
+                    : [...days, day].sort((a, b) => a - b),
+                );
+              else setWeekday(day);
+            }}
           >
             {d[0]}
           </button>
@@ -261,7 +283,7 @@ export function ReminderScreen() {
       </div>
       <p className="small muted">
         {frequency === "week"
-          ? "Chaque semaine, le jour choisi."
+          ? "Chaque semaine, les jours choisis. Vous pouvez en sélectionner plusieurs."
           : frequency === "fortnight"
             ? "Tous les quinze jours calendaires à partir du premier rendez-vous. Le jour de la semaine évolue."
             : "Le même rang du jour choisi dans le mois. Si le cinquième n’existe pas, le quatrième est retenu."}

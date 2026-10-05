@@ -234,6 +234,17 @@ describe("Sauvegarde distante", () => {
     }).account;
     expect(a.reminder!.anchor).toBe(anchor);
     expect(a.reminder!.nextAt).toBeNull();
+    a = change(a, "PUT", "/reminder", {
+      ...a.reminder,
+      enabled: true,
+      frequency: "week",
+      weekdays: [5, 1, 3, 3],
+    }).account;
+    expect(a.reminder!.weekdays).toEqual([1, 3, 5]);
+    expect(a.reminder!.nextAt).not.toBeNull();
+    expect(() =>
+      change(a, "PUT", "/reminder", { ...a.reminder, weekdays: [] }),
+    ).toThrow();
   });
   it("ne transmet pas un abonnement à un domaine tiers", () => {
     const a = consent(consent(emptyCloudAccount("Alice")), "push");

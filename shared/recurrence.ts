@@ -16,6 +16,22 @@ export function firstOccurrence(
   if (next <= local) next = next.plus({ weeks: 1 });
   return next.toISODate()!;
 }
+export function reminderDays(
+  r: Pick<Reminder, "weekday" | "weekdays">,
+): number[] {
+  return [...new Set(r.weekdays ?? [r.weekday])].sort((a, b) => a - b);
+}
+export function reminderAnchor(
+  r: Pick<Reminder, "weekday" | "weekdays" | "frequency" | "time" | "timezone">,
+  now: DateTime = DateTime.now(),
+) {
+  const days = r.frequency === "week" ? reminderDays(r) : [r.weekday];
+  return (
+    days
+      .map((day) => firstOccurrence(day, r.time, r.timezone, now))
+      .sort()[0] ?? ""
+  );
+}
 export function nextOccurrences(
   reminder: Reminder,
   now: DateTime = DateTime.now(),
@@ -30,6 +46,22 @@ export function nextOccurrences(
   const [hour, minute] = reminder.time.split(":").map(Number);
   const anchor = DateTime.fromISO(reminder.anchor, { zone: reminder.timezone });
   if (!anchor.isValid) return [];
+  if (reminder.frequency === "week") {
+    const days = reminderDays(reminder);
+    const results: string[] = [];
+    const localNow = now.setZone(reminder.timezone);
+    let date = (localNow > anchor ? localNow : anchor).startOf("day");
+    for (
+      let index = 0;
+      results.length < count && index < 20000;
+      index++, date = date.plus({ days: 1 })
+    ) {
+      const scheduled = date.set({ hour, minute, second: 0, millisecond: 0 });
+      if (days.includes(date.weekday) && scheduled > now)
+        results.push(scheduled.toUTC().toISO()!);
+    }
+    return results;
+  }
   const results: string[] = [];
   const rank = Math.ceil(anchor.day / 7);
   let index = 0;

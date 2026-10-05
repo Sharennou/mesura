@@ -3,7 +3,7 @@ import { z } from "zod";
 import { DateTime } from "luxon";
 import { STANDARD_MEASURES, DEFAULT_VISIBLE } from "./catalog.ts";
 import { CONSENT_TEXTS, CONSENT_VERSION } from "./config.ts";
-import { firstOccurrence, nextOccurrences } from "./recurrence.ts";
+import { nextOccurrences, reminderAnchor, reminderDays } from "./recurrence.ts";
 import { onboardingSchema } from "./onboarding.ts";
 import type {
   AccountData,
@@ -364,12 +364,18 @@ export function mutateCloudAccount(
       .object({
         enabled: z.boolean(),
         weekday: z.number().int().min(1).max(7),
+        weekdays: z
+          .array(z.number().int().min(1).max(7))
+          .min(1)
+          .max(7)
+          .optional(),
         frequency: z.enum(["week", "fortnight", "month"]),
         time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
         timezone: zone,
         channel: z.enum(["push", "email"]),
       })
       .parse(raw);
+    r.weekdays = reminderDays(r);
     if (r.enabled) {
       bodyRequired();
       if (!a.consents[r.channel])
@@ -387,12 +393,12 @@ export function mutateCloudAccount(
       old &&
       ["weekday", "frequency", "time", "timezone"].every(
         (k) => (old as any)[k] === (r as any)[k],
-      );
+      ) &&
+      (r.frequency !== "week" ||
+        JSON.stringify(reminderDays(old)) === JSON.stringify(r.weekdays));
     const reminder = {
       ...r,
-      anchor: same
-        ? old.anchor
-        : firstOccurrence(r.weekday, r.time, r.timezone, now),
+      anchor: same ? old.anchor : reminderAnchor(r, now),
       nextAt: null as string | null,
     };
     reminder.nextAt = r.enabled

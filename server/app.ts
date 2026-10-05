@@ -32,7 +32,11 @@ import {
 } from "./repository";
 import { pushConfigured } from "./jobs";
 import { enforceDeletionLedger, eraseAccount } from "./retention";
-import { firstOccurrence, nextOccurrences } from "../shared/recurrence";
+import {
+  nextOccurrences,
+  reminderAnchor,
+  reminderDays,
+} from "../shared/recurrence";
 import { localDate } from "../shared/calculations";
 import { onboardingSchema } from "../shared/onboarding";
 import {
@@ -749,12 +753,18 @@ export async function buildApp() {
       .object({
         enabled: z.boolean(),
         weekday: z.number().int().min(1).max(7),
+        weekdays: z
+          .array(z.number().int().min(1).max(7))
+          .min(1)
+          .max(7)
+          .optional(),
         frequency: z.enum(["week", "fortnight", "month"]),
         time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
         timezone: zoneSchema,
         channel: z.enum(["push", "email"]),
       })
       .parse(req.body);
+    r.weekdays = reminderDays(r);
     if (r.enabled) {
       if (!consent(s.user.id, "body") || !consent(s.user.id, r.channel))
         fail("Activez le consentement au canal choisi.", 403);
@@ -779,16 +789,16 @@ export async function buildApp() {
       previous.weekday === r.weekday &&
       previous.frequency === r.frequency &&
       previous.time === r.time &&
-      previous.timezone === r.timezone;
-    const anchor = sameRule
-      ? previous.anchor
-      : firstOccurrence(r.weekday, r.time, r.timezone);
+      previous.timezone === r.timezone &&
+      (r.frequency !== "week" ||
+        JSON.stringify(reminderDays(previous)) === JSON.stringify(r.weekdays));
+    const anchor = sameRule ? previous.anchor : reminderAnchor(r);
     const reminder: Reminder = { ...r, anchor };
     const next = r.enabled
       ? nextOccurrences(reminder, DateTime.now(), 1)[0]
       : null;
     db.prepare(
-      "INSERT INTO reminders VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET enabled=excluded.enabled, weekday=excluded.weekday, frequency=excluded.frequency, time=excluded.time, timezone=excluded.timezone, anchor=excluded.anchor, channel=excluded.channel, next_at=excluded.next_at, revision=excluded.revision",
+      "INSERT INTO reminders (user_id,enabled,weekday,frequency,time,timezone,anchor,channel,next_at,revision,weekdays) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET enabled=excluded.enabled, weekday=excluded.weekday, frequency=excluded.frequency, time=excluded.time, timezone=excluded.timezone, anchor=excluded.anchor, channel=excluded.channel, next_at=excluded.next_at, revision=excluded.revision, weekdays=excluded.weekdays",
     ).run(
       s.user.id,
       Number(r.enabled),
@@ -800,6 +810,7 @@ export async function buildApp() {
       r.channel,
       next,
       randomUUID(),
+      JSON.stringify(r.weekdays),
     );
     return { ...reminder, nextAt: next };
   });

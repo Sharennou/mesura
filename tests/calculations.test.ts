@@ -189,6 +189,20 @@ describe("Récurrences locales", () => {
       "2026-11-02T07:00:00.000Z",
     ]);
   });
+  it("programme tous les jours choisis sans doublon ni répétition après une livraison", () => {
+    const rule = { ...r, weekdays: [1, 3, 5, 3] };
+    expect(
+      nextOccurrences(rule, DateTime.fromISO("2026-10-18T12:00:00Z"), 4),
+    ).toEqual([
+      "2026-10-19T06:00:00.000Z",
+      "2026-10-21T06:00:00.000Z",
+      "2026-10-23T06:00:00.000Z",
+      "2026-10-26T07:00:00.000Z",
+    ]);
+    expect(
+      nextOccurrences(rule, DateTime.fromISO("2026-10-19T06:00:00Z"), 1),
+    ).toEqual(["2026-10-21T06:00:00.000Z"]);
+  });
   it("programme exactement quinze jours calendaires", () => {
     const dates = nextOccurrences(
       { ...r, frequency: "fortnight" },

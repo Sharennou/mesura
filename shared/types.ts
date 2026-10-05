@@ -29,6 +29,7 @@ export interface Goal {
 export interface Reminder {
   enabled: boolean;
   weekday: number;
+  weekdays?: number[];
   frequency: "week" | "fortnight" | "month";
   time: string;
   timezone: string;
