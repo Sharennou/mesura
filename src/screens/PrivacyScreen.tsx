@@ -82,7 +82,7 @@ export function PrivacyScreen() {
                   else void change(p, e.target.checked);
                 }}
               />
-              <span>J’autorise {labels[p].toLocaleLowerCase("fr-FR")}.</span>
+              <span>J’autorise cette utilisation.</span>
             </label>
           </section>
         ))}
