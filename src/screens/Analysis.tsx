@@ -79,7 +79,6 @@ export function AnalysisScreen() {
     <>
       <PageTitle
         title="Analyse"
-        eyebrow="Votre évolution · chaque repère compte"
         back={false}
       >
         <button
@@ -273,20 +272,11 @@ export function AnalysisScreen() {
             )}
           </div>
         </div>
-        <details>
-          <summary>Comprendre ces calculs</summary>
-          <p>
-            L’IMC utilise le poids en kg et la stature en mètres. Les ratios
-            divisent le tour de taille par la stature ou les hanches, en cm,
-            dans la même entrée. La stature historique est conservée. Ces
-            repères n’établissent aucun diagnostic.
-          </p>
-        </details>
       </div>
       {goal ? (
         <>
           <div className="section-heading">
-            <h2>Votre cap personnel</h2>
+            <h2>Vos objectifs</h2>
             <button className="text-button" onClick={() => navigate("goal")}>
               Modifier <Icon as={ArrowUpRight} size={14} />
             </button>
