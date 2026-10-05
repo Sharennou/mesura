@@ -23,13 +23,11 @@ export function ReminderScreen() {
     useApp();
   const initial = data.reminder;
   const [enabled, setEnabled] = useState(initial?.enabled ?? false);
-  const [weekday, setWeekday] = useState(initial?.weekday ?? 1);
+  const weekday = initial?.weekday ?? 1;
   const [weekdays, setWeekdays] = useState(
     initial ? reminderDays(initial) : [1],
   );
-  const [frequency, setFrequency] = useState<Reminder["frequency"]>(
-    initial?.frequency ?? "week",
-  );
+  const frequency = "week" as const;
   const [time, setTime] = useState(initial?.time ?? "08:00");
   const [timezone, setTimezone] = useState(
     initial?.timezone ?? data.profile.timezone,
@@ -224,7 +222,7 @@ export function ReminderScreen() {
         />
       </section>
       <div className="section-heading">
-        <h2>{frequency === "week" ? "Quels jours ?" : "Quel jour ?"}</h2>
+        <h2>Quels jours ?</h2>
       </div>
       <div className="day-selector">
         {[
@@ -239,55 +237,23 @@ export function ReminderScreen() {
           <button
             key={d}
             aria-label={d}
-            aria-pressed={
-              frequency === "week"
-                ? weekdays.includes(i + 1)
-                : weekday === i + 1
-            }
+            aria-pressed={weekdays.includes(i + 1)}
             onClick={() => {
               const day = i + 1;
-              if (frequency === "week")
-                setWeekdays((days) =>
-                  days.includes(day)
-                    ? days.length > 1
-                      ? days.filter((d) => d !== day)
-                      : days
-                    : [...days, day].sort((a, b) => a - b),
-                );
-              else setWeekday(day);
+              setWeekdays((days) =>
+                days.includes(day)
+                  ? days.length > 1
+                    ? days.filter((d) => d !== day)
+                    : days
+                  : [...days, day].sort((a, b) => a - b),
+              );
             }}
           >
             {d[0]}
           </button>
         ))}
       </div>
-      <div className="section-heading">
-        <h2>À quel rythme ?</h2>
-      </div>
-      <div className="frequency-selector">
-        {(
-          [
-            ["week", "Semaine"],
-            ["fortnight", "15 jours"],
-            ["month", "Mois"],
-          ] as const
-        ).map(([value, label]) => (
-          <button
-            key={value}
-            aria-pressed={frequency === value}
-            onClick={() => setFrequency(value)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      <p className="small muted">
-        {frequency === "week"
-          ? "Chaque semaine, les jours choisis. Vous pouvez en sélectionner plusieurs."
-          : frequency === "fortnight"
-            ? "Tous les quinze jours calendaires à partir du premier rendez-vous. Le jour de la semaine évolue."
-            : "Le même rang du jour choisi dans le mois. Si le cinquième n’existe pas, le quatrième est retenu."}
-      </p>
+      <p className="small muted">Chaque semaine, les jours choisis.</p>
       <section className="time-card">
         <label className="eyebrow" htmlFor="reminder-time">
           Le bon moment

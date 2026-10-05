@@ -88,4 +88,4 @@ Les essais sur téléphones, la configuration des prestataires et la validation 
 
 Dans « Mon espace », une photo de profil JPEG/PNG/WebP peut être remplacée ou retirée. Elle est recadrée au centre en 192 × 192 px et réencodée en JPEG sans métadonnées par le navigateur. Sa version réduite (50 000 caractères maximum) est conservée dans le profil privé, avec les mêmes droits d’accès et la suppression du compte. Le fuseau horaire reste géré automatiquement pour les rappels, sans champ à renseigner.
 
-Les rappels hebdomadaires acceptent plusieurs jours, à une heure commune. L’aperçu et les tâches d’envoi utilisent la même règle. Les anciens rappels à un seul jour sont repris automatiquement ; les rythmes quinze jours et mensuel conservent leur fonctionnement.
+Les rappels hebdomadaires acceptent plusieurs jours, à une heure commune. L’aperçu et les tâches d’envoi utilisent la même règle. Les anciens rappels à un seul jour sont repris automatiquement. Le rythme proposé est toujours hebdomadaire ; réenregistrer un ancien rappel le convertit à ce rythme.
