@@ -458,30 +458,6 @@ export function MeasureScreen() {
             visible.filter((m) => data.profile.visible.includes(m.id)),
           )}
         </div>
-        <details className="optional-panel">
-          <summary>Ajouter d’autres mensurations</summary>
-          <div className="measure-chips">
-            {data.measures
-              .filter(
-                (m) =>
-                  m.id !== "weight" &&
-                  !m.archived &&
-                  !visible.some((v) => v.id === m.id),
-              )
-              .map((m) => (
-                <button
-                  type="button"
-                  key={m.id}
-                  onClick={() => update(m.id, "")}
-                >
-                  {m.name} +
-                </button>
-              ))}
-          </div>
-          <Button onClick={() => navigate("favorites")}>
-            Créer une mesure personnalisée
-          </Button>
-        </details>
         {visible.some((m) => !data.profile.visible.includes(m.id)) && (
           <>
             <div className="section-heading">
