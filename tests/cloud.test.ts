@@ -76,6 +76,25 @@ describe("Sauvegarde distante", () => {
       name: "Alice modifiée",
     }).account;
     expect(updated.profile.onboardingCompleted).toBe(true);
+    const avatar = "data:image/jpeg;base64,/9j/2Q==";
+    const pictured = change(updated, "PATCH", "/profile", {
+      ...updated.profile,
+      avatar,
+    }).account;
+    expect(pictured.profile.avatar).toBe(avatar);
+    expect(() =>
+      change(pictured, "PATCH", "/profile", {
+        ...pictured.profile,
+        avatar: "https://example.com/tracker.jpg",
+      }),
+    ).toThrow();
+    expect(
+      change(pictured, "PATCH", "/profile", {
+        ...pictured.profile,
+        avatar: null,
+      }).account.profile.avatar,
+    ).toBeNull();
+
     const noTarget = change(before, "POST", "/onboarding", {
       ...payload,
       goal: null,

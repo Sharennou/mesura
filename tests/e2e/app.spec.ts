@@ -149,6 +149,41 @@ test("compte réel : accessibilité, consentement, sauvegarde, photos, correctio
     push: false,
     email: false,
   });
+  await page.goto("/#account");
+  await expect(page.getByLabel("Pseudo", { exact: true })).toBeVisible();
+  await expect(page.getByText("Fuseau horaire", { exact: true })).toHaveCount(
+    0,
+  );
+  const avatarBytes = await sharp({
+    create: { width: 240, height: 160, channels: 3, background: "#c5ee22" },
+  })
+    .png()
+    .toBuffer();
+  await page
+    .locator('input[type="file"]')
+    .setInputFiles({
+      name: "profil.png",
+      mimeType: "image/png",
+      buffer: avatarBytes,
+    });
+  await expect(page.getByAltText("Votre photo de profil")).toBeVisible();
+  await page.getByRole("button", { name: "Enregistrer mon profil" }).click();
+  await expect(
+    page.getByText("Profil enregistré.", { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(page.getByAltText("Votre photo de profil")).toBeVisible();
+  const withAvatar = await (await page.request.get("/api/account")).json();
+  expect(withAvatar.profile.avatar).toMatch(/^data:image\/jpeg;base64,/);
+  expect(withAvatar.profile.timezone).toBe(setup.profile.timezone);
+  await page.getByRole("button", { name: "Retirer la photo" }).click();
+  await page.getByRole("button", { name: "Enregistrer mon profil" }).click();
+  await expect(
+    page.getByText("Profil enregistré.", { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(page.getByAltText("Votre photo de profil")).toHaveCount(0);
+  await page.goto("/#measure");
   await expect(page.getByLabel("Poids", { exact: true })).toHaveValue("");
   await expect(page.getByLabel("Tour de taille en cm")).toHaveValue("");
   await expect(page.getByLabel("Note de cette entrée")).toHaveValue("");

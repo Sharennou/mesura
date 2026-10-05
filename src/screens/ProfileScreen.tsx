@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   Check,
   LogOut,
@@ -22,7 +22,8 @@ export function ProfileScreen() {
   const [height, setHeight] = useState(
     data.profile.height ? number(data.profile.height) : "",
   );
-  const [timezone, setTimezone] = useState(data.profile.timezone);
+  const [avatar, setAvatar] = useState(data.profile.avatar ?? null);
+  const photoInput = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [sessions, setSessions] = useState<any[]>([]);
@@ -34,7 +35,7 @@ export function ProfileScreen() {
     setError("");
     const parsed = parseDecimal(height);
     if (parsed !== null && !Number.isFinite(parsed)) {
-      setError("La stature doit être un nombre strictement positif.");
+      setError("La taille doit être un nombre strictement positif.");
       return;
     }
     setBusy(true);
@@ -46,7 +47,7 @@ export function ProfileScreen() {
             ...data.profile,
             name,
             height: parsed,
-            timezone,
+            avatar,
           }),
         }),
       );
@@ -59,16 +60,91 @@ export function ProfileScreen() {
   }
   return (
     <>
-      <PageTitle title="Mon espace" eyebrow="Tout commence par vous" />
+      <PageTitle title="Mon espace" />
       <section className="profile-id">
         <span className="intro-icon">
-          <Icon as={UserRound} size={30} />
+          {avatar ? (
+            <img
+              className="profile-avatar"
+              src={avatar}
+              alt="Votre photo de profil"
+            />
+          ) : (
+            <Icon as={UserRound} size={30} />
+          )}
         </span>
         <div>
           <h2>{data.profile.name}</h2>
           <p>{session?.user.email}</p>
         </div>
       </section>
+      <input
+        ref={photoInput}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        hidden
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (!file) return;
+          setError("");
+          try {
+            if (file.size > 10 * 1024 * 1024)
+              throw new Error("Photo trop volumineuse. Maximum : 10 Mo.");
+            if (!["image/jpeg", "image/png", "image/webp"].includes(file.type))
+              throw new Error("Choisissez une photo JPEG, PNG ou WebP.");
+            const bitmap = await createImageBitmap(file, {
+              imageOrientation: "from-image",
+            });
+            try {
+              if (bitmap.width * bitmap.height > 40_000_000)
+                throw new Error(
+                  "La résolution de cette photo est trop grande.",
+                );
+              const canvas = document.createElement("canvas");
+              canvas.width = canvas.height = 192;
+              const ctx = canvas.getContext("2d")!;
+              ctx.fillStyle = "#fff";
+              ctx.fillRect(0, 0, 192, 192);
+              const size = Math.min(bitmap.width, bitmap.height);
+              ctx.drawImage(
+                bitmap,
+                (bitmap.width - size) / 2,
+                (bitmap.height - size) / 2,
+                size,
+                size,
+                0,
+                0,
+                192,
+                192,
+              );
+              const image = canvas.toDataURL("image/jpeg", 0.8);
+              if (image.length > 50000)
+                throw new Error(
+                  "Cette photo est trop détaillée. Choisissez une autre image.",
+                );
+              setAvatar(image);
+            } finally {
+              bitmap.close();
+            }
+          } catch (err: any) {
+            setError(err.message || "Cette photo ne peut pas être lue.");
+          }
+        }}
+      />
+      <div className="profile-photo-actions">
+        <Button disabled={busy} onClick={() => photoInput.current?.click()}>
+          Changer ma photo de profil
+        </Button>
+        {avatar && (
+          <Button disabled={busy} onClick={() => setAvatar(null)}>
+            Retirer la photo
+          </Button>
+        )}
+        <p className="muted small">
+          La photo sera sauvegardée avec « Enregistrer mon profil ».
+        </p>
+      </div>
       {!data.consents.body && (
         <LinkCard
           icon={ShieldCheck}
@@ -79,7 +155,7 @@ export function ProfileScreen() {
       )}
       <form onSubmit={submit} className="stack">
         <label className="field-label">
-          Pseudonyme
+          Pseudo
           <input
             required
             value={name}
@@ -88,7 +164,7 @@ export function ProfileScreen() {
           />
         </label>
         <label className="field-label">
-          Stature en cm <span className="optional">Facultative</span>
+          Taille en cm <span className="optional">Facultative</span>
           <input
             inputMode="decimal"
             placeholder="Ex. 175,0"
@@ -99,29 +175,6 @@ export function ProfileScreen() {
           <small>
             Votre hauteur corporelle, distincte du tour de taille. Une
             modification s’applique aux futures entrées.
-          </small>
-        </label>
-        <label className="field-label">
-          Fuseau horaire
-          <input
-            value={timezone}
-            onChange={(e) => setTimezone(e.target.value)}
-            list="timezones"
-          />
-          <datalist id="timezones">
-            {[
-              "Europe/Paris",
-              "Europe/Brussels",
-              "Europe/Zurich",
-              "America/Montreal",
-              "Indian/Reunion",
-            ].map((z) => (
-              <option key={z} value={z} />
-            ))}
-          </datalist>
-          <small>
-            Pour changer l’heure des rappels, réenregistrez le rappel avec le
-            fuseau souhaité.
           </small>
         </label>
         <button className="secondary" disabled={busy}>

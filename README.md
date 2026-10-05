@@ -85,3 +85,5 @@ La production exige HTTPS, secret d’authentification, SMTP, stockage persistan
 Le texte joint annonce neuf couleurs sans leur tableau de codes. Encre `#0C0C10` et cobalt `#2D3CFF` sont conservés ; les sept autres couleurs, dont volt `#D7FF3F`, sont centralisées dans `src/styles.css`. La liste détaillée des entités annoncée dans le texte est également absente : le modèle choisi est documenté.
 
 Les essais sur téléphones, la configuration des prestataires et la validation juridique sont détaillés dans les documents. Cette livraison ne prétend pas valider ces paramètres externes.
+
+Dans « Mon espace », une photo de profil JPEG/PNG/WebP peut être remplacée ou retirée. Elle est recadrée au centre en 192 × 192 px et réencodée en JPEG sans métadonnées par le navigateur. Sa version réduite (50 000 caractères maximum) est conservée dans le profil privé, avec les mêmes droits d’accès et la suppression du compte. Le fuseau horaire reste géré automatiquement pour les rappels, sans champ à renseigner.

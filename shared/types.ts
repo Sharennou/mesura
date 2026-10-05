@@ -37,6 +37,7 @@ export interface Reminder {
   nextAt?: string | null;
 }
 export interface Profile {
+  avatar?: string | null;
   onboardingCompleted?: boolean;
   name: string;
   height: number | null;

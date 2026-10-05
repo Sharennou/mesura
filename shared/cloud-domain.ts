@@ -1,3 +1,4 @@
+import { avatarSchema } from "./avatar.ts";
 import { z } from "zod";
 import { DateTime } from "luxon";
 import { STANDARD_MEASURES, DEFAULT_VISIBLE } from "./catalog.ts";
@@ -135,6 +136,7 @@ export function mutateCloudAccount(
   } else if (resource === "profile" && method === "PATCH") {
     const p = z
       .object({
+        avatar: avatarSchema,
         name: z.string().trim().min(1).max(100),
         height: z.number().positive().max(300).nullable(),
         timezone: zone,
