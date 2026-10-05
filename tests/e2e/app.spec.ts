@@ -96,6 +96,7 @@ test("compte réel : accessibilité, consentement, sauvegarde, photos, correctio
   page,
   context,
 }, testInfo) => {
+  test.slow();
   const email = `parcours-${testInfo.project.name}-${Date.now()}@example.test`;
   const password = "MonEspacePrive!2026";
   await page.goto("/#account");
@@ -112,13 +113,13 @@ test("compte réel : accessibilité, consentement, sauvegarde, photos, correctio
   ).toBeVisible();
   await expect(page.getByRole("checkbox")).toHaveCount(1);
   await expect(page.getByRole("navigation")).toHaveCount(0);
-  await page.getByLabel("Votre taille en cm").fill("175,5");
+  await page.getByLabel("Votre hauteur en cm").fill("175,5");
   await page.getByLabel("Votre objectif").selectOption("observe");
   await page.getByRole("checkbox").check();
   await page.route("**/api/onboarding", (route) => route.abort());
   await page.getByRole("button", { name: "Commencer mon suivi" }).click();
   await expect(page.getByRole("alert")).toContainText("connexion");
-  await expect(page.getByLabel("Votre taille en cm")).toHaveValue("175,5");
+  await expect(page.getByLabel("Votre hauteur en cm")).toHaveValue("175,5");
   expect(
     (await (await page.request.get("/api/account")).json()).consents.body,
   ).toBe(false);
@@ -157,9 +158,8 @@ test("compte réel : accessibilité, consentement, sauvegarde, photos, correctio
   ).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "Enregistrer le rappel" }).click();
   await expect(
-    page.getByRole("heading", { name: "Nouvelle mesure", exact: true }),
+    page.getByText("Horaires enregistrés.", { exact: true }),
   ).toBeVisible();
-  await page.goto("/#reminder");
   await page.reload();
   for (const day of ["Lundi", "Mercredi", "Vendredi"])
     await expect(
@@ -169,6 +169,7 @@ test("compte réel : accessibilité, consentement, sauvegarde, photos, correctio
     (await (await page.request.get("/api/account")).json()).reminder.weekdays,
   ).toEqual([1, 3, 5]);
   await page.goto("/#account");
+  await page.getByRole("button", { name: /^Profil / }).click();
   await expect(page.getByLabel("Pseudo", { exact: true })).toBeVisible();
   await expect(page.getByText("Fuseau horaire", { exact: true })).toHaveCount(
     0,
@@ -230,6 +231,7 @@ test("compte réel : accessibilité, consentement, sauvegarde, photos, correctio
   ).toBeNull();
   await page.getByLabel("Poids", { exact: true }).fill("78,4");
   await page.getByLabel("Tour de taille en cm").fill("84.0");
+  await page.getByText("Ajouter une note", { exact: false }).click();
   await page
     .getByLabel("Note de cette entrée")
     .fill("Mon repère privé <script>alert(1)</script>");
@@ -240,14 +242,14 @@ test("compte réel : accessibilité, consentement, sauvegarde, photos, correctio
   await expect(page.getByRole("alert")).toContainText("connexion");
   await expect(page.getByLabel("Poids", { exact: true })).toHaveValue("78,4");
   await expect(
-    page.getByText("Mesure enregistrée", { exact: true }),
+    page.getByRole("heading", { name: "Mesure enregistrée", exact: true }),
   ).not.toBeVisible();
   await page.unroute("**/api/entries");
   await page
     .getByRole("button", { name: "Enregistrer la mesure", exact: true })
     .click();
   await expect(
-    page.getByText("Mesure enregistrée", { exact: true }),
+    page.getByRole("heading", { name: "Mesure enregistrée", exact: true }),
   ).toBeVisible();
   await page.screenshot({
     path: `test-results/${testInfo.project.name}-success.png`,
@@ -284,19 +286,32 @@ test("compte réel : accessibilité, consentement, sauvegarde, photos, correctio
   ).toBeVisible();
   await page.getByRole("button", { name: "Analyse", exact: true }).click();
   await expect(page.locator(".graph-value")).toContainText("78,4");
-  await page.getByRole("button", { name: "Voir l’historique" }).click();
+  await page
+    .getByRole("button", { name: "Historique des mesures", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: /Consulter la mesure du/ })
+    .first()
+    .click();
   await expect(page.locator(".saved-note")).toHaveText(
     "Mon repère privé <script>alert(1)</script>",
   );
-  await page.getByRole("button", { name: /Modifier l’entrée/ }).click();
+  await page
+    .getByRole("button", { name: "Modifier la mesure", exact: true })
+    .click();
   await page.getByLabel("Poids", { exact: true }).fill("79.0");
   await page
     .getByRole("button", { name: "Enregistrer les modifications" })
     .click();
-  await page.getByRole("button", { name: "Voir mon analyse" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Détail de la mesure" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Analyse", exact: true }).click();
   await expect(page.locator(".graph-value")).toContainText("79,0");
   await page.getByRole("button", { name: "Mesures", exact: true }).click();
+  await page.getByText("Ajouter une note", { exact: false }).click();
   await page.getByLabel("Note de cette entrée").fill("Une photo privée");
+  await page.getByText("Ajouter des photos", { exact: false }).click();
   await page.locator("label.photo-upload").first().click();
   await page.getByRole("dialog").getByRole("checkbox").check();
   await page.getByRole("button", { name: "Autoriser mes photos" }).click();
@@ -354,6 +369,33 @@ test("compte réel : accessibilité, consentement, sauvegarde, photos, correctio
       ),
       `Pas de débordement : ${screen}`,
     ).toBe(true);
+    const smallTargets = await page.evaluate(() =>
+      [
+        ...document.querySelectorAll<HTMLElement>(
+          "button, summary, input, select, textarea, svg [role=button]",
+        ),
+      ]
+        .filter((element) => element.getClientRects().length)
+        .flatMap((element) => {
+          const hitArea = element.matches("input,select,textarea")
+            ? (element.closest("label") ?? element)
+            : element;
+          const rect = hitArea.getBoundingClientRect();
+          if (!rect.width || !rect.height) return [];
+          return rect.width < 43.9 || rect.height < 43.9
+            ? [
+                {
+                  name:
+                    element.getAttribute("aria-label") ??
+                    element.textContent?.trim().slice(0, 60),
+                  width: rect.width,
+                  height: rect.height,
+                },
+              ]
+            : [];
+        }),
+    );
+    expect(smallTargets, `Cibles tactiles de 44 px : ${screen}`).toEqual([]);
     const violations = (
       await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21aa"])

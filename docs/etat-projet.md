@@ -87,3 +87,11 @@ Les callbacks Auth cloud sont aussi testés avec des réponses simulées. Un vé
 4. Effectuer les contrôles adaptés à la modification, sans envois réels ni effacement de données personnelles pour tester.
 5. Pour une publication autorisée, envoyer sur `main` et vérifier la réussite de GitHub Pages et de Supabase.
 6. Mettre à jour ce contexte si une décision, un écran ou un réglage de déploiement change.
+
+## Refonte UX du 5 octobre 2026 — développement, non publiée
+
+Les parcours mobiles sont corrigés sans changement de technologie, de modèle de données ou de backend. Voir [le diagnostic et le détail par écran](ux-parcours.md). Les nouvelles routes internes `entry`, `edit` et `profile` séparent consultation, modification et menu du compte. `src/useViewState.ts` conserve les choix d’écran en mémoire ; les brouillons de nouvelle mesure et d’édition restent indépendants et conservent leurs fichiers pendant les changements d’écran.
+
+Validation : compilations locale et cloud, 83 tests unitaires/API/cloud/SQL, 16 parcours mobiles à 390 × 844 et 360 × 800, axe et cibles tactiles, checks des chemins GitHub Pages et callbacks Auth simulés. Les tests de notifications utilisent un appareil simulé. L’essai sur vrais téléphones et la réception effective restent nécessaires.
+
+Prévisualisation locale séparée : `http://127.0.0.1:5182`, base `.runtime/ux-preview/`. Le script `scripts/ux-preview.ts` prépare des comptes fictifs uniquement sur un hôte local en développement. Aucun déploiement n’a été effectué pendant cette session. Les tests Playwright attendent maintenant que `/api/config` soit prêt, pour ne pas confondre une API encore au démarrage avec une régression du parcours.

@@ -7,6 +7,7 @@ import {
   Target,
   UserRound,
   FileText,
+  Bell,
 } from "lucide-react";
 import { useApp } from "../context";
 import { Button, ErrorMessage, Icon, LinkCard, PageTitle } from "../components";
@@ -15,7 +16,11 @@ import type { AccountData } from "../../shared/types";
 import { number, parseDecimal } from "../../shared/calculations";
 import { CLOUD } from "../deployment";
 
-export function ProfileScreen() {
+export function ProfileScreen({
+  editingProfile = false,
+}: {
+  editingProfile?: boolean;
+}) {
   const { data, setData, navigate, toast } = useApp();
   const { data: session } = authClient.useSession();
   const [name, setName] = useState(data.profile.name);
@@ -34,8 +39,9 @@ export function ProfileScreen() {
     e.preventDefault();
     setError("");
     const parsed = parseDecimal(height);
+    if (busy) return;
     if (parsed !== null && !Number.isFinite(parsed)) {
-      setError("La taille doit être un nombre strictement positif.");
+      setError("La hauteur doit être un nombre strictement positif.");
       return;
     }
     setBusy(true);
@@ -58,9 +64,84 @@ export function ProfileScreen() {
       setBusy(false);
     }
   }
+  if (!editingProfile)
+    return (
+      <>
+        <PageTitle title="Mon espace" />
+        <div className="stack account-menu">
+          <LinkCard
+            icon={UserRound}
+            title="Profil"
+            description={`${data.profile.name} · pseudo, hauteur et photo.`}
+            onClick={() => navigate("profile")}
+          />
+          <LinkCard
+            icon={Target}
+            title="Objectifs"
+            description="Choisir, modifier ou retirer votre cap."
+            onClick={() => navigate("goal")}
+          />
+          <LinkCard
+            icon={Settings2}
+            title="Mesures favorites"
+            description="Choisir vos mensurations et leur ordre."
+            onClick={() => navigate("favorites")}
+          />
+          <LinkCard
+            icon={Bell}
+            title="Rappels"
+            description="Horaires et notifications sur cet appareil."
+            onClick={() => navigate("reminder")}
+          />
+          <LinkCard
+            icon={ShieldCheck}
+            title="Données et confidentialité"
+            description="Consentements, export et suppression."
+            onClick={() => navigate("privacy")}
+          />
+          <LinkCard
+            icon={FileText}
+            title="Informations du service"
+            description="Confidentialité et conditions d’utilisation."
+            onClick={() => navigate("legal")}
+          />
+        </div>
+        <details className="optional-panel">
+          <summary>Sessions et connexion</summary>
+          <p className="small">
+            {sessions.length} session(s) ouverte(s).{" "}
+            {CLOUD
+              ? "Vous pouvez fermer les autres connexions à votre compte."
+              : "Les connexions expirent après sept jours d’inactivité."}
+          </p>
+          <Button
+            onClick={async () => {
+              const r = await authClient.revokeOtherSessions();
+              if (r.error) {
+                setError("Impossible de fermer les sessions. Réessayez.");
+                return;
+              }
+              setSessions((await authClient.listSessions()).data || []);
+              toast("Les autres sessions sont fermées.");
+            }}
+          >
+            Fermer les autres sessions
+          </Button>
+        </details>
+        <ErrorMessage>{error}</ErrorMessage>
+        <Button
+          onClick={async () => {
+            await authClient.signOut();
+            navigate("account");
+          }}
+        >
+          Me déconnecter <Icon as={LogOut} />
+        </Button>
+      </>
+    );
   return (
     <>
-      <PageTitle title="Mon espace" />
+      <PageTitle title="Modifier mon profil" />
       <section className="profile-id">
         <span className={`intro-icon ${avatar ? "has-avatar" : ""}`}>
           {avatar ? (
@@ -164,7 +245,7 @@ export function ProfileScreen() {
           />
         </label>
         <label className="field-label">
-          Taille en cm <span className="optional">Facultative</span>
+          Hauteur en cm <span className="optional">Facultative</span>
           <input
             inputMode="decimal"
             placeholder="Ex. 175,0"
@@ -183,67 +264,6 @@ export function ProfileScreen() {
         </button>
         <ErrorMessage>{error}</ErrorMessage>
       </form>
-      <div className="section-heading">
-        <h2>Votre suivi, vos règles</h2>
-      </div>
-      <div className="stack">
-        <LinkCard
-          icon={Target}
-          title="Mon objectif"
-          description="Choisir, modifier ou retirer votre cap."
-          onClick={() => navigate("goal")}
-        />
-        <LinkCard
-          icon={Settings2}
-          title="Mes mesures favorites"
-          description="Choisir vos repères et leur ordre."
-          onClick={() => navigate("favorites")}
-        />
-        <LinkCard
-          icon={ShieldCheck}
-          title="Données et confidentialité"
-          description="Consentements, export et suppression."
-          onClick={() => navigate("privacy")}
-        />
-        <LinkCard
-          icon={FileText}
-          title="Informations du service"
-          description="Confidentialité et conditions d’utilisation."
-          onClick={() => navigate("legal")}
-        />
-      </div>
-      <section className="plain-card">
-        <h2>Mes sessions</h2>
-        <p>
-          {sessions.length} session{sessions.length > 1 ? "s" : ""} ouverte
-          {sessions.length > 1 ? "s" : ""}.{" "}
-          {CLOUD
-            ? "Vous pouvez fermer les autres connexions à votre compte."
-            : "Les connexions expirent après sept jours d’inactivité."}
-        </p>
-        <Button
-          onClick={async () => {
-            const r = await authClient.revokeOtherSessions();
-            if (r.error) {
-              setError("Impossible de fermer les sessions. Réessayez.");
-              return;
-            }
-            setSessions((await authClient.listSessions()).data || []);
-            toast("Les autres sessions sont fermées.");
-          }}
-        >
-          Fermer les autres sessions
-        </Button>
-      </section>
-      <Button
-        onClick={async () => {
-          await authClient.signOut();
-          navigate("account");
-        }}
-      >
-        Me déconnecter
-        <Icon as={LogOut} />
-      </Button>
     </>
   );
 }

@@ -32,17 +32,13 @@ export function PageTitle({
   back?: boolean;
   children?: ReactNode;
 }) {
-  const { navigate } = useApp();
+  const { back: goBack } = useApp();
   return (
     <div className="page-heading">
       {eyebrow && <p className="eyebrow">{eyebrow}</p>}
       <div className="heading-row">
         {back && (
-          <button
-            className="circle back"
-            aria-label="Revenir"
-            onClick={() => navigate("analysis")}
-          >
+          <button className="circle back" aria-label="Revenir" onClick={goBack}>
             <Icon as={ArrowLeft} />
           </button>
         )}
@@ -341,7 +337,7 @@ export function Chart({
               <circle
                 cx={xs[i]}
                 cy={ys[i]}
-                r={20}
+                r={26}
                 fill="transparent"
                 tabIndex={0}
                 role="button"

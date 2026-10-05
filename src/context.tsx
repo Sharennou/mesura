@@ -14,6 +14,9 @@ export type Screen =
   | "account"
   | "privacy"
   | "history"
+  | "entry"
+  | "edit"
+  | "profile"
   | "photos"
   | "compare"
   | "monthly"
@@ -25,12 +28,21 @@ export interface MeasurementDraft {
   date: string;
   note: string;
   photos: Record<string, File>;
+  requestId: string;
+}
+export interface EditingDraft extends MeasurementDraft {
+  height: string;
 }
 export interface AppContextValue {
   data: AccountData;
   setData: Dispatch<SetStateAction<AccountData>>;
   screen: Screen;
   navigate: (screen: Screen) => void;
+  back: () => void;
+  viewEntry: (id: string) => void;
+  entryId: string | null;
+  viewState: Record<string, unknown>;
+  setViewState: Dispatch<SetStateAction<Record<string, unknown>>>;
   capabilities: Capabilities;
   reload: () => Promise<void>;
   requireAccount: () => boolean;
@@ -41,6 +53,8 @@ export interface AppContextValue {
   saved: (entry: Entry, previous: number | null) => void;
   draft: MeasurementDraft | null;
   setDraft: Dispatch<SetStateAction<MeasurementDraft | null>>;
+  editingDrafts: Record<string, EditingDraft>;
+  setEditingDrafts: Dispatch<SetStateAction<Record<string, EditingDraft>>>;
   historyMonth: string | null;
   setHistoryMonth: Dispatch<SetStateAction<string | null>>;
 }

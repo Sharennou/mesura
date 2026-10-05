@@ -79,12 +79,12 @@ export function OnboardingScreen() {
         back={false}
       />
       <p className="lead">
-        Votre taille, votre cap. Quelques repères pour commencer, modifiables à
+        Votre hauteur, votre cap. Quelques repères pour commencer, modifiables à
         tout moment.
       </p>
       <form onSubmit={submit} className="stack">
         <label className="field-label">
-          Votre taille en cm
+          Votre hauteur en cm
           <input
             required
             inputMode="decimal"
@@ -94,7 +94,7 @@ export function OnboardingScreen() {
             onChange={(e) => setHeight(e.target.value)}
           />
           <small>
-            Votre stature, pour calculer l’IMC. Ce n’est pas votre tour de
+            Votre hauteur, pour calculer l’IMC. Ce n’est pas votre tour de
             taille.
           </small>
         </label>

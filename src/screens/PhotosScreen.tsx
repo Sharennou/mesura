@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Camera, Columns2, Plus, Trash2 } from "lucide-react";
+import { useViewState } from "../useViewState";
 import { useApp } from "../context";
 import { api } from "../api";
 import { PhotoImage } from "../PhotoImage";
@@ -15,12 +16,13 @@ import {
 import type { AccountData } from "../../shared/types";
 
 export function PhotosScreen() {
-  const { data, setData, navigate, requireAccount } = useApp();
-  const [orientation, setOrientation] = useState<"face" | "profil" | "dos">(
+  const { data, setData, navigate, requireAccount, setViewState } = useApp();
+  const [orientation, setOrientation] = useViewState<"face" | "profil" | "dos">(
+    "photos.angle",
     "face",
   );
-  const [a, setA] = useState("");
-  const [b, setB] = useState("");
+  const [a, setA] = useViewState("photos.a", "");
+  const [b, setB] = useViewState("photos.b", "");
   const [slider, setSlider] = useState(50);
   const [side, setSide] = useState(true);
   const [remove, setRemove] = useState<string | null>(null);
@@ -34,10 +36,7 @@ export function PhotosScreen() {
   const pb = photos.find((p) => p.id === b) ?? photos.at(-1);
   return (
     <>
-      <PageTitle
-        title="Votre évolution en images"
-        eyebrow="Photos · votre regard"
-      />
+      <PageTitle title="Photos de comparaison" />
       <p className="lead">
         Même angle. Deux moments.
         <br />
@@ -60,29 +59,36 @@ export function PhotosScreen() {
       </div>
       {photos.length ? (
         <>
-          <div className="two-fields">
-            {(
-              [
-                ["A", a, setA, pa],
-                ["B", b, setB, pb],
-              ] as const
-            ).map(([label, value, set, current]) => (
-              <label className="field-label" key={label}>
-                Photo {label}
-                <select
-                  value={value || current?.id}
-                  onChange={(e) => set(e.target.value)}
-                >
-                  {photos.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.date}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ))}
-          </div>
-          {pa && pb && pa.id !== pb.id ? (
+          {new Set(photos.map((p) => p.date)).size > 1 ? (
+            <div className="two-fields">
+              {(
+                [
+                  ["A", a, setA, pa],
+                  ["B", b, setB, pb],
+                ] as const
+              ).map(([label, value, set, current]) => (
+                <label className="field-label" key={label}>
+                  {label === "A" ? "Date de référence" : "Date comparée"}
+                  <select
+                    value={value || current?.id}
+                    onChange={(e) => set(e.target.value)}
+                  >
+                    {photos.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.date}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+            </div>
+          ) : (
+            <p className="small">
+              Date disponible : <DateLabel date={photos[0].date} />{" "}
+              {photos[0].date.slice(0, 4)}
+            </p>
+          )}
+          {pa && pb && pa.date !== pb.date ? (
             <>
               <Button onClick={() => setSide(!side)}>
                 <Icon as={Columns2} />
@@ -98,7 +104,8 @@ export function PhotosScreen() {
                           alt={`${orientation}, photo ${i === 0 ? "A" : "B"} du ${p.date}`}
                         />
                         <figcaption>
-                          {i === 0 ? "A" : "B"} · <DateLabel date={p.date} />
+                          {i === 0 ? "Référence" : "Comparée"} ·{" "}
+                          <DateLabel date={p.date} /> {p.date.slice(0, 4)}
                         </figcaption>
                       </figure>
                     ))}
@@ -126,6 +133,13 @@ export function PhotosScreen() {
                 )}
               </div>
               {!side && (
+                <p className="small">
+                  Référence : <DateLabel date={pa.date} /> {pa.date.slice(0, 4)}{" "}
+                  · Comparée : <DateLabel date={pb.date} />{" "}
+                  {pb.date.slice(0, 4)}
+                </p>
+              )}
+              {!side && (
                 <label className="field-label">
                   Révéler la photo B : {slider} %
                   <input
@@ -146,8 +160,9 @@ export function PhotosScreen() {
             </>
           ) : (
             <p className="plain-card">
-              Ajoutez une photo de même orientation à une autre date pour
-              comparer.
+              {new Set(photos.map((p) => p.date)).size < 2
+                ? "Une seule date photographiée pour cet angle. Ajoutez une photo du même angle à une seconde date pour comparer."
+                : "Choisissez deux dates différentes pour comparer cet angle."}
             </p>
           )}
           <div className="section-heading">
@@ -162,7 +177,7 @@ export function PhotosScreen() {
                   alt={`Vue ${orientation} du ${p.date}`}
                 />
                 <figcaption>
-                  <DateLabel date={p.date} />
+                  <DateLabel date={p.date} /> {p.date.slice(0, 4)}
                   <button
                     className="circle"
                     aria-label={`Supprimer la photo du ${p.date}`}
@@ -181,7 +196,12 @@ export function PhotosScreen() {
           choisissez ce qui vous convient.
         </Empty>
       )}
-      <Button onClick={() => navigate("measure")}>
+      <Button
+        onClick={() => {
+          setViewState((state) => ({ ...state, "measure.photos": true }));
+          navigate("measure");
+        }}
+      >
         Ajouter une photo à une entrée
         <Icon as={Plus} />
       </Button>

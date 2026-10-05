@@ -8,10 +8,12 @@ import {
   Plus,
   Minus,
   Flame,
+  History,
   Ruler,
   LockKeyhole,
   ImagePlus,
 } from "lucide-react";
+import { useViewState } from "../useViewState";
 import { useApp } from "../context";
 import {
   ActionBar,
@@ -37,7 +39,7 @@ import {
   CONSENT_VERSION,
   MAX_PHOTO_BYTES,
 } from "../../shared/config";
-import type { AccountData, Entry } from "../../shared/types";
+import type { AccountData, Entry, Measure } from "../../shared/types";
 import { api } from "../api";
 export function MeasureScreen() {
   const {
@@ -49,31 +51,75 @@ export function MeasureScreen() {
     setData,
     draft,
     setDraft,
+    editingDrafts,
+    setEditingDrafts,
   } = useApp();
   const today = localDate(data.profile.timezone);
-  const initial = editing
-    ? Object.fromEntries(
-        Object.entries(editing.values).map(([id, v]) => [id, number(v)]),
-      )
-    : (draft?.values ?? {});
+  const [openPhotos] = useViewState("measure.photos", false);
+  const editingDraft = editing ? editingDrafts[editing.id] : null;
+  const currentDraft = editing ? editingDraft : draft;
+  const initial =
+    currentDraft?.values ??
+    (editing
+      ? Object.fromEntries(
+          Object.entries(editing.values).map(([id, v]) => [id, number(v)]),
+        )
+      : {});
   const [values, setValues] = useState<Record<string, string>>(initial);
-  const [date, setDate] = useState(editing?.date ?? draft?.date ?? today);
-  const [note, setNote] = useState(editing?.note ?? draft?.note ?? "");
+  const [date, setDate] = useState(
+    currentDraft?.date ?? editing?.date ?? today,
+  );
+  const [note, setNote] = useState(currentDraft?.note ?? editing?.note ?? "");
   const [photos, setPhotos] = useState<Record<string, File>>(
-    editing ? {} : (draft?.photos ?? {}),
+    currentDraft?.photos ?? {},
   );
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [photoConsent, setPhotoConsent] = useState(false);
   const [accepted, setAccepted] = useState(false);
-  useEffect(() => {
-    if (!editing) setDraft({ values, date, note, photos });
-  }, [values, date, note, photos, editing, setDraft]);
   const [historicalHeight, setHistoricalHeight] = useState(
-    editing?.height ? number(editing.height) : "",
+    editingDraft?.height ?? (editing?.height ? number(editing.height) : ""),
   );
-  const requestId = useRef(crypto.randomUUID());
+  const requestId = useRef(currentDraft?.requestId ?? crypto.randomUUID());
+  const submitting = useRef(false);
+  const completed = useRef(false);
+  useEffect(() => {
+    if (completed.current) return;
+    const next = { values, date, note, photos, requestId: requestId.current };
+    if (editing)
+      setEditingDrafts((drafts) => ({
+        ...drafts,
+        [editing.id]: { ...next, height: historicalHeight },
+      }));
+    else setDraft(next);
+  }, [
+    values,
+    date,
+    note,
+    photos,
+    historicalHeight,
+    editing,
+    setDraft,
+    setEditingDrafts,
+  ]);
   const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    if (openPhotos) {
+      formRef.current
+        ?.querySelector<HTMLElement>("[data-photo-section]")
+        ?.scrollIntoView({ block: "center" });
+    }
+  }, []);
+  useEffect(() => {
+    if (error)
+      formRef.current
+        ?.querySelector<HTMLElement>("[role=alert]")
+        ?.scrollIntoView({ block: "center" });
+  }, [error]);
+  const photoCount = new Set([
+    ...Object.keys(photos),
+    ...(editing?.photos.map((p) => p.orientation) ?? []),
+  ]).size;
   const weight = parseDecimal(values.weight || "");
   const previousEntries = data.entries.filter(
     (e) =>
@@ -96,22 +142,69 @@ export function MeasureScreen() {
     .filter(
       (m) =>
         m.id !== "weight" &&
-        (data.profile.visible.includes(m.id) ||
-          editing?.values[m.id] !== undefined),
+        (data.profile.visible.includes(m.id) || Object.hasOwn(values, m.id)),
     )
     .sort(
       (a, b) =>
-        data.profile.visible.indexOf(a.id) - data.profile.visible.indexOf(b.id),
+        (data.profile.visible.includes(a.id)
+          ? data.profile.visible.indexOf(a.id)
+          : 999) -
+        (data.profile.visible.includes(b.id)
+          ? data.profile.visible.indexOf(b.id)
+          : 999),
     );
+  function measurementFields(measures: Measure[]) {
+    return measures.map((m) => {
+      const val = parseDecimal(values[m.id] || "");
+      const previousEntry = latest(previousEntries, m.id, date);
+      const diff =
+        val !== null && Number.isFinite(val) && previousEntry
+          ? val - previousEntry.values[m.id]
+          : null;
+      return (
+        <div className="measure-tile" key={m.id}>
+          <label htmlFor={`input-${m.id}`} className="eyebrow">
+            {m.name}
+          </label>
+          <div className="tile-input-row">
+            <input
+              id={`input-${m.id}`}
+              name={m.id}
+              type="text"
+              inputMode="decimal"
+              aria-label={`${m.name} en ${m.unit}`}
+              autoComplete="off"
+              maxLength={10}
+              value={values[m.id] || ""}
+              placeholder="—"
+              onChange={(e) => update(m.id, e.target.value)}
+              onBlur={() => {
+                if (val !== null && Number.isFinite(val))
+                  update(m.id, number(val));
+              }}
+            />
+            <span>{m.unit}</span>
+          </div>
+          {diff !== null ? (
+            <Badge value={diff} unit={m.unit} />
+          ) : (
+            <small className="muted">
+              {latest(data.entries, m.id)
+                ? `Dernière : ${number(latest(data.entries, m.id)!.values[m.id])} ${m.unit}`
+                : "Facultatif"}
+            </small>
+          )}
+        </div>
+      );
+    });
+  }
   function update(id: string, value: string) {
     setValues((v) => ({ ...v, [id]: value }));
     setError("");
   }
   function step(amount: number) {
-    const current =
-      parseDecimal(values.weight || "") ??
-      latest(data.entries, "weight")?.values.weight ??
-      0;
+    const current = parseDecimal(values.weight || "");
+    if (current === null) return;
     if (!Number.isFinite(current) || current + amount <= 0) return;
     update("weight", number(Math.round((current + amount) * 10) / 10));
   }
@@ -136,14 +229,14 @@ export function MeasureScreen() {
   }
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (busy || !requireAccount()) return;
+    if (submitting.current || !requireAccount()) return;
     if (!data.consents.body) {
       navigate("privacy");
       return;
     }
     const parsed: Record<string, number> = {};
     for (const [id, value] of Object.entries(values)) {
-      if (id !== "weight" && !visible.some((m) => m.id === id)) continue;
+      if (!data.measures.some((m) => m.id === id)) continue;
       const result = parseDecimal(value);
       if (result !== null) {
         if (!Number.isFinite(result)) {
@@ -167,6 +260,11 @@ export function MeasureScreen() {
       setError("Ajoutez au moins une mesure, une note ou une photo.");
       return;
     }
+    if (!date || date > today) {
+      setError("Choisissez une date de mesure valide, jusqu’à aujourd’hui.");
+      return;
+    }
+    submitting.current = true;
     setBusy(true);
     setError("");
     const height = editing
@@ -174,9 +272,10 @@ export function MeasureScreen() {
       : data.profile.height;
     if (height !== null && !Number.isFinite(height)) {
       setError(
-        "La stature historique doit être strictement positive ou laissée vide.",
+        "La hauteur historique doit être strictement positive ou laissée vide.",
       );
       setBusy(false);
+      submitting.current = false;
       return;
     }
     const payload = {
@@ -198,10 +297,12 @@ export function MeasureScreen() {
           body: Object.keys(photos).length ? body : JSON.stringify(payload),
         },
       );
+      completed.current = true;
       saved(entry, previous);
     } catch (e: any) {
       setError(e.message);
     } finally {
+      submitting.current = false;
       setBusy(false);
     }
   }
@@ -225,9 +326,21 @@ export function MeasureScreen() {
   return (
     <>
       <PageTitle
-        title={editing ? "Modifier ma mesure" : "Nouvelle mesure"}
-        back={false}
+        title={editing ? "Modifier la mesure" : "Nouvelle mesure"}
+        back={Boolean(editing)}
       />
+      {!editing && (
+        <button
+          className="text-button history-access"
+          onClick={() => navigate("history")}
+        >
+          <Icon as={History} size={18} /> Historique des mesures
+        </button>
+      )}
+      <p className="small form-help">
+        Une mesure, une note ou une photo suffit. Les autres champs peuvent
+        rester vides.
+      </p>
       <form id="measurement-form" onSubmit={submit} ref={formRef} noValidate>
         <div className="date-row">
           <label className="date-chip">
@@ -250,7 +363,9 @@ export function MeasureScreen() {
             {date === today ? "Aujourd’hui" : "Autre date"}
           </span>
         </div>
-        <section className="weight-card">
+        <section
+          className={`weight-card ${values.weight ? "" : "weight-empty"}`}
+        >
           <div className="card-top">
             <label className="eyebrow" htmlFor="weight">
               Poids
@@ -274,11 +389,7 @@ export function MeasureScreen() {
               inputMode="decimal"
               autoComplete="off"
               value={values.weight || ""}
-              placeholder={
-                latest(data.entries, "weight")
-                  ? number(latest(data.entries, "weight")!.values.weight)
-                  : "—"
-              }
+              placeholder="Saisir"
               onChange={(e) => update("weight", e.target.value)}
               onBlur={() => {
                 if (weight !== null && Number.isFinite(weight))
@@ -289,15 +400,14 @@ export function MeasureScreen() {
             <span className="hero-unit">kg</span>
           </div>
           <p id="weight-hint" className="weight-hint">
-            {values.weight
-              ? "Votre mesure, à votre rythme."
-              : latest(data.entries, "weight")
-                ? "Dernière valeur en repère. Touchez pour saisir."
-                : "Touchez pour saisir votre premier poids."}
+            {latest(data.entries, "weight")
+              ? `Dernier poids connu : ${number(latest(data.entries, "weight")!.values.weight)} kg · non saisi ici.`
+              : "Poids facultatif · ex. 78,4"}
           </p>
           <div className="stepper">
             <button
               type="button"
+              disabled={weight === null || !Number.isFinite(weight)}
               onClick={() => step(-0.1)}
               aria-label="Diminuer le poids de 0,1 kilogramme"
             >
@@ -306,6 +416,7 @@ export function MeasureScreen() {
             </button>
             <button
               type="button"
+              disabled={weight === null || !Number.isFinite(weight)}
               onClick={() => step(0.1)}
               aria-label="Augmenter le poids de 0,1 kilogramme"
             >
@@ -313,7 +424,7 @@ export function MeasureScreen() {
               0,1
             </button>
           </div>
-          {goal && (
+          {goal && values.weight && (
             <div className="weight-goal">
               <div className="goal-label">
                 <span>
@@ -332,7 +443,7 @@ export function MeasureScreen() {
           )}
         </section>
         <div className="section-heading">
-          <h2>Vos mensurations</h2>
+          <h2>Mensurations favorites</h2>
           <button
             type="button"
             className="text-button"
@@ -343,129 +454,135 @@ export function MeasureScreen() {
           </button>
         </div>
         <div className="measurement-grid">
-          {visible.map((m) => {
-            const val = parseDecimal(values[m.id] || "");
-            const previousEntry = latest(previousEntries, m.id, date);
-            const diff =
-              val !== null && Number.isFinite(val) && previousEntry
-                ? val - previousEntry.values[m.id]
-                : null;
-            return (
-              <div className="measure-tile" key={m.id}>
-                <label htmlFor={`input-${m.id}`} className="eyebrow">
-                  {m.name}
-                </label>
-                <div className="tile-input-row">
-                  <input
-                    id={`input-${m.id}`}
-                    name={m.id}
-                    type="text"
-                    inputMode="decimal"
-                    aria-label={`${m.name} en ${m.unit}`}
-                    autoComplete="off"
-                    maxLength={10}
-                    value={values[m.id] || ""}
-                    placeholder={
-                      latest(data.entries, m.id)
-                        ? number(latest(data.entries, m.id)!.values[m.id])
-                        : "—"
-                    }
-                    onChange={(e) => update(m.id, e.target.value)}
-                    onBlur={() => {
-                      if (val !== null && Number.isFinite(val))
-                        update(m.id, number(val));
-                    }}
-                  />
-                  <span>{m.unit}</span>
-                </div>
-                <Badge value={diff} unit={m.unit} />
-              </div>
-            );
-          })}
+          {measurementFields(
+            visible.filter((m) => data.profile.visible.includes(m.id)),
+          )}
         </div>
-        <button
-          type="button"
-          className="custom-button"
-          onClick={() => navigate("favorites")}
-        >
-          <Icon as={Plus} size={18} />
-          Mesure personnalisée
-        </button>
-        <div className="section-heading">
-          <h2>Un peu de contexte ?</h2>
-          <span className="optional">Facultatif</span>
-        </div>
-        <div className="note-field">
-          <label className="eyebrow" htmlFor="note">
-            Note de cette entrée
-          </label>
-          <textarea
-            id="note"
-            maxLength={2000}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Énergie, séance, ressenti… votre note à vous."
-            rows={3}
-          />
-          <span className="counter">{note.length} / 2 000</span>
-        </div>
-        <div className="section-heading">
-          <h2>Votre repère en images</h2>
-          <Icon as={Camera} size={18} />
-        </div>
-        <div className="photo-upload-grid">
-          {(["face", "profil", "dos"] as const).map((orientation) => (
-            <label
-              key={orientation}
-              className={`photo-upload ${photos[orientation] ? "selected" : ""}`}
-              onClick={(e) => {
-                if (!data.consents.photos) {
-                  e.preventDefault();
-                  if (requireAccount()) setPhotoConsent(true);
-                }
-              }}
-            >
-              <Icon as={photos[orientation] ? Check : ImagePlus} size={24} />
-              <strong>
-                {orientation === "face"
-                  ? "Face"
-                  : orientation === "profil"
-                    ? "Profil"
-                    : "Dos"}
-              </strong>
-              <small>
-                {photos[orientation]
-                  ? "Prête à envoyer"
-                  : editing?.photos.some((p) => p.orientation === orientation)
-                    ? "Remplacer"
-                    : "Ajouter"}
-              </small>
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp,.heic,.heif"
-                aria-label={`Ajouter une photo de ${orientation}`}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  if (file.size > MAX_PHOTO_BYTES) {
-                    setError("Photo trop volumineuse. Maximum : 10 Mo.");
-                    return;
-                  }
-                  setPhotos((p) => ({ ...p, [orientation]: file }));
-                }}
-              />
-            </label>
-          ))}
-        </div>
-        {Object.keys(photos).length > 0 && (
-          <Button onClick={() => setPhotos({})}>
-            Retirer les photos sélectionnées
+        <details className="optional-panel">
+          <summary>Ajouter d’autres mensurations</summary>
+          <div className="measure-chips">
+            {data.measures
+              .filter(
+                (m) =>
+                  m.id !== "weight" &&
+                  !m.archived &&
+                  !visible.some((v) => v.id === m.id),
+              )
+              .map((m) => (
+                <button
+                  type="button"
+                  key={m.id}
+                  onClick={() => update(m.id, "")}
+                >
+                  {m.name} +
+                </button>
+              ))}
+          </div>
+          <Button onClick={() => navigate("favorites")}>
+            Créer une mesure personnalisée
           </Button>
+        </details>
+        {visible.some((m) => !data.profile.visible.includes(m.id)) && (
+          <>
+            <div className="section-heading">
+              <h2>Autres mensurations</h2>
+            </div>
+            <div className="measurement-grid">
+              {measurementFields(
+                visible.filter((m) => !data.profile.visible.includes(m.id)),
+              )}
+            </div>
+          </>
         )}
+        <details className="optional-panel" open={note ? true : undefined}>
+          <summary>
+            {note ? "Note ajoutée · modifier" : "Ajouter une note"}{" "}
+            <span className="optional">Facultatif</span>
+          </summary>
+          <div className="note-field">
+            <label className="eyebrow" htmlFor="note">
+              Note de cette entrée
+            </label>
+            <textarea
+              id="note"
+              maxLength={2000}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Énergie, séance, ressenti… votre note à vous."
+              rows={3}
+            />
+            <span className="counter">{note.length} / 2 000</span>
+          </div>
+        </details>
+        <details
+          className="optional-panel"
+          data-photo-section
+          open={
+            openPhotos || Object.keys(photos).length || editing?.photos.length
+              ? true
+              : undefined
+          }
+        >
+          <summary>
+            {Object.keys(photos).length || editing?.photos.length
+              ? `${photoCount} photo${photoCount > 1 ? "s" : ""} ajoutée${photoCount > 1 ? "s" : ""} · modifier`
+              : "Ajouter des photos"}{" "}
+            <span className="optional">Facultatif</span>
+          </summary>
+          <div className="photo-upload-grid">
+            {(["face", "profil", "dos"] as const).map((orientation) => (
+              <label
+                key={orientation}
+                className={`photo-upload ${photos[orientation] ? "selected" : ""}`}
+                onClick={(e) => {
+                  if (!data.consents.photos) {
+                    e.preventDefault();
+                    if (requireAccount()) setPhotoConsent(true);
+                  }
+                }}
+              >
+                <Icon as={photos[orientation] ? Check : ImagePlus} size={24} />
+                <strong>
+                  {orientation === "face"
+                    ? "Face"
+                    : orientation === "profil"
+                      ? "Profil"
+                      : "Dos"}
+                </strong>
+                <small>
+                  {photos[orientation]
+                    ? "Prête à envoyer"
+                    : editing?.photos.some((p) => p.orientation === orientation)
+                      ? "Remplacer"
+                      : "Ajouter"}
+                </small>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,.heic,.heif"
+                  aria-label={`Ajouter une photo de ${orientation}`}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > MAX_PHOTO_BYTES) {
+                      setError("Photo trop volumineuse. Maximum : 10 Mo.");
+                      return;
+                    }
+                    setPhotos((p) => ({ ...p, [orientation]: file }));
+                  }}
+                />
+              </label>
+            ))}
+          </div>
+          {Object.keys(photos).length > 0 && (
+            <Button onClick={() => setPhotos({})}>
+              Retirer les photos sélectionnées
+            </Button>
+          )}
+        </details>
         {editing && (
           <section className="plain-card">
             <label className="field-label">
-              Stature de cette entrée, en cm
+              Hauteur de cette entrée, en cm
               <input
                 inputMode="decimal"
                 value={historicalHeight}
@@ -482,7 +599,18 @@ export function MeasureScreen() {
           <Icon as={LockKeyhole} size={14} />
           Vos mesures, notes et photos restent privées.
         </p>
-        <ErrorMessage>{error}</ErrorMessage>
+        {error && (
+          <ErrorMessage>
+            {error}{" "}
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => formRef.current?.requestSubmit()}
+            >
+              Réessayer l’enregistrement
+            </button>
+          </ErrorMessage>
+        )}
         <ActionBar form="measurement-form" busy={busy}>
           {editing ? "Enregistrer les modifications" : "Enregistrer la mesure"}
         </ActionBar>
@@ -522,11 +650,11 @@ export function MeasureScreen() {
   );
 }
 export function SuccessScreen() {
-  const { success, data, navigate, edit } = useApp();
+  const { success, data, navigate, viewEntry } = useApp();
   if (!success)
     return (
       <>
-        <PageTitle title="Vos repères" back={false} />
+        <PageTitle title="Aucune mesure à confirmer" back={false} />
         <Empty title="Prêt pour une nouvelle mesure ?" />
         <ActionBar onClick={() => navigate("measure")}>
           Nouvelle mesure
@@ -546,8 +674,8 @@ export function SuccessScreen() {
         Mesure enregistrée
       </div>
       <PageTitle
-        title="Un repère de plus."
-        eyebrow="C’est dans la boîte"
+        title="Mesure enregistrée"
+        eyebrow="Un repère de plus"
         back={false}
       />
       <div className="success-hero">
@@ -607,7 +735,7 @@ export function SuccessScreen() {
       <div className="success-recap">
         <div className="card-top">
           <span className="eyebrow">Votre saisie</span>
-          <DateLabel date={entry.date} />
+          <DateLabel date={entry.date} full /> {entry.date.slice(0, 4)}
         </div>
         {Object.entries(entry.values).map(([id, value]) => (
           <div className="recap-row" key={id}>
@@ -635,8 +763,11 @@ export function SuccessScreen() {
           <small>Un rendez-vous avec vous-même.</small>
         </span>
       </div>
-      <button className="text-button success-edit" onClick={() => edit(entry)}>
-        Corriger cette entrée
+      <button
+        className="text-button success-edit"
+        onClick={() => viewEntry(entry.id)}
+      >
+        Consulter la mesure enregistrée
       </button>
       <ActionBar onClick={() => navigate("analysis")}>
         Voir mon analyse

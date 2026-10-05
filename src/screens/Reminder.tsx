@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bell, BellOff, Check, Smartphone, Info, Mail } from "lucide-react";
+import { Bell, BellOff, Check, Smartphone, Mail } from "lucide-react";
 import { DateTime } from "luxon";
 import { useApp } from "../context";
 import {
@@ -19,8 +19,7 @@ import {
 import type { Reminder, AccountData } from "../../shared/types";
 import { APP_NAME, CONSENT_TEXTS, CONSENT_VERSION } from "../../shared/config";
 export function ReminderScreen() {
-  const { data, setData, requireAccount, capabilities, navigate, toast } =
-    useApp();
+  const { data, setData, requireAccount, capabilities, toast } = useApp();
   const initial = data.reminder;
   const [enabled, setEnabled] = useState(initial?.enabled ?? false);
   const weekday = initial?.weekday ?? 1;
@@ -30,7 +29,9 @@ export function ReminderScreen() {
   const frequency = "week" as const;
   const [time, setTime] = useState(initial?.time ?? "08:00");
   const [timezone, setTimezone] = useState(
-    initial?.timezone ?? data.profile.timezone,
+    initial?.timezone ??
+      Intl.DateTimeFormat().resolvedOptions().timeZone ??
+      data.profile.timezone,
   );
   const [channel, setChannel] = useState<"push" | "email">(
     initial?.channel ?? "push",
@@ -68,23 +69,69 @@ export function ReminderScreen() {
         })
         .catch(() => {});
   }, [supportsPush]);
+  const pushAvailable =
+    supportsPush && !(ios && !installed) && capabilities.pushConfigured;
+  useEffect(() => {
+    const refreshPermission = () => {
+      if ("Notification" in window) {
+        const next = Notification.permission;
+        if (next !== permission) {
+          setPermission(next);
+          setError("");
+        }
+      }
+    };
+    window.addEventListener("focus", refreshPermission);
+    document.addEventListener("visibilitychange", refreshPermission);
+    return () => {
+      window.removeEventListener("focus", refreshPermission);
+      document.removeEventListener("visibilitychange", refreshPermission);
+    };
+  }, [permission]);
   const operational =
     channel === "email"
       ? capabilities.emailConfigured && data.consents.email
-      : deviceReady && permission === "granted" && data.consents.push;
-  const status = !enabled
-    ? "Désactivé"
-    : channel === "email" && !capabilities.emailConfigured
-      ? "À configurer"
-      : channel === "push" && (!supportsPush || (ios && !installed))
-        ? "Indisponible sur cet appareil"
-        : channel === "push" && !capabilities.pushConfigured
-          ? "À configurer"
-          : permission === "denied" && channel === "push"
-            ? "Bloqué dans les réglages du téléphone"
+      : pushAvailable &&
+        deviceReady &&
+        permission === "granted" &&
+        data.consents.push;
+  const notificationStatus =
+    channel === "email"
+      ? !capabilities.emailConfigured
+        ? "Email indisponible"
+        : operational
+          ? "Rappels par email disponibles"
+          : "Consentement email nécessaire"
+      : !supportsPush || (ios && !installed)
+        ? "Indisponibles sur cet appareil"
+        : !capabilities.pushConfigured
+          ? "Indisponibles sur ce service"
+          : permission === "denied"
+            ? "Notifications bloquées"
             : operational
-              ? "Activé"
-              : "Autorisation nécessaire";
+              ? "Notifications disponibles sur cet appareil"
+              : "Notifications à activer sur cet appareil";
+  const availableElsewhere =
+    channel === "push" &&
+    capabilities.pushConfigured &&
+    data.consents.push &&
+    data.devices > 0;
+  const canConfirm =
+    operational ||
+    Boolean(
+      initial?.enabled && initial.channel === channel && availableElsewhere,
+    );
+  const scheduleSaved = Boolean(initial);
+  const active = Boolean(
+    initial?.enabled && operational && initial.channel === channel,
+  );
+  const dirty =
+    !initial ||
+    initial.enabled !== enabled ||
+    initial.time !== time ||
+    initial.timezone !== timezone ||
+    initial.channel !== channel ||
+    JSON.stringify(reminderDays(initial)) !== JSON.stringify(weekdays);
   const current: Reminder = {
     enabled,
     weekday,
@@ -104,15 +151,18 @@ export function ReminderScreen() {
         ? initial.anchor
         : reminderAnchor({ weekday, weekdays, frequency, time, timezone }),
   };
-  const dates = nextOccurrences(current, DateTime.now());
+  const dates =
+    active && !dirty && DateTime.local().setZone(timezone).isValid
+      ? nextOccurrences(current, DateTime.now())
+      : [];
   async function activate() {
-    if (!requireAccount()) return;
+    if (!requireAccount() || busy) return;
     setError("");
     setBusy(true);
     try {
       if (!agreed && !data.consents[channel])
         throw new Error(
-          "Choisissez explicitement le canal de rappel ci-dessous.",
+          "Votre consentement est nécessaire pour recevoir ce rappel.",
         );
       if (channel === "push" && (!supportsPush || (ios && !installed)))
         throw new Error(
@@ -170,7 +220,7 @@ export function ReminderScreen() {
         throw new Error(
           "Le canal email n’est pas encore disponible sur ce service.",
         );
-      toast("Le canal de rappel est prêt. Enregistrez votre horaire.");
+      toast("Autorisation enregistrée. Confirmez maintenant votre rappel.");
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -185,7 +235,7 @@ export function ReminderScreen() {
       const r = await api<Reminder>("/reminder", {
         method: "PUT",
         body: JSON.stringify({
-          enabled,
+          enabled: enabled && canConfirm,
           weekday,
           weekdays,
           frequency,
@@ -195,12 +245,12 @@ export function ReminderScreen() {
         }),
       });
       setData((d) => ({ ...d, reminder: r }));
+      setEnabled(r.enabled);
       toast(
-        enabled
-          ? "Votre rappel est enregistré."
-          : "Votre rappel est désactivé.",
+        r.enabled
+          ? "Horaires enregistrés. Rappel actif."
+          : "Horaires enregistrés. Aucun envoi actif.",
       );
-      navigate("measure");
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -210,19 +260,12 @@ export function ReminderScreen() {
   return (
     <>
       <PageTitle title="Rappel" />
-      <section className="reminder-main">
-        <div>
-          <h2>Mon rappel</h2>
-          <p>La régularité commence par un petit rendez-vous.</p>
-        </div>
-        <Switch
-          checked={enabled}
-          onChange={() => setEnabled(!enabled)}
-          label="Activer mon rappel"
-        />
-      </section>
+      <p className="lead">
+        Choisissez vos horaires, autorisez les notifications si vous le
+        souhaitez, puis confirmez votre rappel.
+      </p>
       <div className="section-heading">
-        <h2>Quels jours ?</h2>
+        <h2>1. Jours et heure</h2>
       </div>
       <div className="day-selector">
         {[
@@ -256,7 +299,7 @@ export function ReminderScreen() {
       <p className="small muted">Chaque semaine, les jours choisis.</p>
       <section className="time-card">
         <label className="eyebrow" htmlFor="reminder-time">
-          Le bon moment
+          Heure du rappel
         </label>
         <input
           id="reminder-time"
@@ -265,29 +308,44 @@ export function ReminderScreen() {
           onChange={(e) => setTime(e.target.value)}
           required
         />
-        <label className="field-label">
-          Fuseau horaire
-          <input
-            value={timezone}
-            onChange={(e) => setTimezone(e.target.value)}
-          />
-        </label>
+        <details className="timezone-details">
+          <summary>Fuseau : {timezone} · modifier</summary>
+          <label className="field-label">
+            Fuseau horaire
+            <input
+              value={timezone}
+              onChange={(e) => setTimezone(e.target.value)}
+            />
+            <small>
+              Détecté sur cet appareil pour un nouveau rappel. Exemple :
+              Europe/Paris.
+            </small>
+          </label>
+        </details>
       </section>
       <div className="section-heading">
-        <h2>Comment vous rappeler ?</h2>
+        <h2>2. Notifications</h2>
       </div>
       <div className="channel-options">
         <button
-          aria-pressed={channel === "push"}
-          onClick={() => setChannel("push")}
+          aria-pressed={channel === "push" && pushAvailable}
+          disabled={!pushAvailable}
+          onClick={() => {
+            setChannel("push");
+            setAgreed(false);
+          }}
         >
           <Icon as={Smartphone} />
-          Sur mon téléphone
+          Sur cet appareil
+          {!pushAvailable && <small>Indisponible</small>}
         </button>
         <button
-          aria-pressed={channel === "email"}
+          aria-pressed={channel === "email" && capabilities.emailConfigured}
           disabled={!capabilities.emailConfigured}
-          onClick={() => setChannel("email")}
+          onClick={() => {
+            setChannel("email");
+            setAgreed(false);
+          }}
         >
           <Icon as={Mail} />
           Par email
@@ -305,66 +363,128 @@ export function ReminderScreen() {
         </section>
       )}
       <section className="plain-card">
-        <label className="check-label">
-          <input
-            type="checkbox"
-            checked={agreed || data.consents[channel]}
-            disabled={data.consents[channel]}
-            onChange={(e) => setAgreed(e.target.checked)}
-          />
-          <span>{CONSENT_TEXTS[channel]}</span>
-        </label>
-        <Button
-          disabled={
-            busy ||
-            (!agreed && !data.consents[channel]) ||
-            (channel === "push" && !capabilities.pushConfigured)
-          }
-          onClick={() => void activate()}
-        >
-          Autoriser ce canal <Icon as={Bell} />
-        </Button>
+        <h2>{notificationStatus}</h2>
+        <p>
+          {channel === "push"
+            ? "Votre consentement autorise Mesura à envoyer un rappel. L’autorisation du navigateur permet de l’afficher sur cet appareil. Ces deux choix sont distincts et volontaires."
+            : "Votre consentement autorise l’envoi d’un rappel à l’adresse email de votre compte."}
+        </p>
+        {(channel === "push" ? pushAvailable : capabilities.emailConfigured) &&
+          !operational && (
+            <>
+              <label className="check-label">
+                <input
+                  type="checkbox"
+                  checked={agreed || data.consents[channel]}
+                  disabled={data.consents[channel]}
+                  onChange={(e) => setAgreed(e.target.checked)}
+                />
+                <span>{CONSENT_TEXTS[channel]}</span>
+              </label>
+              {channel === "push" && permission === "denied" ? (
+                <p>
+                  Autorisez les notifications pour Mesura dans les réglages de
+                  votre navigateur, puis revenez ici.
+                </p>
+              ) : (
+                <Button
+                  disabled={busy || (!agreed && !data.consents[channel])}
+                  onClick={() => void activate()}
+                >
+                  {channel === "push"
+                    ? permission === "granted"
+                      ? "Activer les notifications sur cet appareil"
+                      : "Autoriser les notifications"
+                    : "Autoriser les rappels par email"}
+                  <Icon as={Bell} />
+                </Button>
+              )}
+            </>
+          )}
       </section>
-      <section
-        className={`reminder-status ${status === "Activé" ? "cobalt" : ""}`}
-      >
-        <Icon
-          as={status === "Activé" ? Check : enabled ? Info : BellOff}
-          size={24}
-        />
+      <div className="section-heading">
+        <h2>3. Confirmer le rappel</h2>
+      </div>
+      <section className="reminder-main">
         <div>
-          <span className="eyebrow">État du canal</span>
-          <h2>{status}</h2>
+          <h2>Activer mon rappel</h2>
           <p>
-            {status === "À configurer"
-              ? "Ce canal n’est pas encore disponible sur le service."
-              : status === "Activé"
-                ? "Un rappel discret, sans mesure ni information personnelle."
-                : "Le suivi reste disponible, avec ou sans rappel."}
+            {operational
+              ? "Votre canal est disponible. Confirmez pour enregistrer."
+              : "Vous pouvez enregistrer les horaires. L’envoi attend l’activation d’un canal disponible."}
           </p>
         </div>
+        <Switch
+          checked={enabled}
+          onChange={() => setEnabled(!enabled)}
+          label="Activer mon rappel"
+        />
       </section>
-      <section className="plain-card">
-        <span className="eyebrow">
-          Prochains rendez-vous {enabled ? "" : "· aperçu"}
-        </span>
-        {dates.map((d, i) => (
-          <p className="occurrence" key={d}>
-            <span>{i + 1 < 10 ? `0${i + 1}` : i + 1}</span>
-            {DateTime.fromISO(d)
-              .setZone(timezone)
-              .setLocale("fr")
-              .toFormat("cccc d LLLL · HH:mm")}
+      <section
+        className={`reminder-status ${active && !dirty ? "cobalt" : ""}`}
+        role="status"
+      >
+        <Icon as={active && !dirty ? Check : BellOff} size={24} />
+        <div>
+          <span className="eyebrow">État enregistré</span>
+          <h2>
+            {active
+              ? "Rappel actif"
+              : initial?.enabled
+                ? "Horaires enregistrés"
+                : "Aucun envoi actif"}
+          </h2>
+          <p>
+            {scheduleSaved
+              ? "Horaires enregistrés."
+              : "Horaires non enregistrés."}
+            {dirty && " Modifications à confirmer."}
           </p>
-        ))}
-        <p className="small muted">
-          L’heure est locale. La réception dépend du téléphone, du réseau et du
-          système.
-        </p>
+          <p>
+            {channel === "push"
+              ? operational
+                ? "Notifications actives sur cet appareil."
+                : "Notifications inactives sur cet appareil."
+              : operational
+                ? "Canal email autorisé."
+                : "Canal email inactif."}
+          </p>
+          {initial?.enabled && !active && (
+            <p>
+              Le rappel est activé pour le canal enregistré. Cet appareil reste
+              à configurer pour recevoir des notifications ici.
+            </p>
+          )}
+          {!initial?.enabled && (
+            <p>Vos horaires seuls ne déclenchent pas de notification.</p>
+          )}
+        </div>
       </section>
+      {dates.length > 0 && (
+        <section className="plain-card">
+          <span className="eyebrow">
+            Prochains rappels · horaires enregistrés
+          </span>
+          {dates.map((d) => (
+            <p className="occurrence" key={d}>
+              {DateTime.fromISO(d)
+                .setZone(timezone)
+                .setLocale("fr")
+                .toFormat("cccc d LLLL · HH:mm")}
+            </p>
+          ))}
+          <p className="small muted">
+            La réception dépend du téléphone, du réseau et du système.
+          </p>
+        </section>
+      )}
       <ErrorMessage>{error}</ErrorMessage>
       <ActionBar onClick={() => void save()} busy={busy}>
-        Enregistrer le rappel
+        {enabled && canConfirm
+          ? "Confirmer le rappel"
+          : enabled
+            ? "Enregistrer les horaires"
+            : "Enregistrer le rappel"}
       </ActionBar>
     </>
   );

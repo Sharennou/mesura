@@ -88,7 +88,7 @@ try {
     assert.ok(reads > 0);
     assert.equal(new URL(page.url()).hash, "");
     await expect(page.getByRole("navigation")).toHaveCount(0);
-    await page.getByLabel("Votre taille en cm").fill("172");
+    await page.getByLabel("Votre hauteur en cm").fill("172");
     await page.getByLabel("Votre objectif").selectOption("target");
     await page.getByLabel("Mon départ").fill("80");
     await page.getByLabel("Ma cible").fill("75");

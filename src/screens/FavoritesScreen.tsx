@@ -14,7 +14,7 @@ import { number } from "../../shared/calculations";
 import type { AccountData, Measure } from "../../shared/types";
 
 export function FavoritesScreen() {
-  const { data, setData, requireAccount, navigate, toast } = useApp();
+  const { data, setData, requireAccount, back, toast } = useApp();
   const [visible, setVisible] = useState(data.profile.visible);
   const [custom, setCustom] = useState(false);
   const [name, setName] = useState("");
@@ -41,7 +41,7 @@ export function FavoritesScreen() {
         }),
       );
       toast("Vos repères sont prêts.");
-      navigate("measure");
+      back();
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -70,10 +70,7 @@ export function FavoritesScreen() {
   }
   return (
     <>
-      <PageTitle
-        title="Vos repères favoris"
-        eyebrow="Personnaliser ma saisie"
-      />
+      <PageTitle title="Mesures favorites" eyebrow="Personnaliser ma saisie" />
       <p className="lead">
         Choisissez vos mesures. Placez les plus utiles en premier.
       </p>

@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Camera, Edit3, History, Plus, Trash2 } from "lucide-react";
+import { Edit3, History, Plus, Trash2 } from "lucide-react";
 import { useApp } from "../context";
+import { useViewState } from "../useViewState";
 import { api } from "../api";
+import { PhotoImage } from "../PhotoImage";
 import {
   Button,
   Confirm,
@@ -20,107 +22,226 @@ export function HistoryScreen() {
     edit,
     requireAccount,
     navigate,
+    back,
+    viewEntry,
+    screen,
+    entryId,
     historyMonth,
     setHistoryMonth,
   } = useApp();
+  const [date, setDate] = useViewState("history.date", "");
   const [remove, setRemove] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const entries = data.entries
-    .filter((e) => !historyMonth || e.date.startsWith(historyMonth))
+    .filter(
+      (e) =>
+        (!historyMonth || e.date.startsWith(historyMonth)) &&
+        (!date || e.date === date),
+    )
     .sort(
       (a, b) =>
         b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt),
     );
+  const entry =
+    screen === "entry" ? data.entries.find((e) => e.id === entryId) : null;
   return (
     <>
       <PageTitle
-        title="Tous vos repères"
-        eyebrow={historyMonth ? `Historique · ${historyMonth}` : "Historique"}
+        title={
+          screen === "entry" ? "Détail de la mesure" : "Historique des mesures"
+        }
       />
-      {historyMonth && (
-        <Button onClick={() => setHistoryMonth(null)}>
-          Voir toutes mes entrées
-        </Button>
-      )}
-      {entries.length ? (
-        <>
-          <p className="lead">
-            {entries.length} entrée{entries.length > 1 ? "s" : ""}. Un parcours
-            qui vous ressemble.
-          </p>
-          <div className="stack">
-            {entries.map((e) => (
-              <article className="history-card" key={e.id}>
-                <div className="card-top">
-                  <h2>
-                    <DateLabel date={e.date} full />
-                  </h2>
-                  <div className="row-actions">
-                    <button
-                      className="circle"
-                      aria-label={`Modifier l’entrée du ${e.date}`}
-                      onClick={() => {
-                        if (requireAccount()) edit(e);
-                      }}
-                    >
-                      <Icon as={Edit3} size={18} />
-                    </button>
-                    <button
-                      className="circle"
-                      aria-label={`Supprimer l’entrée du ${e.date}`}
-                      onClick={() => {
-                        if (requireAccount()) setRemove(e.id);
-                      }}
-                    >
-                      <Icon as={Trash2} size={18} />
-                    </button>
-                  </div>
+      {screen === "entry" ? (
+        entry ? (
+          <>
+            <section className="plain-card">
+              <h2>
+                <DateLabel date={entry.date} full /> {entry.date.slice(0, 4)}
+              </h2>
+              {Object.entries(entry.values).map(([id, value]) => (
+                <div className="recap-row" key={id}>
+                  <span>
+                    {data.measures.find((m) => m.id === id)?.name ?? id}
+                  </span>
+                  <strong>
+                    {number(value)}{" "}
+                    {data.measures.find((m) => m.id === id)?.unit}
+                  </strong>
                 </div>
-                <div className="history-values">
-                  {Object.entries(e.values).map(([id, v]) => (
-                    <span key={id}>
-                      <small>
-                        {data.measures.find((m) => m.id === id)?.name}
-                      </small>
-                      <strong>
-                        {number(v)} 
-                        {data.measures.find((m) => m.id === id)?.unit}
-                      </strong>
-                    </span>
+              ))}
+              {!Object.keys(entry.values).length && (
+                <p className="small muted">
+                  Cette entrée ne contient pas de valeur chiffrée.
+                </p>
+              )}
+              {entry.note && (
+                <>
+                  <h3>Note</h3>
+                  <p className="saved-note">{entry.note}</p>
+                </>
+              )}
+            </section>
+            {entry.photos.length > 0 && (
+              <>
+                <div className="section-heading">
+                  <h2>Photos de cette entrée</h2>
+                </div>
+                <div className="photo-gallery">
+                  {entry.photos.map((p) => (
+                    <figure key={p.id}>
+                      <PhotoImage
+                        photoId={p.id}
+                        alt={`${p.orientation} du ${entry.date}`}
+                      />
+                      <figcaption>
+                        {p.orientation === "face"
+                          ? "Face"
+                          : p.orientation === "profil"
+                            ? "Profil"
+                            : "Dos"}{" "}
+                        · <DateLabel date={entry.date} />
+                      </figcaption>
+                    </figure>
                   ))}
                 </div>
-                {e.note && <p className="saved-note">{e.note}</p>}
-                {e.photos.length > 0 && (
-                  <button
-                    className="text-button"
-                    onClick={() => navigate("photos")}
-                  >
-                    <Icon as={Camera} size={16} />
-                    {e.photos.length} photo{e.photos.length > 1 ? "s" : ""}
-                  </button>
-                )}
-              </article>
-            ))}
-          </div>
-        </>
+              </>
+            )}
+            <Button
+              onClick={() => {
+                if (requireAccount()) edit(entry);
+              }}
+            >
+              Modifier la mesure <Icon as={Edit3} />
+            </Button>
+            <div className="destructive-actions">
+              <button
+                className="text-button"
+                onClick={() => {
+                  if (requireAccount()) setRemove(entry.id);
+                }}
+              >
+                <Icon as={Trash2} size={18} />
+                Supprimer cette mesure
+              </button>
+            </div>
+          </>
+        ) : (
+          <Empty title="Cette mesure n’est plus disponible">
+            Revenez à l’historique pour consulter vos autres entrées.
+          </Empty>
+        )
       ) : (
-        <Empty title="Votre histoire commence ici." icon={History}>
-          Enregistrez votre première entrée pour la retrouver ici.
-        </Empty>
+        <>
+          <div className="two-fields history-filters">
+            <label className="field-label">
+              Mois
+              <input
+                type="month"
+                value={historyMonth ?? ""}
+                onChange={(e) => {
+                  setHistoryMonth(e.target.value || null);
+                  setDate("");
+                }}
+              />
+            </label>
+            <label className="field-label">
+              Date précise
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => {
+                  setDate(e.target.value);
+                  setHistoryMonth(null);
+                }}
+              />
+            </label>
+          </div>
+          {(historyMonth || date) && (
+            <button
+              className="text-button"
+              onClick={() => {
+                setHistoryMonth(null);
+                setDate("");
+              }}
+            >
+              Effacer les filtres
+            </button>
+          )}
+          <p className="small muted history-count">
+            {entries.length} entrée{entries.length > 1 ? "s" : ""} · choisissez
+            une date pour consulter.
+          </p>
+          {entries.length ? (
+            <div className="stack">
+              {entries.map((e) => (
+                <button
+                  className="history-card history-entry"
+                  key={e.id}
+                  onClick={() => viewEntry(e.id)}
+                  aria-label={`Consulter la mesure du ${e.date}`}
+                >
+                  <h2>
+                    <DateLabel date={e.date} full /> {e.date.slice(0, 4)}
+                  </h2>
+                  <div className="history-values">
+                    {Object.entries(e.values)
+                      .slice(0, 4)
+                      .map(([id, value]) => (
+                        <span key={id}>
+                          <small>
+                            {data.measures.find((m) => m.id === id)?.name}
+                          </small>
+                          <strong>
+                            {number(value)}{" "}
+                            {data.measures.find((m) => m.id === id)?.unit}
+                          </strong>
+                        </span>
+                      ))}
+                  </div>
+                  <p className="small muted">
+                    {[
+                      Object.keys(e.values).length > 4
+                        ? `${Object.keys(e.values).length} valeurs`
+                        : "",
+                      e.note ? "Note ajoutée" : "",
+                      e.photos.length ? `${e.photos.length} photo(s)` : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                  <span className="text-button">Consulter la mesure →</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <Empty
+              title={
+                data.entries.length
+                  ? "Aucune entrée pour ces dates"
+                  : "Votre histoire commence ici"
+              }
+              icon={History}
+            >
+              {data.entries.length
+                ? "Choisissez une autre date ou effacez les filtres."
+                : "Enregistrez votre première mesure pour la retrouver ici."}
+            </Empty>
+          )}
+          <Button onClick={() => navigate("measure")}>
+            Ajouter une mesure <Icon as={Plus} />
+          </Button>
+        </>
       )}
       <ErrorMessage>{error}</ErrorMessage>
-      <Button onClick={() => navigate("measure")}>
-        Nouvelle mesure
-        <Icon as={Plus} />
-      </Button>
       {remove && (
         <Confirm
-          title="Supprimer cette entrée ?"
+          title="Supprimer cette mesure ?"
           text="Les mesures, la note et les photos associées seront supprimées. Votre analyse sera recalculée."
           busy={busy}
           onClose={() => setRemove(null)}
           onConfirm={async () => {
+            if (busy) return;
             setBusy(true);
             try {
               await api(`/entries/${remove}`, { method: "DELETE" });
@@ -129,6 +250,7 @@ export function HistoryScreen() {
                 entries: d.entries.filter((e) => e.id !== remove),
               }));
               setRemove(null);
+              if (screen === "entry") back();
             } catch (e: any) {
               setError(e.message);
             } finally {

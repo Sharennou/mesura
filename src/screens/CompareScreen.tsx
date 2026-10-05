@@ -1,28 +1,38 @@
-import { useState } from "react";
+import { DateTime } from "luxon";
 import { useApp } from "../context";
-import { Badge, Button, ErrorMessage, PageTitle } from "../components";
+import { useViewState } from "../useViewState";
+import {
+  Badge,
+  Button,
+  DateLabel,
+  ErrorMessage,
+  PageTitle,
+} from "../components";
 import {
   delta,
   localDate,
   number,
-  periodBounds,
   periodStats,
   shiftDate,
 } from "../../shared/calculations";
 
 export function CompareScreen() {
-  const { data } = useApp();
+  const { data, navigate } = useApp();
   const today = localDate(data.profile.timezone);
-  const range = periodBounds("1M", data.entries, today);
-  const duration =
-    Math.round((Date.parse(range.end) - Date.parse(range.start)) / 86400000) +
-    1;
-  const [a, setA] = useState({
-    start: shiftDate(range.start, -duration),
-    end: shiftDate(range.start, -1),
+  const [a, setA] = useViewState("compare.reference", {
+    start: shiftDate(today, -59),
+    end: shiftDate(today, -30),
   });
-  const [b, setB] = useState(range);
-  const [selected, setSelected] = useState(["weight", "waist", "hips"]);
+  const [b, setB] = useViewState("compare.compared", {
+    start: shiftDate(today, -29),
+    end: today,
+  });
+  const favorites = ["weight", ...data.profile.visible].filter((id) =>
+    data.measures.some((m) => m.id === id && !m.archived),
+  );
+  const [selected, setSelected] = useViewState("compare.measures", favorites);
+  const [quick, setQuick] = useViewState("compare.quick", "30");
+  const [showAll, setShowAll] = useViewState("compare.all", false);
   const valid = Boolean(
     a.start &&
     a.end &&
@@ -31,67 +41,119 @@ export function CompareScreen() {
     a.start <= a.end &&
     b.start <= b.end,
   );
-  const days = (range: { start: string; end: string }) =>
-    range.start && range.end
-      ? Math.round(
-          (Date.parse(range.end) - Date.parse(range.start)) / 86400000,
-        ) + 1
-      : "—";
+  function choose(value: string) {
+    setQuick(value);
+    if (value === "month") {
+      const month = DateTime.fromISO(today);
+      setB({ start: month.startOf("month").toISODate()!, end: today });
+      setA({
+        start: month.minus({ months: 1 }).startOf("month").toISODate()!,
+        end: month.minus({ months: 1 }).endOf("month").toISODate()!,
+      });
+    } else {
+      const days = Number(value);
+      setB({ start: shiftDate(today, 1 - days), end: today });
+      setA({
+        start: shiftDate(today, 1 - 2 * days),
+        end: shiftDate(today, -days),
+      });
+    }
+  }
   return (
     <>
-      <PageTitle title="Deux périodes. Vos repères." eyebrow="Comparer" />
-      <p className="lead">Prenez du recul, sans juger la direction.</p>
-      <Button
-        onClick={() => {
-          setB(range);
-          setA({
-            start: shiftDate(range.start, -duration),
-            end: shiftDate(range.start, -1),
-          });
-        }}
+      <PageTitle title="Comparer deux périodes" />
+      <p className="lead">
+        Comparez la moyenne de chaque période. La variation décrit un écart,
+        sans jugement sur sa direction.
+      </p>
+      <div
+        className="measure-chips quick-periods"
+        aria-label="Comparaisons rapides"
       >
-        Cette période / période précédente
-      </Button>
-      {(
-        [
-          ["A", a, setA],
-          ["B", b, setB],
-        ] as const
-      ).map(([label, range, set]) => (
-        <section className={`compare-period period-${label}`} key={label}>
-          <span className="eyebrow">Période {label}</span>
-          <div className="two-fields">
-            <label className="field-label">
-              Du
-              <input
-                type="date"
-                required
-                value={range.start}
-                onChange={(e) => set((r) => ({ ...r, start: e.target.value }))}
-              />
-            </label>
-            <label className="field-label">
-              Au
-              <input
-                type="date"
-                required
-                value={range.end}
-                onChange={(e) => set((r) => ({ ...r, end: e.target.value }))}
-              />
-            </label>
-          </div>
-          <p className="small">{days(range)} jours calendaires</p>
-        </section>
-      ))}
+        {[
+          ["30", "30 derniers jours"],
+          ["7", "7 derniers jours"],
+          ["month", "Ce mois / mois précédent"],
+        ].map(([value, label]) => (
+          <button
+            key={value}
+            aria-pressed={quick === value}
+            onClick={() => choose(value)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="compare-range-summary plain-card">
+        <p>
+          <strong>Période de référence</strong>
+          <br />
+          {a.start ? <DateLabel date={a.start} /> : "Date à choisir"}{" "}
+          {a.start.slice(0, 4)} —{" "}
+          {a.end ? <DateLabel date={a.end} /> : "Date à choisir"}{" "}
+          {a.end.slice(0, 4)}
+        </p>
+        <p>
+          <strong>Période comparée</strong>
+          <br />
+          {b.start ? <DateLabel date={b.start} /> : "Date à choisir"}{" "}
+          {b.start.slice(0, 4)} —{" "}
+          {b.end ? <DateLabel date={b.end} /> : "Date à choisir"}{" "}
+          {b.end.slice(0, 4)}
+        </p>
+      </div>
+      <details
+        className="optional-panel"
+        open={quick === "custom" ? true : undefined}
+      >
+        <summary>Dates personnalisées</summary>
+        {(
+          [
+            ["Période de référence", a, setA],
+            ["Période comparée", b, setB],
+          ] as const
+        ).map(([label, range, set]) => (
+          <section className="compare-period" key={label}>
+            <h2>{label}</h2>
+            <div className="two-fields">
+              <label className="field-label">
+                Du
+                <input
+                  type="date"
+                  aria-label={`${label} : du`}
+                  value={range.start}
+                  onChange={(e) => {
+                    setQuick("custom");
+                    set((r) => ({ ...r, start: e.target.value }));
+                  }}
+                />
+              </label>
+              <label className="field-label">
+                Au
+                <input
+                  type="date"
+                  aria-label={`${label} : au`}
+                  value={range.end}
+                  onChange={(e) => {
+                    setQuick("custom");
+                    set((r) => ({ ...r, end: e.target.value }));
+                  }}
+                />
+              </label>
+            </div>
+          </section>
+        ))}
+      </details>
       <div className="section-heading">
         <h2>Mesures à comparer</h2>
       </div>
-      <div className="measure-chips">
+      <div className="measure-chips" aria-label="Mesures à comparer">
         {data.measures
           .filter(
             (m) =>
-              !m.archived ||
-              data.entries.some((e) => e.values[m.id] !== undefined),
+              (showAll || favorites.includes(m.id)) &&
+              (!m.archived ||
+                data.entries.some((e) => e.values[m.id] !== undefined)),
           )
           .map((m) => (
             <button
@@ -109,9 +171,16 @@ export function CompareScreen() {
             </button>
           ))}
       </div>
+      <button className="text-button" onClick={() => setShowAll(!showAll)}>
+        {showAll ? "Afficher mes favorites" : "Choisir d’autres mesures"}
+      </button>
       <ErrorMessage>
-        {!valid ? "La date de fin doit suivre la date de début." : null}
+        {!valid &&
+          "Dans chaque période, la date de fin doit suivre la date de début."}
       </ErrorMessage>
+      {!selected.length && (
+        <p className="plain-card">Choisissez au moins une mesure à comparer.</p>
+      )}
       {valid &&
         selected.map((id) => {
           const m = data.measures.find((m) => m.id === id);
@@ -130,56 +199,68 @@ export function CompareScreen() {
             <section className="comparison-card" key={id}>
               <div className="card-top">
                 <h2>{m.name}</h2>
-                <Badge value={change} unit={m.unit} />
+                {change !== null && <Badge value={change} unit={m.unit} />}
               </div>
               <div className="comparison-values">
                 {[
-                  ["A", sa, a],
-                  ["B", sb, b],
-                ].map(([label, stats, range]: any) => (
+                  ["Référence", sa],
+                  ["Comparée", sb],
+                ].map(([label, stats]: any) => (
                   <div key={label}>
-                    <span className="eyebrow">Période {label} · moyenne</span>
+                    <span className="eyebrow">{label} · moyenne</span>
                     <strong>
                       {stats.average === null ? "—" : number(stats.average)}
                       <small>{m.unit}</small>
                     </strong>
-                    <p>
-                      {range.start} → {range.end}
-                    </p>
-                    <p>
-                      {stats.days} jour{stats.days > 1 ? "s" : ""} renseigné
-                      {stats.days > 1 ? "s" : ""}
-                    </p>
-                    <small>
-                      Première :{" "}
-                      {stats.first
-                        ? `${number(stats.first.value)} · ${stats.first.date}`
-                        : "—"}
-                      <br />
-                      Dernière :{" "}
-                      {stats.last
-                        ? `${number(stats.last.value)} · ${stats.last.date}`
-                        : "—"}
-                    </small>
+                    <p>{stats.days} jour(s) renseigné(s)</p>
                   </div>
                 ))}
               </div>
-              <p className="comparison-change">
-                Écart B − A :{" "}
-                <strong>
-                  {delta(change)} {m.unit}
-                </strong>{" "}
-                · {delta(percent)}
-                {percent !== null ? " %" : ""}
-              </p>
+              {change !== null ? (
+                <p className="comparison-change">
+                  Moyenne comparée − moyenne de référence :{" "}
+                  <strong>
+                    {delta(change)} {m.unit}
+                  </strong>{" "}
+                  · {delta(percent)} %
+                </p>
+              ) : (
+                <div className="comparison-change">
+                  <p className="small">
+                    Aucune valeur de {m.name.toLocaleLowerCase("fr")} dans{" "}
+                    {sa.average === null && sb.average === null
+                      ? "les deux périodes"
+                      : sa.average === null
+                        ? "la période de référence"
+                        : "la période comparée"}
+                    .
+                  </p>
+                  <button
+                    className="text-button"
+                    onClick={() => setQuick("custom")}
+                  >
+                    Choisir d’autres dates
+                  </button>
+                  <button
+                    className="text-button"
+                    onClick={() => navigate("measure")}
+                  >
+                    Ajouter une mesure
+                  </button>
+                </div>
+              )}
             </section>
           );
         })}
-      <p className="small muted">
-        Chaque jour renseigné compte autant : les saisies d’un même jour sont
-        d’abord moyennées. Les jours sans saisie ne sont pas estimés. Les durées
-        des périodes peuvent différer.
-      </p>
+      <details className="optional-panel">
+        <summary>Détails du calcul</summary>
+        <p className="small">
+          Les saisies d’un même jour sont d’abord moyennées. La moyenne de
+          période donne le même poids à chaque jour renseigné. Les jours absents
+          ne sont pas estimés. Les périodes peuvent avoir des durées différentes
+          ; le mois en cours est incomplet.
+        </p>
+      </details>
     </>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Bell,
   Ruler,
@@ -13,7 +13,12 @@ import logo from "./assets/mesura-logo.png";
 import { api, useSession } from "./api";
 import { CLOUD } from "./deployment";
 import { emptyAccountData } from "./account-data";
-import { AppContext, type Screen, type MeasurementDraft } from "./context";
+import {
+  AppContext,
+  type Screen,
+  type MeasurementDraft,
+  type EditingDraft,
+} from "./context";
 import { Icon } from "./components";
 import { MeasureScreen, SuccessScreen } from "./screens/Measure";
 import { AnalysisScreen } from "./screens/Analysis";
@@ -42,6 +47,9 @@ const screens: Screen[] = [
   "account",
   "privacy",
   "history",
+  "entry",
+  "edit",
+  "profile",
   "photos",
   "compare",
   "monthly",
@@ -64,12 +72,28 @@ export default function App() {
     privacyContact: null,
   });
   const [accountOwner, setAccountOwner] = useState<string | null>(null);
-  const [editing, setEditing] = useState<Entry | null>(null);
+  const [entryId, setEntryId] = useState<string | null>(
+    history.state?.entryId ?? null,
+  );
+  const editing =
+    route === "edit"
+      ? (data.entries.find((e) => e.id === entryId) ?? null)
+      : null;
+  const [viewState, setViewState] = useState<Record<string, unknown>>({});
+  const routeRef = useRef(route);
+  const navigationKey = useRef(history.state?.mesuraKey ?? crypto.randomUUID());
+  const scrollPositions = useRef(new Map<string, number>());
+  const screenPositions = useRef(new Map<Screen, number>());
+  const pendingScroll = useRef<number | null>(null);
+  const [navigationVersion, setNavigationVersion] = useState(0);
   const [success, setSuccess] = useState<{
     entry: Entry;
     previous: number | null;
   } | null>(null);
   const [draft, setDraft] = useState<MeasurementDraft | null>(null);
+  const [editingDrafts, setEditingDrafts] = useState<
+    Record<string, EditingDraft>
+  >({});
   const [historyMonth, setHistoryMonth] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [offline, setOffline] = useState(!navigator.onLine);
@@ -102,15 +126,51 @@ export default function App() {
   }, [isPending]);
   useEffect(() => {
     setDraft(null);
+    setEditingDrafts({});
     setHistoryMonth(null);
+    setViewState({});
+    scrollPositions.current.clear();
+    screenPositions.current.clear();
   }, [session?.user.id]);
-  function navigate(next: Screen) {
-    if (next === "measure") setEditing(null);
-    if (next === "history") setHistoryMonth(null);
-    location.hash = next;
-    setRoute(next);
-    window.scrollTo(0, 0);
+  function rememberPosition() {
+    scrollPositions.current.set(navigationKey.current, window.scrollY);
+    screenPositions.current.set(routeRef.current, window.scrollY);
   }
+  function openScreen(next: Screen, id: string | null = null) {
+    if (next === routeRef.current && id === entryId) return;
+    rememberPosition();
+    const key = crypto.randomUUID();
+    history.pushState(
+      { mesuraKey: key, mesuraParent: true, screen: next, entryId: id },
+      "",
+      `#${next}`,
+    );
+    navigationKey.current = key;
+    routeRef.current = next;
+    pendingScroll.current = ["entry", "edit", "success"].includes(next)
+      ? 0
+      : (screenPositions.current.get(next) ?? 0);
+    setEntryId(id);
+    setRoute(next);
+    setNavigationVersion((v) => v + 1);
+  }
+  function navigate(next: Screen) {
+    openScreen(next);
+  }
+  function back() {
+    if (history.state?.mesuraParent) history.back();
+    else
+      navigate(
+        ["photos", "compare", "monthly"].includes(routeRef.current)
+          ? "analysis"
+          : "measure",
+      );
+  }
+  useLayoutEffect(() => {
+    if (pendingScroll.current === null || loading) return;
+    window.scrollTo(0, pendingScroll.current);
+    pendingScroll.current = null;
+  }, [route, navigationVersion, loading]);
   async function reload() {
     if (session?.user) {
       setData(await api<AccountData>("/account"));
@@ -148,7 +208,7 @@ export default function App() {
       setData(emptyAccountData());
       setAccountOwner(null);
       setLoading(false);
-      setEditing(null);
+      setEntryId(null);
       setSuccess(null);
       setLoadError("");
       setMessage("");
@@ -156,26 +216,102 @@ export default function App() {
     return () => controller.abort();
   }, [session?.user.id, authenticated, isPending, recovering]);
   useEffect(() => {
+    if (!canAccess || accountOwner !== session?.user.id) return;
     if (!data.consents.body) {
       setDraft(null);
+      setEditingDrafts({});
       setSuccess(null);
-      setEditing(null);
-    } else if (!data.consents.photos)
+      setEntryId(null);
+    } else if (!data.consents.photos) {
       setDraft((d) => (d ? { ...d, photos: {} } : null));
-  }, [data.consents.body, data.consents.photos]);
+      setEditingDrafts((drafts) =>
+        Object.fromEntries(
+          Object.entries(drafts).map(([id, d]) => [id, { ...d, photos: {} }]),
+        ),
+      );
+    }
+  }, [
+    data.consents.body,
+    data.consents.photos,
+    canAccess,
+    accountOwner,
+    session?.user.id,
+  ]);
   useEffect(() => {
+    setEditingDrafts((drafts) =>
+      Object.fromEntries(
+        Object.entries(drafts).filter(([id]) =>
+          data.entries.some((entry) => entry.id === id),
+        ),
+      ),
+    );
+  }, [data.entries]);
+  useEffect(() => {
+    history.scrollRestoration = "manual";
+    history.replaceState(
+      {
+        ...history.state,
+        mesuraKey: navigationKey.current,
+        screen: routeRef.current,
+      },
+      "",
+    );
+    const trackScroll = () => {
+      scrollPositions.current.set(navigationKey.current, window.scrollY);
+      screenPositions.current.set(routeRef.current, window.scrollY);
+    };
     const change = () => {
       const next = location.hash.slice(1) as Screen;
-      if (screens.includes(next)) {
-        setRoute(next);
-        window.scrollTo(0, 0);
-      }
+      if (!screens.includes(next)) return;
+      const state = history.state;
+      const key =
+        state?.screen === next && state?.mesuraKey
+          ? state.mesuraKey
+          : crypto.randomUUID();
+      if (key === navigationKey.current && next === routeRef.current) return;
+      navigationKey.current = key;
+      routeRef.current = next;
+      pendingScroll.current =
+        scrollPositions.current.get(key) ??
+        screenPositions.current.get(next) ??
+        0;
+      setEntryId(state?.screen === next ? (state.entryId ?? null) : null);
+      setRoute(next);
+      setNavigationVersion((v) => v + 1);
+      if (state?.screen !== next)
+        history.replaceState({ mesuraKey: key, screen: next }, "");
     };
+    window.addEventListener("scroll", trackScroll, { passive: true });
+    window.addEventListener("popstate", change);
     window.addEventListener("hashchange", change);
-    return () => window.removeEventListener("hashchange", change);
+    return () => {
+      window.removeEventListener("scroll", trackScroll);
+      window.removeEventListener("popstate", change);
+      window.removeEventListener("hashchange", change);
+      history.scrollRestoration = "auto";
+    };
   }, []);
   useEffect(() => {
-    document.title = `${APP_NAME} — ${screen === "analysis" ? "Analyse" : "Votre repère du jour"}`;
+    const titles: Record<Screen, string> = {
+      measure: "Nouvelle mesure",
+      edit: "Modifier la mesure",
+      entry: "Détail de la mesure",
+      history: "Historique des mesures",
+      analysis: "Analyse",
+      photos: "Photos de comparaison",
+      compare: "Comparer deux périodes",
+      monthly: "Bilan mensuel",
+      success: success ? "Mesure enregistrée" : "Nouvelle mesure",
+      reminder: "Rappels",
+      account: "Mon espace",
+      profile: "Profil",
+      privacy: "Données et confidentialité",
+      goal: "Objectifs",
+      favorites: "Mesures favorites",
+      legal: "Informations du service",
+      onboarding: "Votre point de départ",
+    };
+    document.title = `${APP_NAME} — ${canAccess ? titles[screen] : screen === "legal" ? titles.legal : "Connexion"}`;
     mainRef.current
       ?.querySelector<HTMLElement>("h1")
       ?.focus({ preventScroll: true });
@@ -202,6 +338,7 @@ export default function App() {
         "keyboard-open",
         window.innerHeight - viewport.height > 150,
       );
+    update();
     viewport.addEventListener("resize", update);
     return () => viewport.removeEventListener("resize", update);
   }, []);
@@ -221,45 +358,62 @@ export default function App() {
     setData,
     screen,
     navigate,
+    back,
+    entryId,
+    viewEntry: (id: string) => openScreen("entry", id),
+    viewState,
+    setViewState,
     capabilities,
     reload,
     requireAccount,
     toast: setMessage,
     draft,
     setDraft,
+    editingDrafts,
+    setEditingDrafts,
     historyMonth,
     setHistoryMonth,
     editing,
     edit: (entry: Entry | null) => {
-      setEditing(entry);
-      setDraft(null);
-      location.hash = "measure";
-      setRoute("measure");
-      window.scrollTo(0, 0);
+      if (entry) openScreen("edit", entry.id);
+      else navigate("measure");
     },
     success,
     saved: (entry: Entry, previous: number | null) => {
       setMessage("");
-      setDraft(null);
+      if (!editing) {
+        setDraft(null);
+        setViewState((state) => ({ ...state, "measure.photos": false }));
+      }
       setData((d) => ({
         ...d,
         entries: [entry, ...d.entries.filter((e) => e.id !== entry.id)],
       }));
-      setSuccess({ entry, previous });
-      navigate("success");
+      if (editing) {
+        setEditingDrafts((drafts) =>
+          Object.fromEntries(
+            Object.entries(drafts).filter(([id]) => id !== entry.id),
+          ),
+        );
+        setMessage("Modifications enregistrées.");
+        back();
+      } else {
+        setSuccess({ entry, previous });
+        navigate("success");
+      }
     },
   };
   const analysisActive = [
     "analysis",
-    "history",
     "photos",
     "compare",
     "monthly",
     "goal",
   ].includes(screen);
   const hasAction =
-    ["measure", "reminder", "success", "goal", "favorites"].includes(screen) &&
-    canAccess;
+    ["measure", "edit", "reminder", "success", "goal", "favorites"].includes(
+      screen,
+    ) && canAccess;
   return (
     <AppContext value={context}>
       <div
@@ -272,7 +426,7 @@ export default function App() {
           <button
             className="brand"
             onClick={() => navigate(canAccess ? "measure" : "account")}
-            aria-label={`${APP_NAME}, accueil`}
+            aria-label={`${APP_NAME}, Mesures`}
           >
             <img className="brand-logo" src={logo} alt="" />
           </button>
@@ -351,17 +505,28 @@ export default function App() {
             <OnboardingScreen key={session?.user.id} />
           ) : (
             <>
-              {screen === "measure" && (
+              {(screen === "measure" || (screen === "edit" && editing)) && (
                 <MeasureScreen
                   key={`${session?.user.id}-${editing?.id ?? "new"}`}
                 />
+              )}
+              {screen === "edit" && !editing && (
+                <>
+                  <h1>Mesure indisponible</h1>
+                  <button className="secondary" onClick={back}>
+                    Revenir
+                  </button>
+                </>
               )}
               {screen === "analysis" && <AnalysisScreen />}
               {screen === "success" && <SuccessScreen />}
               {screen === "reminder" && <ReminderScreen />}
               {screen === "account" && <ProfileScreen />}
+              {screen === "profile" && <ProfileScreen editingProfile />}
               {screen === "privacy" && <PrivacyScreen />}
-              {screen === "history" && <HistoryScreen />}
+              {(screen === "history" || screen === "entry") && (
+                <HistoryScreen />
+              )}
               {screen === "photos" && <PhotosScreen />}
               {screen === "compare" && <CompareScreen />}
               {screen === "monthly" && <MonthlyScreen />}

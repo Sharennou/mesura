@@ -42,7 +42,7 @@ npm run dev
 4. Après l’inscription, renseigner sa taille, choisir une cible ou le suivi sans cible et cocher une seule autorisation sur l’écran de démarrage. Le tout est sauvegardé ensemble ; cet écran ne revient pas après sa validation.
 5. Enregistrer une mesure, une note ou une photo, puis consulter l’analyse.
 
-Les nouveaux comptes commencent sans mesure, note ni photo. Leur taille et leur éventuel objectif viennent du formulaire de démarrage. Les photos et les rappels sont autorisés au moment de leur activation ; les choix restent indépendants et modifiables en une action dans « Données et confidentialité ». Le mode découverte et ses données fictives ont été supprimés. Une ancienne valeur personnelle est seulement un placeholder. Le serveur bloque toute collecte sans consentement et n’annonce la réussite qu’après une sauvegarde réelle. Un fichier invalide empêche la sauvegarde complète, sans perdre les champs.
+Les nouveaux comptes commencent sans mesure, note ni photo. Leur taille et leur éventuel objectif viennent du formulaire de démarrage. Les photos et les rappels sont autorisés au moment de leur activation ; les choix restent indépendants et modifiables en une action dans « Données et confidentialité ». Le mode découverte et ses données fictives ont été supprimés. Une ancienne valeur personnelle est affichée séparément comme repère ; les champs de nouvelle mesure restent vides. Le serveur bloque toute collecte sans consentement et n’annonce la réussite qu’après une sauvegarde réelle. Un fichier invalide empêche la sauvegarde complète, sans perdre les champs.
 
 ## Fonctionnalités
 
@@ -91,3 +91,9 @@ Les essais sur téléphones, la configuration des prestataires et la validation 
 Dans « Mon espace », une photo de profil JPEG/PNG/WebP peut être remplacée ou retirée. Elle est recadrée au centre en 192 × 192 px et réencodée en JPEG sans métadonnées par le navigateur. Sa version réduite (50 000 caractères maximum) est conservée dans le profil privé, avec les mêmes droits d’accès et la suppression du compte. Le fuseau horaire reste géré automatiquement pour les rappels, sans champ à renseigner.
 
 Les rappels hebdomadaires acceptent plusieurs jours, à une heure commune. L’aperçu et les tâches d’envoi utilisent la même règle. Les anciens rappels à un seul jour sont repris automatiquement. Le rythme proposé est toujours hebdomadaire ; réenregistrer un ancien rappel le convertit à ce rythme.
+
+## Parcours mobiles — version de développement
+
+La refonte du parcours conserve la technologie, les données et l’identité visuelle. Mesures donne accès à l’historique et conserve les brouillons pendant la navigation. L’Analyse adapte ses résultats aux données et rapproche les outils de comparaison. Les entrées ont un détail distinct de leur édition ; les retours restaurent le contexte. Mon espace commence par un menu, et les rappels distinguent horaires enregistrés et appareil configuré.
+
+Voir [le diagnostic, les changements et la validation](docs/ux-parcours.md). Le script `scripts/ux-preview.ts` prépare uniquement des comptes fictifs sur un serveur **local de développement**, sans réinitialiser de données. Les changements de cette session ne sont pas publiés.

@@ -19,7 +19,7 @@ export default defineConfig({
   ],
   webServer: {
     command: "npm run dev",
-    url: baseURL,
+    url: `${baseURL}/api/config`,
     env: {
       APP_URL: baseURL,
       PORT: "3011",
