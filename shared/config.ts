@@ -15,5 +15,5 @@ export const CONSENT_TEXTS = {
     "Je consens à stocker mes photos corporelles, privées, pour les consulter et les comparer. Les métadonnées sont supprimées ; aucune analyse par IA n’est effectuée.",
   push: "Je souhaite recevoir des rappels discrets par notification sur cet appareil. Ce choix est indépendant de l’autorisation du navigateur.",
   email:
-    "Je souhaite recevoir des rappels discrets à l’adresse email vérifiée de mon compte.",
+    "Je souhaite recevoir des rappels discrets à l’adresse email de mon compte.",
 } as const;

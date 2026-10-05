@@ -42,13 +42,10 @@ async function account(email: string) {
     "",
   );
   expect(signup.statusCode).toBe(200);
-  const mail = db
-    .prepare("SELECT url FROM dev_mail WHERE email = ?")
-    .get(email);
-  const url = new URL(mail.url);
-  const verified = await call("GET", url.pathname + url.search, undefined, "");
-  expect(verified.statusCode).toBe(302);
-  const cookies = verified.cookies
+  expect(
+    db.prepare("SELECT url FROM dev_mail WHERE email = ?").get(email),
+  ).toBeUndefined();
+  const cookies = signup.cookies
     .filter((c) => c.value)
     .map((c) => `${c.name}=${c.value}`)
     .join("; ");
@@ -58,7 +55,10 @@ async function account(email: string) {
     undefined,
     cookies,
   );
-  expect(session.json().user.emailVerified).toBe(true);
+  expect(session.json().user.email).toBe(email);
+  expect(
+    (await call("GET", "/api/account", undefined, cookies)).statusCode,
+  ).toBe(200);
   return { cookie: cookies, id: session.json().user.id };
 }
 beforeAll(async () => {
@@ -91,7 +91,7 @@ describe("Comptes et contrôle d’accès", () => {
     const short = await call("POST", "/api/auth/sign-up/email", payload, "");
     expect(short.statusCode).toBe(400);
     expect(short.json().code).toBe("PASSWORD_TOO_SHORT");
-    // Les deux comptes du beforeAll ont été créés et vérifiés avec six caractères.
+    // Les deux comptes du beforeAll ont été créés et connectés directement avec six caractères.
   });
   it("expose la santé du serveur sans donnée privée", async () => {
     const r = await call("GET", "/api/health", undefined, "");

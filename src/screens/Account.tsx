@@ -8,7 +8,6 @@ import { appURL } from "../cloud-auth";
 import { MIN_PASSWORD_LENGTH } from "../../shared/config";
 const authErrors: Record<string, string> = {
   INVALID_EMAIL_OR_PASSWORD: "L’adresse ou le mot de passe ne correspond pas.",
-  EMAIL_NOT_VERIFIED: "Vérifiez votre adresse email avant de vous connecter.",
   USER_ALREADY_EXISTS: "Un compte existe déjà avec cette adresse.",
   USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL:
     "Un compte existe déjà avec cette adresse.",
@@ -35,7 +34,7 @@ export function AccountScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(
     search.has("auth_error")
-      ? "Ce lien de vérification est expiré ou invalide. Connectez-vous si votre adresse est déjà vérifiée, ou demandez un nouveau lien."
+      ? "Ce lien est expiré ou invalide. Connectez-vous ou demandez un nouveau lien de récupération."
       : "",
   );
   const [sent, setSent] = useState(false);
@@ -86,7 +85,7 @@ export function AccountScreen() {
           authErrors[response.error.code] ||
             "La demande n’a pas abouti. Vérifiez vos informations puis réessayez.",
         );
-      if (mode === "signup" || mode === "reset") {
+      if (mode === "reset") {
         setSent(true);
         await getLocalMail();
       } else if (mode === "newpass") {
@@ -98,10 +97,6 @@ export function AccountScreen() {
       } else navigate("measure");
     } catch (e: any) {
       setError(e.message);
-      if (e.message.includes("Vérifiez votre adresse")) {
-        setSent(true);
-        await getLocalMail();
-      }
     } finally {
       setBusy(false);
     }
@@ -126,15 +121,10 @@ export function AccountScreen() {
       {sent ? (
         <section className="plain-card">
           <Icon as={Mail} size={28} />
-          <h2>
-            {mode === "reset"
-              ? "Consultez votre messagerie"
-              : "Vérifiez votre adresse"}
-          </h2>
+          <h2>Consultez votre messagerie</h2>
           <p>
-            {mode === "reset"
-              ? "Si un compte existe à cette adresse, un lien de récupération vous a été envoyé."
-              : `Un lien de vérification a été préparé pour ${email}. Ouvrez-le : vous serez connecté automatiquement pour renseigner votre taille et votre objectif.`}
+            Si un compte existe à cette adresse, un lien de récupération vous a
+            été envoyé.
           </p>
           {localMail && (
             <div className="development-mail">
@@ -152,38 +142,10 @@ export function AccountScreen() {
                 }
                 className="secondary"
               >
-                {localMail.purpose === "verify"
-                  ? "Vérifier mon adresse"
-                  : "Choisir un mot de passe"}
+                Choisir un mot de passe
                 <Icon as={ArrowRight} />
               </a>
             </div>
-          )}
-          {mode !== "reset" && (
-            <Button
-              disabled={busy}
-              onClick={async () => {
-                setBusy(true);
-                setError("");
-                try {
-                  const response = await authClient.sendVerificationEmail({
-                    email,
-                    callbackURL: appURL(),
-                  });
-                  if (response.error)
-                    throw new Error(
-                      "Le lien n’a pas pu être renvoyé. Réessayez.",
-                    );
-                  await getLocalMail();
-                } catch (e: any) {
-                  setError(e.message);
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            >
-              Renvoyer le lien de vérification
-            </Button>
           )}
           <Button
             onClick={() => {

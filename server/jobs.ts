@@ -85,9 +85,9 @@ export async function runJobs(now = DateTime.now()) {
               );
             else if (row.channel === "email" && mailer) {
               const user = db
-                .prepare("SELECT email, emailVerified FROM user WHERE id = ?")
+                .prepare("SELECT email FROM user WHERE id = ?")
                 .get(row.user_id) as any;
-              if (!user?.emailVerified) throw new Error("unverified");
+              if (!user?.email) throw new Error("missing_email");
               await mailer.sendMail({
                 from: process.env.MAIL_FROM,
                 to: user.email,

@@ -186,8 +186,8 @@ export async function buildApp() {
     const session = await auth.api.getSession({
       headers: fromNodeHeaders(req.headers),
     });
-    if (!session?.user.emailVerified)
-      fail("Connectez-vous avec une adresse vérifiée.", 401);
+    if (!session?.user)
+      fail("Connectez-vous pour accéder à votre espace.", 401);
     const browserZone = String(req.headers["x-timezone"] || "UTC");
     const timezone = DateTime.now().setZone(browserZone).isValid
       ? browserZone

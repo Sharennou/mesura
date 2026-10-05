@@ -36,17 +36,17 @@ npm run dev
 
 ## Essayer un vrai compte
 
-1. L’accueil impose la création d’un compte ou la connexion. Aucun écran de suivi n’est accessible sans connexion et vérification de l’adresse email, y compris par lien direct.
-2. Créer un compte et vérifier l’email, ou se connecter à son compte existant.
-3. Sans SMTP, la messagerie **locale de développement** propose le lien de test. Aucun email n’est annoncé comme envoyé.
-4. La vérification ouvre automatiquement une session. Renseigner sa taille, choisir une cible ou le suivi sans cible et cocher une seule autorisation sur l’écran de démarrage. Le tout est sauvegardé ensemble ; cet écran ne revient pas après sa validation.
+1. L’accueil impose la création d’un compte ou la connexion. Aucun écran de suivi n’est accessible sans connexion, y compris par lien direct.
+2. Créer un compte : la session s’ouvre immédiatement, sans email de confirmation. Ou se connecter à son compte existant.
+3. Le SMTP reste utilisé pour la récupération du mot de passe et les rappels facultatifs.
+4. Après l’inscription, Renseigner sa taille, choisir une cible ou le suivi sans cible et cocher une seule autorisation sur l’écran de démarrage. Le tout est sauvegardé ensemble ; cet écran ne revient pas après sa validation.
 5. Enregistrer une mesure, une note ou une photo, puis consulter l’analyse.
 
 Les nouveaux comptes commencent sans mesure, note ni photo. Leur taille et leur éventuel objectif viennent du formulaire de démarrage. Les photos et les rappels sont autorisés au moment de leur activation ; les choix restent indépendants et modifiables en une action dans « Données et confidentialité ». Le mode découverte et ses données fictives ont été supprimés. Une ancienne valeur personnelle est seulement un placeholder. Le serveur bloque toute collecte sans consentement et n’annonce la réussite qu’après une sauvegarde réelle. Un fichier invalide empêche la sauvegarde complète, sans perdre les champs.
 
 ## Fonctionnalités
 
-- Comptes Better Auth : vérification, connexion, récupération, déconnexion et révocation des autres sessions.
+- Comptes Better Auth : inscription avec session immédiate, connexion, récupération, déconnexion et révocation des autres sessions.
 - Poids, 14 mensurations standard, mesures personnalisées, favoris ordonnés et archivage avec historique.
 - Notes privées et photos Face / Profil / Dos ; galerie et comparaison accessible, sans recadrage.
 - Historique, modification, correction explicite de la stature historique et suppression.

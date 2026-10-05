@@ -23,7 +23,6 @@ export const cloud = CLOUD
   : null;
 const codes: Record<string, string> = {
   invalid_credentials: "INVALID_EMAIL_OR_PASSWORD",
-  email_not_confirmed: "EMAIL_NOT_VERIFIED",
   user_already_exists: "USER_ALREADY_EXISTS",
   weak_password: "PASSWORD_TOO_SHORT",
   otp_expired: "INVALID_TOKEN",
@@ -137,14 +136,6 @@ export const cloudAuthClient = {
     if (!r.error) await cloud!.auth.signOut({ scope: "global" });
     return response(r);
   },
-  sendVerificationEmail: async ({ email, callbackURL }: any) =>
-    response(
-      await cloud!.auth.resend({
-        type: "signup",
-        email,
-        options: { emailRedirectTo: callbackURL },
-      }),
-    ),
   listSessions: async () => {
     const { data, error } = await cloud!.rpc("mesura_sessions");
     return response({ data, error });

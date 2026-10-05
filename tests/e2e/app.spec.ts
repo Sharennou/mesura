@@ -107,17 +107,13 @@ test("compte réel : accessibilité, consentement, sauvegarde, photos, correctio
     .getByRole("button", { name: "Créer mon espace", exact: true })
     .click();
   await expect(page.getByRole("navigation")).toHaveCount(0);
-  expect((await page.request.get("/api/account")).status()).toBe(401);
-  await page.getByRole("link", { name: "Vérifier mon adresse" }).click();
   await expect(
     page.getByRole("heading", { name: "Votre point de départ.", exact: true }),
   ).toBeVisible();
   await expect(page.getByRole("checkbox")).toHaveCount(1);
   await expect(page.getByRole("navigation")).toHaveCount(0);
   await page.getByLabel("Votre taille en cm").fill("175,5");
-  await page
-    .getByLabel("Votre objectif")
-    .selectOption("observe");
+  await page.getByLabel("Votre objectif").selectOption("observe");
   await page.getByRole("checkbox").check();
   await page.route("**/api/onboarding", (route) => route.abort());
   await page.getByRole("button", { name: "Commencer mon suivi" }).click();

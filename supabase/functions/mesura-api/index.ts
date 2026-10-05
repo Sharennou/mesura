@@ -144,8 +144,8 @@ async function authenticate(req: Request) {
   const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!token) cloudFail("Connectez-vous pour accéder à votre espace.", 401);
   const { data, error } = await service.auth.getUser(token);
-  if (error || !data.user || !data.user.email_confirmed_at)
-    cloudFail("Connectez-vous avec une adresse vérifiée.", 401);
+  if (error || !data.user)
+    cloudFail("Connectez-vous pour accéder à votre espace.", 401);
   let sid = "";
   try {
     sid = JSON.parse(

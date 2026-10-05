@@ -76,7 +76,7 @@ export default function App() {
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(false);
   const { data: session, isPending } = useSession();
-  const authenticated = Boolean(session?.user?.emailVerified);
+  const authenticated = Boolean(session?.user);
   const search = new URLSearchParams(location.search);
   const recovering = Boolean(
     search.get("token") || (CLOUD && search.get("reset") === "1"),
@@ -112,7 +112,7 @@ export default function App() {
     window.scrollTo(0, 0);
   }
   async function reload() {
-    if (session?.user.emailVerified) {
+    if (session?.user) {
       setData(await api<AccountData>("/account"));
       setAccountOwner(session.user.id);
     } else setCapabilities(await api<Capabilities>("/config"));

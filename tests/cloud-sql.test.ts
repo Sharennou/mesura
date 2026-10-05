@@ -31,6 +31,15 @@ beforeAll(async () => {
       "utf8",
     ),
   );
+  await pg.exec(
+    readFileSync(
+      new URL(
+        "../supabase/migrations/20261005000400_email_optional.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
   await pg.exec(`create schema vault;
     create table vault.secrets(id uuid primary key default gen_random_uuid(),secret text,name text unique,description text);
     create view vault.decrypted_secrets as select secret as decrypted_secret,name from vault.secrets;
@@ -46,7 +55,7 @@ beforeAll(async () => {
       "utf8",
     ),
   );
-  await pg.query("insert into auth.users values ($1,now()),($2,now())", [
+  await pg.query("insert into auth.users values ($1,null),($2,now())", [
     alice,
     bob,
   ]);

@@ -62,11 +62,11 @@ export function purgeExpiredData(now = DateTime.now()) {
   // Dormant personal accounts have no continuing purpose after 24 months.
   const inactive = db
     .prepare(
-      "SELECT u.id FROM user u LEFT JOIN profiles p ON p.user_id = u.id WHERE (p.last_active IS NOT NULL AND p.last_active < ?) OR (u.emailVerified = 0 AND u.createdAt < ?)",
+      "SELECT u.id FROM user u LEFT JOIN profiles p ON p.user_id = u.id WHERE (p.last_active IS NOT NULL AND p.last_active < ?) OR (p.last_active IS NULL AND u.createdAt < ?)",
     )
     .all(
       now.minus({ months: 24 }).toUTC().toISO(),
-      now.minus({ days: 7 }).toUTC().toISO(),
+      now.minus({ months: 24 }).toUTC().toISO(),
     ) as { id: string }[];
   for (const user of inactive) eraseAccount(user.id);
   db.prepare("DELETE FROM verification WHERE expiresAt < ?").run(

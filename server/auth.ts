@@ -40,8 +40,8 @@ async function sendAccessMail(email: string, url: string, purpose: string) {
     await mailer.sendMail({
       from: process.env.MAIL_FROM,
       to: email,
-      subject: `${APP_NAME} — ${purpose === "verify" ? "Vérifiez votre adresse" : "Récupérez votre accès"}`,
-      text: `Ce lien vous permet de ${purpose === "verify" ? "vérifier votre adresse" : "choisir un nouveau mot de passe"} :\n${url}\nSi vous n’êtes pas à l’origine de cette demande, ignorez ce message.`,
+      subject: `${APP_NAME} — Récupérez votre accès`,
+      text: `Ce lien vous permet de choisir un nouveau mot de passe :\n${url}\nSi vous n’êtes pas à l’origine de cette demande, ignorez ce message.`,
     });
   else if (!production)
     db.prepare("INSERT INTO dev_mail VALUES (?, ?, ?, ?, ?)").run(
@@ -64,17 +64,10 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: MIN_PASSWORD_LENGTH,
     maxPasswordLength: 128,
-    requireEmailVerification: true,
+    requireEmailVerification: false,
     revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url }) =>
       sendAccessMail(user.email, url, "reset"),
-  },
-  emailVerification: {
-    sendOnSignUp: true,
-    autoSignInAfterVerification: true,
-    expiresIn: 3600,
-    sendVerificationEmail: async ({ user, url }) =>
-      sendAccessMail(user.email, url, "verify"),
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7,
