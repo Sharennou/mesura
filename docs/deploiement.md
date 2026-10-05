@@ -21,18 +21,20 @@ npx supabase functions deploy mesura-api --no-verify-jwt
 
 Ou depuis le tableau de bord :
 
-1. SQL Editor : exécuter `supabase/migrations/20261005000100_mesura.sql`, puis `20261005000200_jobs.sql`. Ces migrations sont additives et ne suppriment aucune table existante. Elles créent les tables Mesura, le bucket privé, les contrôles de session, les transactions et le planificateur.
+1. SQL Editor : exécuter dans l’ordre les fichiers de `supabase/migrations/` : `20261005000100_mesura.sql`, `20261005000200_jobs.sql`, puis `20261005000300_push.sql`. Ces migrations sont additives et ne suppriment aucune table existante. Elles créent les tables Mesura, le bucket privé, les contrôles de session, les transactions et le planificateur.
 2. Exécuter `npm run bundle:cloud`. Edge Functions → nouvelle fonction `mesura-api` → coller `.runtime/mesura-api.ts` comme `index.ts` et déployer. Désactiver « Verify JWT » dans les réglages de la fonction. Ce réglage permet l’emploi des nouvelles clés publiques ; les opérations privées restent protégées par `Auth.getUser`, la vérification de l’adresse et le contrôle de la session en base.
 3. Vérifier `https://duselqsuvkwbwkhmljkh.supabase.co/functions/v1/mesura-api/health` : réponse `{"status":"ok"}`. Une requête anonyme à `/account` doit répondre 401, et la clé publique ne doit pouvoir lire aucune ligne de compte ni aucun fichier photo.
 
 Le planificateur appelle la fonction toutes les minutes. Son secret est généré et conservé dans Supabase Vault. Il ne sort ni dans le dépôt ni dans le navigateur. La purge fonctionne même sans canal de notification configuré.
+
+Le projet est également relié à `Sharennou/mesura` dans Settings → Integrations, avec « Deploy to production » activé sur `main`, dossier `.` et preview branches désactivées. Les prochains envois appliquent automatiquement les nouvelles migrations et déploient `mesura-api`, sans abonnement Pro.
 
 ## Auth et emails
 
 Dans Authentication → URL Configuration :
 
 - Site URL : `https://sharennou.github.io/mesura/`.
-- Redirect URLs : `https://sharennou.github.io/mesura/**`.
+- Redirect URLs : `https://sharennou.github.io/mesura/` et `https://sharennou.github.io/mesura/?reset=1`.
 - Conserver la confirmation email activée.
 - Définir une longueur minimale de mot de passe de 12 caractères.
 
@@ -64,7 +66,9 @@ Le test de publication contrôle les chemins et l’interface sur 390 et 360 px 
 
 ## Rappels et données
 
-Pour Web Push, créer les clés avec `npm run push:keys` puis renseigner dans **Edge Functions → Secrets** : `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`. Pour les rappels email facultatifs : `RESEND_API_KEY` et `MAIL_FROM` autorisé par ce fournisseur. Aucun rappel ne contient de mesure ni de note. `PRIVACY_CONTACT` renseigne le contact de l’exploitant. `MESURA_APP_URL` permet de changer l’URL publique sans toucher au code.
+Web Push fonctionne sans fournisseur payant : la fonction crée une paire VAPID une seule fois, puis la conserve chiffrée dans Supabase Vault. Un verrou Postgres évite de créer deux paires au démarrage. Seule la clé publique est transmise au téléphone ; la clé privée reste accessible au serveur. Les secrets optionnels `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` permettent d’utiliser une paire existante. Conserver la paire et Vault lors d’une restauration pour préserver les abonnements. Sur iPhone, installer l’application sur l’écran d’accueil avant d’autoriser les notifications.
+
+Pour les rappels email facultatifs : renseigner `RESEND_API_KEY` et `MAIL_FROM` autorisé par ce fournisseur dans **Edge Functions → Secrets**. Aucun rappel ne contient de mesure ni de note. `PRIVACY_CONTACT` renseigne le contact de l’exploitant. `MESURA_APP_URL` permet de changer l’URL publique sans toucher au code.
 
 Un canal n’apparaît disponible que lorsque ses secrets sont configurés et que le planificateur a réellement appelé la fonction dans les trois dernières minutes. Les tâches réclament chaque occurrence en base avant l’envoi ; une même occurrence n’est pas renvoyée après un redémarrage. Un échec est enregistré et un endpoint expiré retiré.
 

@@ -2,6 +2,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 import { beforeAll, afterAll, describe, it, expect } from "vitest";
 import { emptyCloudAccount } from "../shared/cloud-domain";
+import webpush from "web-push";
 let pg: PGlite;
 const alice = crypto.randomUUID(),
   bob = crypto.randomUUID(),
@@ -25,6 +26,21 @@ beforeAll(async () => {
     readFileSync(
       new URL(
         "../supabase/migrations/20261005000100_mesura.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  await pg.exec(`create schema vault;
+    create table vault.secrets(id uuid primary key default gen_random_uuid(),secret text,name text unique,description text);
+    create view vault.decrypted_secrets as select secret as decrypted_secret,name from vault.secrets;
+    create function vault.create_secret(secret text,name text,description text) returns uuid language sql as $$
+      insert into vault.secrets(secret,name,description) values ($1,$2,$3) returning id;
+    $$;`);
+  await pg.exec(
+    readFileSync(
+      new URL(
+        "../supabase/migrations/20261005000300_push.sql",
         import.meta.url,
       ),
       "utf8",
@@ -60,6 +76,53 @@ afterAll(async () => {
   await pg?.close();
 });
 describe("Postgres réel : autorisations et transactions", () => {
+  it("les clients ne peuvent ni créer ni récupérer la clé privée Web Push", async () => {
+    for (const role of ["anon", "authenticated"]) {
+      await pg.exec(`set role ${role}`);
+      try {
+        await expect(
+          pg.query("select public.mesura_vapid('{}')"),
+        ).rejects.toThrow("permission denied");
+        await expect(
+          pg.query("select * from vault.decrypted_secrets"),
+        ).rejects.toThrow("permission denied");
+      } finally {
+        await pg.exec("reset role");
+      }
+    }
+  });
+  it("le serveur conserve la même paire Web Push après redémarrage", async () => {
+    const first = {
+      ...webpush.generateVAPIDKeys(),
+      subject: "https://example.test/mesura/",
+    };
+    const second = {
+      ...webpush.generateVAPIDKeys(),
+      subject: "https://example.test/new/",
+    };
+    await pg.exec("set role service_role");
+    try {
+      expect(
+        (
+          await pg.query("select public.mesura_vapid($1) config", [
+            JSON.stringify(first),
+          ])
+        ).rows,
+      ).toEqual([{ config: first }]);
+      expect(
+        (
+          await pg.query("select public.mesura_vapid($1) config", [
+            JSON.stringify(second),
+          ])
+        ).rows,
+      ).toEqual([{ config: first }]);
+    } finally {
+      await pg.exec("reset role");
+    }
+    expect((await pg.query("select name from vault.secrets")).rows).toEqual([
+      { name: "mesura_vapid" },
+    ]);
+  });
   it("la clé anonyme ne lit pas les comptes", async () => {
     await pg.exec("set role anon");
     await expect(

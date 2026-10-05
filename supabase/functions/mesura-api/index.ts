@@ -28,13 +28,40 @@ const appURL =
   Deno.env.get("MESURA_APP_URL") || "https://sharennou.github.io/mesura/";
 const appOrigin = new URL(appURL).origin;
 const photos = service.storage.from("mesura-photos");
-const vapidPublic = Deno.env.get("VAPID_PUBLIC_KEY");
-const vapidPrivate = Deno.env.get("VAPID_PRIVATE_KEY");
-const vapidSubject = Deno.env.get("VAPID_SUBJECT");
-if (vapidPublic && vapidPrivate && vapidSubject)
-  webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
+type PushConfig = { publicKey: string; privateKey: string; subject: string };
+let pushConfig: Promise<PushConfig> | null = null;
+async function configurePush(): Promise<PushConfig> {
+  if (!pushConfig) {
+    pushConfig = (async () => {
+      const publicKey = Deno.env.get("VAPID_PUBLIC_KEY");
+      const privateKey = Deno.env.get("VAPID_PRIVATE_KEY");
+      const subject = Deno.env.get("VAPID_SUBJECT");
+      const config: PushConfig =
+        publicKey && privateKey && subject
+          ? { publicKey, privateKey, subject }
+          : check(
+              await service.rpc("mesura_vapid", {
+                p_candidate: {
+                  ...webpush.generateVAPIDKeys(),
+                  subject: appURL,
+                },
+              }),
+            );
+      webpush.setVapidDetails(
+        config.subject,
+        config.publicKey,
+        config.privateKey,
+      );
+      return config;
+    })().catch((error) => {
+      pushConfig = null;
+      throw error;
+    });
+  }
+  return pushConfig;
+}
 const envCaps: Capabilities = {
-  pushConfigured: Boolean(vapidPublic && vapidPrivate && vapidSubject),
+  pushConfigured: false,
   emailConfigured: Boolean(
     Deno.env.get("RESEND_API_KEY") && Deno.env.get("MAIL_FROM"),
   ),
@@ -47,6 +74,7 @@ const check = <T>(r: { data: T; error: unknown }) => {
   return r.data;
 };
 async function caps(): Promise<Capabilities> {
+  envCaps.pushConfigured = Boolean(await configurePush().catch(() => null));
   const scheduled = await service.rpc("mesura_jobs_ready");
   return {
     ...envCaps,
@@ -325,6 +353,7 @@ async function exportData(
   return new Response(zipSync(files, { level: 3 }), { headers });
 }
 async function runJobs() {
+  envCaps.pushConfigured = Boolean(await configurePush().catch(() => null));
   const now = DateTime.now();
   check(
     await service
@@ -557,7 +586,11 @@ Deno.serve(async (req) => {
     if (path === "/consents" && req.method === "GET")
       return json(current.data.audit);
     if (path === "/push-key" && req.method === "GET")
-      return json({ key: (await caps()).pushConfigured ? vapidPublic : null });
+      return json({
+        key: (await caps()).pushConfigured
+          ? (await configurePush()).publicKey
+          : null,
+      });
     if (path === "/device-status" && req.method === "POST") {
       const v = z
         .object({ endpoint: z.string().max(2000) })
@@ -660,8 +693,9 @@ Deno.serve(async (req) => {
       req.method === "DELETE" && path !== "/subscriptions"
         ? {}
         : await req.json();
+    const configured = await caps();
     const next = await apply(user, (a) =>
-      mutateCloudAccount(a, req.method, path, raw, envCaps),
+      mutateCloudAccount(a, req.method, path, raw, configured),
     );
     await cleanup(user.id);
     return json(next.result);
