@@ -226,7 +226,6 @@ export function MeasureScreen() {
     <>
       <PageTitle
         title={editing ? "Modifier ma mesure" : "Nouvelle mesure"}
-        eyebrow="Votre repère du jour"
         back={false}
       />
       <form id="measurement-form" onSubmit={submit} ref={formRef} noValidate>
@@ -329,7 +328,6 @@ export function MeasureScreen() {
                 </strong>
               </div>
               {progress !== null && <Progress value={progress} />}
-              <p>Chaque saisie compte. Gardez votre rythme.</p>
             </div>
           )}
         </section>
@@ -415,9 +413,6 @@ export function MeasureScreen() {
           <h2>Votre repère en images</h2>
           <Icon as={Camera} size={18} />
         </div>
-        <p className="muted small">
-          Trois angles. Une évolution qui vous appartient.
-        </p>
         <div className="photo-upload-grid">
           {(["face", "profil", "dos"] as const).map((orientation) => (
             <label
