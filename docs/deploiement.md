@@ -36,7 +36,7 @@ Dans Authentication → URL Configuration :
 - Site URL : `https://sharennou.github.io/mesura/`.
 - Redirect URLs : `https://sharennou.github.io/mesura/` et `https://sharennou.github.io/mesura/?reset=1`.
 - Conserver la confirmation email activée.
-- Définir une longueur minimale de mot de passe de 12 caractères.
+- Définir une longueur minimale de mot de passe de 6 caractères, comme `MIN_PASSWORD_LENGTH` dans `shared/config.ts`. Supabase hébergé refuse un minimum inférieur à 6 ([schéma officiel de configuration](https://raw.githubusercontent.com/supabase/supabase/master/apps/docs/spec/api_v1_openapi.json)).
 
 Configurer un serveur SMTP dans les réglages Auth si d’autres personnes doivent s’inscrire. Le service intégré Supabase n’envoie par défaut qu’aux adresses autorisées des membres du projet, avec une limite basse. Ne pas désactiver la vérification pour contourner cette limite. Référence : [emails Supabase](https://supabase.com/docs/guides/auth/auth-smtp).
 

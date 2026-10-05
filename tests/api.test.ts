@@ -15,6 +15,7 @@ let bob: { cookie: string; id: string };
 let entryId: string;
 let photoId: string;
 let customId: string;
+const initialPassword = "abc123";
 const headers = (cookie = "") => ({
   origin: "http://localhost:5173",
   "x-requested-with": "Mesura",
@@ -37,7 +38,7 @@ async function account(email: string) {
   const signup = await call(
     "POST",
     "/api/auth/sign-up/email",
-    { name: email.split("@")[0], email, password: "UnePassphrase!2026" },
+    { name: email.split("@")[0], email, password: initialPassword },
     "",
   );
   expect(signup.statusCode).toBe(200);
@@ -81,6 +82,17 @@ afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 describe("Comptes et contrôle d’accès", () => {
+  it("refuse cinq caractères et accepte six pour un nouveau mot de passe", async () => {
+    const payload = {
+      name: "Limite",
+      email: "limite@example.test",
+      password: "abc12",
+    };
+    const short = await call("POST", "/api/auth/sign-up/email", payload, "");
+    expect(short.statusCode).toBe(400);
+    expect(short.json().code).toBe("PASSWORD_TOO_SHORT");
+    // Les deux comptes du beforeAll ont été créés et vérifiés avec six caractères.
+  });
   it("expose la santé du serveur sans donnée privée", async () => {
     const r = await call("GET", "/api/health", undefined, "");
     expect(r.statusCode).toBe(200);
@@ -640,7 +652,7 @@ describe("Comptes et contrôle d’accès", () => {
         .statusCode,
     ).toBe(403);
     expect(
-      (await call("DELETE", "/api/account", { password: "UnePassphrase!2026" }))
+      (await call("DELETE", "/api/account", { password: initialPassword }))
         .statusCode,
     ).toBe(200);
     expect((await call("GET", "/api/account")).statusCode).toBe(401);

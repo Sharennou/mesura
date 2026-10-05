@@ -5,7 +5,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import nodemailer from "nodemailer";
 import { db, dataDir, migrate } from "./db";
-import { APP_NAME } from "../shared/config";
+import { APP_NAME, MIN_PASSWORD_LENGTH } from "../shared/config";
 export const production = process.env.NODE_ENV === "production";
 export const appURL = process.env.APP_URL || "http://localhost:5173";
 export const emailConfigured = Boolean(
@@ -62,7 +62,7 @@ export const auth = betterAuth({
     : [appURL, "http://127.0.0.1:5173", "http://localhost:5173"],
   emailAndPassword: {
     enabled: true,
-    minPasswordLength: 12,
+    minPasswordLength: MIN_PASSWORD_LENGTH,
     maxPasswordLength: 128,
     requireEmailVerification: true,
     revokeSessionsOnPasswordReset: true,

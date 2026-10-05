@@ -5,13 +5,14 @@ import { Button, ErrorMessage, Icon, PageTitle } from "../components";
 import { api, authClient } from "../api";
 import { CLOUD } from "../deployment";
 import { appURL } from "../cloud-auth";
+import { MIN_PASSWORD_LENGTH } from "../../shared/config";
 const authErrors: Record<string, string> = {
   INVALID_EMAIL_OR_PASSWORD: "L’adresse ou le mot de passe ne correspond pas.",
   EMAIL_NOT_VERIFIED: "Vérifiez votre adresse email avant de vous connecter.",
   USER_ALREADY_EXISTS: "Un compte existe déjà avec cette adresse.",
   USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL:
     "Un compte existe déjà avec cette adresse.",
-  PASSWORD_TOO_SHORT: "Choisissez un mot de passe d’au moins 12 caractères.",
+  PASSWORD_TOO_SHORT: `Choisissez un mot de passe d’au moins ${MIN_PASSWORD_LENGTH} caractères.`,
   INVALID_TOKEN: "Ce lien est expiré ou invalide. Demandez un nouveau lien.",
   email_address_not_authorized:
     "Le service d’email doit être configuré pour autoriser cette adresse. Contactez le responsable du service.",
@@ -227,14 +228,14 @@ export function AccountScreen() {
                 <input
                   type={show ? "text" : "password"}
                   required
-                  minLength={mode === "signin" ? 1 : 12}
+                  minLength={mode === "signin" ? 1 : MIN_PASSWORD_LENGTH}
                   maxLength={128}
                   autoComplete={
                     mode === "signin" ? "current-password" : "new-password"
                   }
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="12 caractères minimum"
+                  placeholder={`${MIN_PASSWORD_LENGTH} caractères minimum`}
                 />
                 <button
                   type="button"

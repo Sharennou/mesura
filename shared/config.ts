@@ -1,4 +1,6 @@
 export const APP_NAME = "Mesura";
+// Supabase hébergé impose au moins 6 caractères.
+export const MIN_PASSWORD_LENGTH = 6;
 export const APP_SLUG =
   APP_NAME.normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
