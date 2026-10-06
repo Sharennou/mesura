@@ -16,8 +16,10 @@ Mesura est une application web de suivi corporel conçue pour le téléphone, en
 - Application : https://sharennou.github.io/mesura/ ; dépôt : `Sharennou/mesura`, branche `main`.
 - Production : GitHub Pages + Supabase Free. Version locale : Fastify + SQLite + Better Auth.
 - Deux destinations principales : Mesures (saisie et historique) et Analyse (évolution et comparaison).
+- Analyse : sélection de plusieurs mesures, comparaison en pourcentage avec valeurs exactes par date, IMC et ratios directement sous le graphique. Périodes 3M, 6M, 1A, MAX ; menus « Les autres mesures » et indicateurs retirés.
 - Refonte UX en développement : [diagnostic et validation](docs/ux-parcours.md), états d’analyse selon les données, détail distinct de l’édition, retours et brouillons conservés en mémoire. Cette session n’est pas publiée.
-- Compte obligatoire, aucune donnée fictive, aucune confirmation d’email à l’inscription.
+- Compte obligatoire, aucune donnée fictive dans les comptes ordinaires, aucune confirmation d’email à l’inscription.
+- Compte de développement dédié autorisé par le propriétaire : « Développement · données fictives », 30 entrées et 383 valeurs injectées par `scripts/seed-development-account.ts`. Identifiants privés dans `.runtime`, jamais dans la documentation.
 - Après inscription : connexion immédiate, puis taille et objectifs avant le suivi.
 - Historique en bas de Mesures ; guide en trois étapes courtes, sans « À éviter » ni « Bien mesurer à chaque séance », avec sources.
 - Favoris ordonnés par glisser-déposer, à la souris ou au doigt, avec commande au clavier.

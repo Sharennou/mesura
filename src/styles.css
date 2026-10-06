@@ -2538,3 +2538,79 @@ select {
   object-fit: cover;
   border-radius: 50%;
 }
+
+.analysis-indicators {
+  margin-top: 24px;
+}
+.comparison-readings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 18px 0;
+}
+.comparison-readings > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.comparison-readings span {
+  font-size: 12px;
+}
+.comparison-readings strong {
+  font-size: 23px;
+}
+.comparison-readings small {
+  color: var(--light);
+  font-size: 10px;
+}
+.chart-comparison-help {
+  color: var(--light);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.chart-legend {
+  padding: 0;
+  margin: 16px 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  font-size: 12px;
+}
+.chart-legend li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.chart-legend li svg {
+  width: 24px;
+  height: 8px;
+  flex-shrink: 0;
+}
+.chart-legend small {
+  color: var(--light);
+}
+.chart-baseline {
+  stroke: var(--light);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+.chart-selection {
+  stroke: var(--white);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+.comparison-point-label {
+  margin: 16px 0 4px;
+  color: var(--light);
+  font-size: 12px;
+}
+.comparison-point-label > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 8px;
+}
+.comparison-point-label > div strong {
+  color: var(--white);
+}

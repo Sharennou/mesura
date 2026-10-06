@@ -41,7 +41,7 @@ Privilégier les changements précis demandés, conserver le design existant et 
 
 ## Parcours mobiles corrigés (développement)
 
-Les nouvelles instructions du propriétaire précisent les noms « Historique des mesures », « Comparer deux périodes » et « Bilan mensuel ». L’historique appartient à Mesures. La carte de poids reste reconnaissable, avec un état vide compact et un champ délimité. Les anciennes valeurs sont des textes de repère distincts de la saisie. Les détails d’analyse sont repliés ; aucune projection ou courbe vide n’est ajoutée pour remplir l’écran. Les hausses et baisses restent descriptives et neutres.
+Les nouvelles instructions du propriétaire précisent les noms « Historique des mesures », « Comparer deux périodes » et « Bilan mensuel ». L’historique appartient à Mesures. La carte de poids reste reconnaissable, avec un état vide compact et un champ délimité. Les anciennes valeurs sont des textes de repère distincts de la saisie. L’IMC et les ratios sont affichés directement sous le graphique. Plusieurs mesures peuvent être sélectionnées ensemble, avec comparaison en pourcentage et valeurs exactes par date. Retirer « Les autres mesures » et la période 1M ; proposer 3M, 6M, 1A et MAX. Les objectifs restent repliés ; aucune projection ou courbe vide n’est ajoutée pour remplir l’écran. Les hausses et baisses restent descriptives et neutres.
 
 Les écrans de consultation et de modification d’une entrée sont distincts. Les retours et les deux types de brouillons conservent le contexte en mémoire de session. Aucun accueil intermédiaire, nouveau canal ou changement de technologie n’est introduit. Voir [le compte rendu UX](ux-parcours.md).
 

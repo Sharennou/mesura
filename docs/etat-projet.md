@@ -75,7 +75,7 @@ Le préfixe `/mesura/` est indispensable sur GitHub Pages. Ne pas publier direct
 
 ## Vérification et limites connues
 
-La validation locale du 6 octobre 2026 comprend 81 tests unitaires / API / SQL et 20 parcours mobiles, à 390 et 360 px. Elle couvre notamment les favoris à la souris, au doigt et au clavier, l’ordre sauvegardé, le guide simplifié, l’absence des contrôles photo et le nettoyage des anciennes données. Ces modifications ne sont pas publiées.
+La validation locale du 6 octobre 2026 comprend 81 tests unitaires / API / SQL et 22 parcours mobiles, à 390 et 360 px. Elle couvre notamment les favoris à la souris, au doigt et au clavier, l’ordre sauvegardé, le guide simplifié, l’absence des contrôles photo et le nettoyage des anciennes données. Ces modifications ne sont pas publiées.
 
 Les callbacks Auth cloud sont aussi testés avec des réponses simulées. Un véritable parcours multiutilisateur cloud et la réception des notifications sur les téléphones cibles restent à vérifier ; les tests de livraison sont simulés. Les coordonnées et documents de l’exploitant restent à compléter selon [confidentialite.md](confidentialite.md). Les sauvegardes externes doivent être organisées : la formule Free ne fournit pas la sauvegarde automatique attendue.
 

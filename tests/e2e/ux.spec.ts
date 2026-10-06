@@ -856,3 +856,117 @@ test("favoris : glisser-déposer à la souris, au doigt et au clavier, ordre sau
   await page.getByLabel("Format d’export").selectOption("zip");
   await expect(page.getByLabel("Inclure mes photos privées")).toHaveCount(0);
 });
+
+test("analyse : plusieurs courbes, indicateurs visibles et périodes à partir de trois mois", async ({
+  page,
+}, info) => {
+  const headers = await setup(page);
+  const today = localDate("Europe/Paris");
+  for (let i = 0; i < 3; i++) {
+    const response = await page.request.post("/api/entries", {
+      headers,
+      data: {
+        date: shiftDate(today, -60 + i * 30),
+        values: {
+          weight: 80 - i,
+          waist: 90 - i,
+          ...(i === 1 ? {} : { hips: 100 - i }),
+        },
+        height: 175,
+        note: "",
+        requestId: crypto.randomUUID(),
+      },
+    });
+    expect(response.ok()).toBe(true);
+  }
+  await page.goto("/#analysis");
+  const choices = page.getByRole("group", { name: "Mesures du graphique" });
+  await expect(
+    choices.getByRole("button", { name: "Poids", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".period-selector button")).toHaveText([
+    "3M",
+    "6M",
+    "1A",
+    "MAX",
+  ]);
+  await expect(
+    page.getByRole("button", { name: "1M", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText("Les autres mesures", { exact: true }),
+  ).toHaveCount(0);
+  await expect(page.locator(".analysis-indicators")).toBeVisible();
+  expect(
+    await page
+      .locator(".analysis-indicators")
+      .evaluate(
+        (el) =>
+          !el.closest("details") &&
+          el.previousElementSibling?.classList.contains("graph-card"),
+      ),
+  ).toBe(true);
+  await expect(page.locator(".indicator-detail")).toHaveCount(3);
+  await expect(page.locator(".indicator-detail").first()).toContainText(
+    "25,5 kg/m²",
+  );
+  await choices
+    .getByRole("button", { name: "Tour de taille", exact: true })
+    .click();
+  await choices.getByRole("button", { name: "Hanches", exact: true }).click();
+  await expect(
+    page.locator(".comparison-chart [data-series] .chart-line"),
+  ).toHaveCount(3);
+  await expect(
+    page.getByRole("list", { name: "Mesures affichées" }).getByRole("listitem"),
+  ).toHaveCount(3);
+  await page
+    .locator(".comparison-chart")
+    .getByRole("button", { name: new RegExp(`^${today} :`) })
+    .press("Enter");
+  const reading = page.locator(".comparison-point-label");
+  await expect(reading).toContainText("78,0 kg");
+  await expect(reading).toContainText("88,0 cm");
+  await expect(reading).toContainText("98,0 cm");
+  await page
+    .locator(".comparison-chart")
+    .getByRole("button", { name: new RegExp(`^${shiftDate(today, -30)} :`) })
+    .press("Enter");
+  await expect(reading).toContainText("Non renseigné");
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await screenshot(page, "analyse-plusieurs-mesures", info.project.name);
+  await page.getByRole("button", { name: "6M", exact: true }).click();
+  await page.getByRole("button", { name: /^Comparer deux périodes/ }).click();
+  await page
+    .getByRole("heading", { name: "Comparer deux périodes", exact: true })
+    .waitFor();
+  await page.goBack();
+  for (const name of ["Poids", "Tour de taille", "Hanches"])
+    await expect(
+      choices.getByRole("button", { name, exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+  await expect(
+    page.getByRole("button", { name: "6M", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await choices.getByRole("button", { name: "Poids", exact: true }).click();
+  await choices.getByRole("button", { name: "Hanches", exact: true }).click();
+  await expect(page.locator(".comparison-chart")).toHaveCount(0);
+  await expect(page.locator(".graph-value")).toContainText("88,0");
+  await choices
+    .getByRole("button", { name: "Tour de taille", exact: true })
+    .click();
+  await expect(
+    choices.getByRole("button", { name: "Tour de taille", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+});

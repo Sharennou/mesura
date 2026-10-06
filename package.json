@@ -18,6 +18,7 @@
     "check:cloud": "deno check --config supabase/functions/deno.json supabase/functions/mesura-api/index.ts",
     "bundle:cloud": "tsx scripts/bundle-cloud.ts",
     "check": "npm run build && npm test",
+    "seed:dev": "tsx scripts/seed-development-account.ts",
     "push:keys": "web-push generate-vapid-keys",
     "format": "prettier --write src server shared scripts tests *.ts *.json *.html docs README.md"
   },

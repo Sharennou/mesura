@@ -50,7 +50,7 @@ Les nouveaux comptes commencent sans mesure ni note. Leur taille et leur éventu
 - Poids, 14 mensurations standard, mesures personnalisées, favoris ordonnés par glisser-déposer et archivage avec historique.
 - Notes privées ; guide illustré avec trois étapes courtes et sources.
 - Historique, modification, correction explicite de la stature historique et suppression.
-- Courbes réelles, cinq périodes et moyennes journalières.
+- Courbes réelles, sélection de plusieurs mesures, quatre périodes à partir de trois mois et moyennes journalières. IMC et ratios visibles sous le graphique.
 - IMC, ratios, objectifs dans les deux directions ou de maintien et projection conditionnelle.
 - Comparaison de périodes, bilan mensuel recalculé et notes du mois.
 - PWA, Web Push et email facultatif ; rappels hebdomadaires sur un ou plusieurs jours.
@@ -101,3 +101,9 @@ Voir [le diagnostic, les changements et la validation](docs/ux-parcours.md). Le 
 Les photos associées aux mesures ont été retirées le 6 octobre 2026 : ajout aux mesures, galerie, comparaison, consentement proposé et inclusion dans les exports ZIP. Les API refusent les nouveaux envois de photos de mesures. Les anciens fichiers et champs restent privés et compatibles avec le nettoyage lors du retrait du suivi ou de la suppression du compte ; aucune migration destructive n’est appliquée.
 
 La photo de profil est conservée : ajout, remplacement et retrait dans « Profil », avec affichage rond dans l’en-tête. Elle est réduite en JPEG sans métadonnées et enregistrée dans le profil privé.
+
+## Compte de développement rempli
+
+`npm run seed:dev` crée un compte explicitement nommé « Développement · données fictives » sur le serveur local (`http://127.0.0.1:5173`). Pour l’application en ligne, utiliser explicitement `npm run seed:dev -- --target cloud`. Le script utilise uniquement les API publiques authentifiées, sans clé d’administration.
+
+Le jeu contient 30 entrées et 383 valeurs sur plus d’un an : 15 types de mesures, séances partielles, notes, note seule, deux mesures du même jour et objectif de poids. `--dry-run` affiche uniquement le résumé sans créer de compte. Les identifiants générés sont conservés dans un fichier privé ignoré par Git, `.runtime/development-account-local.json` ou `.runtime/development-account-cloud.json` ; les relances reprennent le même compte et complètent seulement les entrées manquantes. Les comptes ordinaires restent vides à leur création.

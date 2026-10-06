@@ -5,6 +5,7 @@ import {
   Target,
   Ruler,
 } from "lucide-react";
+import { ComparisonChart } from "../components/ComparisonChart";
 import { useApp } from "../context";
 import { useViewState } from "../useViewState";
 import {
@@ -32,10 +33,18 @@ import {
 
 export function AnalysisScreen() {
   const { data, navigate } = useApp();
-  const [period, setPeriod] = useViewState("analysis.period", "3M");
-  const [selected, setSelected] = useViewState("analysis.measure", "weight");
-  const measure =
-    data.measures.find((m) => m.id === selected) ?? data.measures[0];
+  const [storedPeriod, setPeriod] = useViewState("analysis.period", "3M");
+  const period = ["3M", "6M", "1A", "MAX"].includes(storedPeriod)
+    ? storedPeriod
+    : "3M";
+  const [selected, setSelected] = useViewState<string[]>("analysis.measures", [
+    "weight",
+  ]);
+  const selectedMeasures = selected.flatMap((id) =>
+    data.measures.filter((m) => m.id === id),
+  );
+  const measure = selectedMeasures[0] ?? data.measures[0];
+  const multiple = selectedMeasures.length > 1;
   const bounds = periodBounds(
     period,
     data.entries,
@@ -76,6 +85,20 @@ export function AnalysisScreen() {
       data.profile.visible.includes(m.id) ||
       data.entries.some((e) => e.values[m.id] !== undefined),
   );
+  const series = selectedMeasures.map((m) => ({
+    ...m,
+    data: dailyValues(data.entries, m.id, bounds.start, bounds.end),
+  }));
+  const hasTrend = series.some((s) => s.data.length > 1);
+  function toggleMeasure(id: string) {
+    setSelected((current) =>
+      current.includes(id)
+        ? current.length > 1
+          ? current.filter((item) => item !== id)
+          : current
+        : [...current, id],
+    );
+  }
   return (
     <>
       <PageTitle title="Analyse" back={false} />
@@ -91,12 +114,19 @@ export function AnalysisScreen() {
         </>
       ) : (
         <>
-          <div className="measure-chips" aria-label="Mesure du graphique">
+          <p className="small muted">
+            Choisissez une ou plusieurs mesures à afficher.
+          </p>
+          <div
+            className="measure-chips"
+            role="group"
+            aria-label="Mesures du graphique"
+          >
             {tracked.map((m) => (
               <button
                 key={m.id}
-                aria-pressed={measure.id === m.id}
-                onClick={() => setSelected(m.id)}
+                aria-pressed={selected.includes(m.id)}
+                onClick={() => toggleMeasure(m.id)}
               >
                 {m.name}
               </button>
@@ -105,7 +135,7 @@ export function AnalysisScreen() {
           {data.entries.length > 1 && (
             <>
               <div className="period-selector" aria-label="Période d’analyse">
-                {["1M", "3M", "6M", "1A", "MAX"].map((p) => (
+                {["3M", "6M", "1A", "MAX"].map((p) => (
                   <button
                     key={p}
                     aria-pressed={period === p}
@@ -122,141 +152,149 @@ export function AnalysisScreen() {
             </>
           )}
           <section
-            className={`graph-card ${points.length < 2 ? "graph-compact" : ""}`}
+            className={`graph-card ${(multiple ? !hasTrend : points.length < 2) ? "graph-compact" : ""}`}
           >
-            <div className="card-top">
-              <span className="eyebrow">{measure.name}</span>
-              {points.length > 1 && (
-                <Badge value={stat.delta} unit={measure.unit} />
-              )}
-            </div>
-            {last ? (
+            {multiple ? (
               <>
-                <div className="graph-value">
-                  <strong
-                    style={
-                      number(last.values[measure.id]).length > 5
-                        ? { fontSize: 60 }
-                        : undefined
-                    }
-                  >
-                    {number(last.values[measure.id])}
-                  </strong>
-                  <span>{measure.unit}</span>
+                <div className="card-top">
+                  <span className="eyebrow">Évolution des mesures</span>
                 </div>
-                <p className="graph-caption">
-                  Dernière valeur connue · <DateLabel date={last.date} />{" "}
-                  {last.date.slice(0, 4)}
-                  {(last.date < bounds.start || last.date > bounds.end) &&
-                    " · hors période"}
-                </p>
-              </>
-            ) : (
-              <p className="graph-caption">
-                Aucune valeur de {measure.name.toLocaleLowerCase("fr")}{" "}
-                enregistrée.
-              </p>
-            )}
-            {points.length > 1 ? (
-              <>
-                <Chart
-                  key={`${measure.id}-${period}`}
-                  data={points}
-                  unit={measure.unit}
-                />
-                <div className="graph-footer">
-                  <span>Variation sur la période</span>
-                  <strong>{stat.days} jours renseignés</strong>
-                </div>
-                <p className="small">
-                  De {number(stat.first!.value)} à {number(stat.last!.value)}{" "}
-                  {measure.unit}. Les points représentent les moyennes de chaque
-                  jour renseigné.
-                </p>
-              </>
-            ) : (
-              <p className="analysis-hint">
-                {!last
-                  ? "Choisissez une autre mesure ou ajoutez cette valeur dans une entrée."
-                  : !points.length
-                    ? "Aucune valeur sur la période choisie. Votre dernière valeur connue reste affichée ci-dessus."
-                    : knownPoints.length === 1
-                      ? "Votre première valeur est enregistrée. Une prochaine mesure, à une autre date, permettra de suivre son évolution."
-                      : "Un seul jour renseigné sur cette période. Choisissez une période plus longue pour comparer."}
-              </p>
-            )}
-            {!points.length && last && (
-              <button className="text-button" onClick={() => setPeriod("MAX")}>
-                Voir toute la période
-              </button>
-            )}
-            {!last && (
-              <button
-                className="text-button"
-                onClick={() => navigate("measure")}
-              >
-                Ajouter une mesure
-              </button>
-            )}
-          </section>
-        </>
-      )}
-      <div className="section-heading">
-        <h2>Comprendre et comparer</h2>
-      </div>
-      <div className="stack analysis-tools">
-        <LinkCard
-          icon={CalendarRange}
-          title="Comparer deux périodes"
-          description="Comparer les moyennes de vos mesures."
-          onClick={() => navigate("compare")}
-        />
-        <LinkCard
-          icon={CalendarDays}
-          title="Bilan mensuel"
-          description="Régularité et évolutions du mois."
-          onClick={() => navigate("monthly")}
-        />
-      </div>
-      {data.entries.length > 0 && (
-        <>
-          {tracked.some(
-            (m) => m.id !== measure.id && latest(data.entries, m.id),
-          ) && (
-            <details className="optional-panel">
-              <summary>Les autres mesures</summary>
-              <div className="measurement-grid">
-                {tracked
-                  .filter(
-                    (m) => m.id !== measure.id && latest(data.entries, m.id),
-                  )
-                  .map((m) => {
-                    const value = latest(data.entries, m.id)!;
+                <div className="comparison-readings">
+                  {selectedMeasures.map((m) => {
+                    const lastValue = latest(data.entries, m.id);
                     return (
-                      <button
-                        key={m.id}
-                        className="measure-tile analysis-tile"
-                        onClick={() => {
-                          setSelected(m.id);
-                          window.scrollTo(0, 0);
-                        }}
-                      >
-                        <span className="eyebrow">{m.name}</span>
-                        <div className="tile-reading">
-                          <strong>{number(value.values[m.id])}</strong>
-                          <span>{m.unit}</span>
-                        </div>
-                        <small>
-                          Dernière connue · <DateLabel date={value.date} />
-                        </small>
-                      </button>
+                      <div key={m.id}>
+                        <span>{m.name}</span>
+                        <strong>
+                          {lastValue
+                            ? `${number(lastValue.values[m.id])} ${m.unit}`
+                            : "Non renseigné"}
+                        </strong>
+                        {lastValue && (
+                          <small>
+                            Dernière connue ·{" "}
+                            <DateLabel date={lastValue.date} />
+                            {(lastValue.date < bounds.start ||
+                              lastValue.date > bounds.end) &&
+                              " · hors période"}
+                          </small>
+                        )}
+                      </div>
                     );
                   })}
-              </div>
-            </details>
-          )}
-          <details className="optional-panel">
-            <summary>Indicateurs · période sélectionnée</summary>
+                </div>
+                {hasTrend ? (
+                  <ComparisonChart
+                    key={`${selected.join("-")}-${period}`}
+                    series={series}
+                  />
+                ) : (
+                  <p className="analysis-hint">
+                    Ajoutez des mesures à plusieurs dates ou choisissez une
+                    période plus longue pour comparer leur évolution.
+                  </p>
+                )}
+                {!hasTrend && series.every((s) => !s.data.length) && (
+                  <button
+                    className="text-button"
+                    onClick={() => setPeriod("MAX")}
+                  >
+                    Voir toute la période
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="card-top">
+                  <span className="eyebrow">{measure.name}</span>
+                  {points.length > 1 && (
+                    <Badge value={stat.delta} unit={measure.unit} />
+                  )}
+                </div>
+                {last ? (
+                  <>
+                    <div className="graph-value">
+                      <strong
+                        style={
+                          number(last.values[measure.id]).length > 5
+                            ? { fontSize: 60 }
+                            : undefined
+                        }
+                      >
+                        {number(last.values[measure.id])}
+                      </strong>
+                      <span>{measure.unit}</span>
+                    </div>
+                    <p className="graph-caption">
+                      Dernière valeur connue · <DateLabel date={last.date} />{" "}
+                      {last.date.slice(0, 4)}
+                      {(last.date < bounds.start || last.date > bounds.end) &&
+                        " · hors période"}
+                    </p>
+                  </>
+                ) : (
+                  <p className="graph-caption">
+                    Aucune valeur de {measure.name.toLocaleLowerCase("fr")}{" "}
+                    enregistrée.
+                  </p>
+                )}
+                {points.length > 1 ? (
+                  <>
+                    <Chart
+                      key={`${measure.id}-${period}`}
+                      data={points}
+                      unit={measure.unit}
+                    />
+                    <div className="graph-footer">
+                      <span>Variation sur la période</span>
+                      <strong>{stat.days} jours renseignés</strong>
+                    </div>
+                    <p className="small">
+                      De {number(stat.first!.value)} à{" "}
+                      {number(stat.last!.value)} {measure.unit}. Les points
+                      représentent les moyennes de chaque jour renseigné.
+                    </p>
+                  </>
+                ) : (
+                  <p className="analysis-hint">
+                    {!last
+                      ? "Choisissez une autre mesure ou ajoutez cette valeur dans une entrée."
+                      : !points.length
+                        ? "Aucune valeur sur la période choisie. Votre dernière valeur connue reste affichée ci-dessus."
+                        : knownPoints.length === 1
+                          ? "Votre première valeur est enregistrée. Une prochaine mesure, à une autre date, permettra de suivre son évolution."
+                          : "Un seul jour renseigné sur cette période. Choisissez une période plus longue pour comparer."}
+                  </p>
+                )}
+                {!points.length && last && (
+                  <button
+                    className="text-button"
+                    onClick={() => setPeriod("MAX")}
+                  >
+                    Voir toute la période
+                  </button>
+                )}
+                {!last && (
+                  <button
+                    className="text-button"
+                    onClick={() => navigate("measure")}
+                  >
+                    Ajouter une mesure
+                  </button>
+                )}
+              </>
+            )}
+          </section>
+          <section
+            className="analysis-indicators"
+            aria-labelledby="analysis-indicators-title"
+          >
+            <div className="section-heading">
+              <h2 id="analysis-indicators-title">IMC et ratios</h2>
+            </div>
+            <p className="small muted">
+              Derniers indicateurs de la période sélectionnée.
+            </p>
             <p className="small">
               Hauteur : votre hauteur corporelle en cm, distincte du tour de
               taille. Chaque calcul utilise les valeurs d’une même entrée.
@@ -304,7 +342,28 @@ export function AnalysisScreen() {
                 </div>
               ))}
             </div>
-          </details>
+          </section>
+        </>
+      )}
+      <div className="section-heading">
+        <h2>Comprendre et comparer</h2>
+      </div>
+      <div className="stack analysis-tools">
+        <LinkCard
+          icon={CalendarRange}
+          title="Comparer deux périodes"
+          description="Comparer les moyennes de vos mesures."
+          onClick={() => navigate("compare")}
+        />
+        <LinkCard
+          icon={CalendarDays}
+          title="Bilan mensuel"
+          description="Régularité et évolutions du mois."
+          onClick={() => navigate("monthly")}
+        />
+      </div>
+      {data.entries.length > 0 && (
+        <>
           <details className="optional-panel">
             <summary>
               Vos objectifs <span className="optional">Facultatifs</span>
