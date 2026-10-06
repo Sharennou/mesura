@@ -1,6 +1,7 @@
 import { useId } from "react";
 import {
   EQUATION_LABELS,
+  ageAt,
   SITUATION_LABELS,
   PROTOCOL_LABELS,
   type ToolProfile,
@@ -12,12 +13,18 @@ export function EquationFields({
   value,
   onChange,
   maxDate,
+  profile = false,
 }: {
   value: ToolProfile;
   onChange: (value: ToolProfile) => void;
   maxDate: string;
+  profile?: boolean;
 }) {
   const id = useId();
+  const age = ageAt(value.birthDate, maxDate);
+  const equationLabel = profile
+    ? "Sexe utilisé pour les calculs"
+    : "Équation pour le RFM et la dépense au repos";
   return (
     <div className="stack">
       <label className="field-label">
@@ -26,6 +33,7 @@ export function EquationFields({
           aria-label="Date de naissance"
           aria-describedby={`${id}-birth-help`}
           type="date"
+          autoComplete={profile ? "bday" : "off"}
           max={maxDate}
           value={value.birthDate ?? ""}
           onChange={(e) =>
@@ -36,10 +44,18 @@ export function EquationFields({
           L’âge sera calculé à la date de chaque séance.
         </small>
       </label>
+      {profile && (
+        <p className="small" role="status" aria-live="polite">
+          Âge actuel :{" "}
+          <strong>{age === null ? "Non renseigné" : `${age} ans`}</strong>.
+          {!value.birthDate &&
+            " Renseignez votre date de naissance pour les calculs qui nécessitent l’âge."}
+        </p>
+      )}
       <label className="field-label">
-        Équation pour le RFM et la dépense au repos
+        {equationLabel}
         <select
-          aria-label="Équation pour le RFM et la dépense au repos"
+          aria-label={equationLabel}
           aria-describedby={`${id}-equation-help`}
           value={value.equation}
           onChange={(e) =>
@@ -51,7 +67,9 @@ export function EquationFields({
         >
           {Object.entries(EQUATION_LABELS).map(([id, label]) => (
             <option key={id} value={id}>
-              {label}
+              {profile && id !== "unspecified"
+                ? `${id === "male" ? "Masculin" : "Féminin"} — ${label.toLocaleLowerCase("fr")}`
+                : label}
             </option>
           ))}
         </select>

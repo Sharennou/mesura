@@ -290,6 +290,12 @@ export async function buildApp() {
     const s = await owner(req);
     const setup = onboardingSchema.parse(req.body);
     if (
+      setup.toolProfile?.birthDate &&
+      setup.toolProfile.birthDate >
+        localDate(accountData(s.user.id, s.user.name).profile.timezone)
+    )
+      fail("La date de naissance ne peut pas être dans le futur.");
+    if (
       setup.goal &&
       !getMeasures(s.user.id).some(
         (m) => m.id === setup.goal!.measureId && !m.archived,
@@ -310,6 +316,10 @@ export async function buildApp() {
       db.prepare(
         "UPDATE profiles SET height = ?, height_date = ?, onboarding_completed = 1 WHERE user_id = ?",
       ).run(setup.height, null, s.user.id);
+      if (setup.toolProfile !== undefined)
+        db.prepare(
+          "UPDATE profiles SET tool_profile_json = ? WHERE user_id = ?",
+        ).run(JSON.stringify(setup.toolProfile), s.user.id);
       if (setup.goal)
         db.prepare(
           "INSERT INTO goals VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET measure_id=excluded.measure_id, start=excluded.start, target=excluded.target, start_date=excluded.start_date",

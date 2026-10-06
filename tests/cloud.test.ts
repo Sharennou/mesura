@@ -35,6 +35,45 @@ const consent = (
   change(a, "POST", "/consents", { purpose, granted, version: CONSENT_VERSION })
     .account;
 describe("Sauvegarde distante", () => {
+  it("conserve l’âge et le choix d’équation du démarrage sans accepter de date invalide ni altérer les anciens clients", () => {
+    const before = emptyCloudAccount("Alice", "Europe/Paris");
+    const payload = {
+      height: 180,
+      consent: true,
+      version: CONSENT_VERSION,
+      goal: null,
+    };
+    for (const toolProfile of [
+      { birthDate: "2026-10-06", equation: "female" },
+      { birthDate: "2000-02-30", equation: "female" },
+      { birthDate: "", equation: "female" },
+      { birthDate: "1996-10-05", equation: "inferred" },
+    ]) {
+      expect(() =>
+        change(before, "POST", "/onboarding", { ...payload, toolProfile }),
+      ).toThrow();
+      expect(before.consents.body).toBe(false);
+      expect(before.profile.toolProfile).toBeUndefined();
+      expect(before.profile.onboardingCompleted).toBe(false);
+      expect(before.audit).toEqual([]);
+    }
+    const toolProfile = { birthDate: "1996-10-05", equation: "female" };
+    const saved = change(before, "POST", "/onboarding", {
+      ...payload,
+      toolProfile,
+    }).account;
+    expect(publicCloudAccount(saved).profile.toolProfile).toEqual(toolProfile);
+    const legacy = change(saved, "POST", "/onboarding", payload).account;
+    expect(legacy.profile.toolProfile).toEqual(toolProfile);
+    const unspecified = { birthDate: null, equation: "unspecified" };
+    expect(
+      change(legacy, "POST", "/onboarding", {
+        ...payload,
+        toolProfile: unspecified,
+      }).account.profile.toolProfile,
+    ).toEqual(unspecified);
+    expect(before.profile.toolProfile).toBeUndefined();
+  });
   it("enregistre le démarrage en un seul changement sans activer les options", () => {
     const before = emptyCloudAccount("Alice", "Europe/Paris");
     const payload = {

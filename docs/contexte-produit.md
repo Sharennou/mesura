@@ -12,7 +12,7 @@ Le visiteur voit le formulaire de création de compte ou de connexion. Les liens
 
 L’inscription ouvre directement une session, sans email de confirmation. Le minimum de mot de passe actuel est de six caractères. La récupération du mot de passe conserve son lien par email.
 
-Le nouvel utilisateur renseigne sa hauteur, choisit un objectif chiffré ou un suivi sans cible, puis autorise le suivi corporel en une case. Ces informations sont sauvegardées ensemble. Aucun poids, mesure, note ou objectif fictif n’est ajouté. Les autorisations de rappels sont demandées à leur utilisation.
+Le nouvel utilisateur renseigne sa hauteur et peut compléter sa date de naissance et le sexe utilisé pour les calculs dans l’étape « Votre point de départ ». L’âge actuel est affiché automatiquement ; le choix masculin/féminin correspond explicitement aux équations des études, avec « Non renseigné » par défaut. Il choisit un objectif chiffré ou un suivi sans cible, puis autorise le suivi corporel en une case. Ces informations sont sauvegardées ensemble. Aucun poids, mesure, note ou objectif fictif n’est ajouté. Les autorisations de rappels sont demandées à leur utilisation.
 
 ## Mesures et Analyse
 
@@ -22,7 +22,7 @@ Analyse distingue aucune entrée, premier repère et évolution sur plusieurs jo
 
 ## Mon espace
 
-Mon espace commence par un menu : Profil, Objectifs, Mesures favorites, Rappels, Données et confidentialité. Le profil s’ouvre depuis ce menu et permet de modifier le pseudo, la hauteur et la photo de profil. La photo peut être remplacée ou retirée puis enregistrée. Elle apparaît en cercle dans le profil et l’en-tête ; sans photo, l’icône de personnage est affichée.
+Mon espace commence par un menu : Profil, Objectifs, Mesures favorites, Rappels, Données et confidentialité. Le profil s’ouvre depuis ce menu et permet de modifier le pseudo, la hauteur, la date de naissance, le sexe utilisé pour les calculs et la photo de profil. Les champs des calculs sont directement visibles quand le suivi corporel est autorisé. L’âge affiché est calculé à partir de la naissance, jamais stocké comme une valeur fixe. Ces réglages alimentent les nouvelles séances ; les séances enregistrées et les brouillons en cours gardent leurs propres informations, modifiables dans leurs données pour les outils. La photo peut être remplacée ou retirée puis enregistrée. Elle apparaît en cercle dans le profil et l’en-tête ; sans photo, l’icône de personnage est affichée.
 
 Le champ du fuseau horaire est absent de Mon espace. Sa valeur technique reste conservée pour le calendrier. L’écran Rappel possède encore son réglage de fuseau horaire.
 

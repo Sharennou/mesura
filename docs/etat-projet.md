@@ -24,9 +24,9 @@ Le service SMTP Auth Brevo ne configure pas automatiquement les rappels email de
 | ------------------------------------------------ | ------------------------------------------------------ |
 | `src/App.tsx`                                    | Session, accès aux écrans, démarrage et navigation     |
 | `src/screens/Account.tsx`                        | Inscription, connexion et récupération                 |
-| `src/screens/OnboardingScreen.tsx`               | Taille et objectif après inscription                   |
+| `src/screens/OnboardingScreen.tsx`               | Hauteur, âge, sexe des équations et objectif après inscription |
 | `src/screens/Measure.tsx`, `Analysis.tsx`        | Mesures et analyse                                     |
-| `src/screens/ProfileScreen.tsx`                  | Pseudo, taille et photo de profil                      |
+| `src/screens/ProfileScreen.tsx`                  | Pseudo, hauteur, âge, sexe des équations et photo de profil |
 | `src/screens/Reminder.tsx`                       | Jours hebdomadaires, heure et canal                    |
 | `src/api.ts`, `src/cloud-auth.ts`                | Adaptation entre API locale et cloud                   |
 | `shared/config.ts`, `shared/types.ts`            | Nom, consentements, constantes et contrats             |
@@ -100,4 +100,4 @@ Prévisualisation locale séparée : `http://127.0.0.1:5182`, base `.runtime/ux-
 
 « Outils » remplace « IMC et ratios » dans Analyse. Les séances conservent l’âge calculable, l’équation choisie, la situation, les deux protocoles de tour de taille et la provenance de la hauteur. La migration locale `006_body_tools.sql` est additive ; le compte JSON cloud reçoit le nouveau catalogue sans modifier les anciennes mesures.
 
-Formules, restrictions et références : [dossier scientifique](outils-scientifiques.md). Bilan : 148 tests unitaires/API/cloud/SQL, 24 exécutions de parcours mobiles, contrôles cloud et Pages réussis ; voir [vérifications](verification.md). Publier l’API avant le frontend. Aucune publication ni migration des données de production effectuée pendant cette évolution.
+Formules, restrictions et références : [dossier scientifique](outils-scientifiques.md). L’inscription et le profil exposent directement la naissance (âge calculé) et le sexe utilisé pour les équations, sans nouveau champ de stockage ni modification rétroactive des séances. Bilan : 150 tests unitaires/API/cloud/SQL, 24 exécutions de parcours mobiles, contrôles cloud et Pages réussis ; voir [vérifications](verification.md). Publier l’API avant le frontend. Aucune publication ni migration des données de production effectuée pendant cette évolution.

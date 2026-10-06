@@ -82,7 +82,7 @@ export function ProfileScreen({
           <LinkCard
             icon={UserRound}
             title="Profil"
-            description={`${data.profile.name} · pseudo, hauteur et photo.`}
+            description={`${data.profile.name} · âge, sexe pour les calculs, hauteur et photo.`}
             onClick={() => navigate("profile")}
           />
           <LinkCard
@@ -273,8 +273,19 @@ export function ProfileScreen({
           </small>
         </label>
         {data.consents.body && (
-          <details className="optional-panel">
-            <summary>Préparer les outils des prochaines séances</summary>
+          <section
+            className="stack"
+            aria-labelledby="profile-calculations-title"
+          >
+            <h2 id="profile-calculations-title">
+              Âge et sexe pour les calculs
+            </h2>
+            <EquationFields
+              profile
+              value={toolProfile}
+              onChange={setToolProfile}
+              maxDate={localDate(data.profile.timezone)}
+            />
             <label className="field-label">
               Date de mesure de la hauteur du profil
               <input
@@ -284,16 +295,13 @@ export function ProfileScreen({
                 onChange={(e) => setHeightDate(e.target.value)}
               />
             </label>
-            <EquationFields
-              value={toolProfile}
-              onChange={setToolProfile}
-              maxDate={localDate(data.profile.timezone)}
-            />
             <p className="small">
               Ces réglages seront proposés aux nouvelles séances. Les entrées
-              déjà enregistrées restent inchangées.
+              déjà enregistrées restent inchangées. Une séance en cours garde
+              les informations déjà saisies ; vous pouvez les compléter dans ses
+              données pour les outils.
             </p>
-          </details>
+          </section>
         )}
         <button className="secondary" disabled={busy}>
           {busy ? "Enregistrement…" : "Enregistrer mon profil"}

@@ -22,7 +22,7 @@ Mesura est une application web de suivi corporel conçue pour le téléphone, en
 - Refonte UX en développement : [diagnostic et validation](docs/ux-parcours.md), états d’analyse selon les données, détail distinct de l’édition, retours et brouillons conservés en mémoire. Cette session n’est pas publiée.
 - Compte obligatoire, aucune donnée fictive dans les comptes ordinaires, aucune confirmation d’email à l’inscription.
 - Compte de développement dédié autorisé par le propriétaire : « Développement · données fictives », 30 entrées et 383 valeurs injectées par `scripts/seed-development-account.ts`. Identifiants privés dans `.runtime`, jamais dans la documentation.
-- Après inscription : connexion immédiate, puis taille et objectifs avant le suivi.
+- Après inscription : connexion immédiate, puis hauteur, date de naissance facultative (âge calculé), sexe utilisé pour les équations et objectifs avant le suivi.
 - Historique en bas de Mesures ; guide en trois étapes courtes, sans « À éviter » ni « Bien mesurer à chaque séance », avec sources.
 - Favoris ordonnés par glisser-déposer, à la souris ou au doigt, avec commande au clavier.
 - Fonction photo retirée, à l’exception de la photo de profil, avec retrait des options d’export d’images. Nouveaux envois de photos de mesures refusés ; anciennes données conservées privées jusqu’au nettoyage habituel.

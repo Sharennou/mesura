@@ -1,10 +1,12 @@
+import { EquationFields } from "../components/ToolFields";
+import { EMPTY_TOOL_PROFILE, validDate } from "../../shared/body-tools";
 import { useState, type FormEvent } from "react";
 import { ArrowRight, LogOut } from "lucide-react";
 import { useApp } from "../context";
 import { api, authClient } from "../api";
 import { Button, ErrorMessage, Icon, PageTitle } from "../components";
 import { CONSENT_TEXTS, CONSENT_VERSION } from "../../shared/config";
-import { number, parseDecimal } from "../../shared/calculations";
+import { number, parseDecimal, localDate } from "../../shared/calculations";
 import type { AccountData } from "../../shared/types";
 
 export function OnboardingScreen() {
@@ -12,6 +14,10 @@ export function OnboardingScreen() {
   const [height, setHeight] = useState(
     data.profile.height ? number(data.profile.height) : "",
   );
+  const [toolProfile, setToolProfile] = useState(
+    data.profile.toolProfile ?? { ...EMPTY_TOOL_PROFILE },
+  );
+  const today = localDate(data.profile.timezone);
   const [choice, setChoice] = useState(data.goal ? "target" : "");
   const [measureId, setMeasureId] = useState(data.goal?.measureId || "weight");
   const [start, setStart] = useState(data.goal ? number(data.goal.start) : "");
@@ -45,6 +51,15 @@ export function OnboardingScreen() {
       );
       return;
     }
+    if (
+      toolProfile.birthDate &&
+      (!validDate(toolProfile.birthDate) || toolProfile.birthDate > today)
+    ) {
+      setError(
+        "Vérifiez votre date de naissance : elle doit être valide et ne pas être dans le futur.",
+      );
+      return;
+    }
     if (!consent) {
       setError(
         "Cochez l’autorisation de suivi pour enregistrer ces informations.",
@@ -58,6 +73,7 @@ export function OnboardingScreen() {
         method: "POST",
         body: JSON.stringify({
           height: h,
+          toolProfile,
           consent,
           version: CONSENT_VERSION,
           goal: choice === "target" ? { measureId, start: a, target: b } : null,
@@ -79,8 +95,8 @@ export function OnboardingScreen() {
         back={false}
       />
       <p className="lead">
-        Votre hauteur, votre cap. Quelques repères pour commencer, modifiables à
-        tout moment.
+        Votre hauteur, votre âge, le sexe utilisé pour les calculs et votre cap.
+        Ces repères restent modifiables dans votre profil.
       </p>
       <form onSubmit={submit} className="stack">
         <label className="field-label">
@@ -98,6 +114,25 @@ export function OnboardingScreen() {
             taille.
           </small>
         </label>
+        <section
+          className="stack"
+          aria-labelledby="onboarding-calculations-title"
+        >
+          <h2 id="onboarding-calculations-title">
+            Âge et sexe pour les calculs
+          </h2>
+          <EquationFields
+            profile
+            value={toolProfile}
+            onChange={setToolProfile}
+            maxDate={today}
+          />
+          <p className="small muted">
+            Ces informations complètent les nouvelles séances. Si vous les
+            laissez non renseignées, les outils qui en dépendent resteront
+            indisponibles.
+          </p>
+        </section>
         <label className="field-label">
           Votre objectif
           <select

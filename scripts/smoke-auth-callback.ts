@@ -89,6 +89,16 @@ try {
     assert.equal(new URL(page.url()).hash, "");
     await expect(page.getByRole("navigation")).toHaveCount(0);
     await page.getByLabel("Votre hauteur en cm").fill("172");
+    const toolProfile =
+      width === 390
+        ? { birthDate: "1996-01-01", equation: "female" }
+        : { birthDate: null, equation: "unspecified" };
+    if (toolProfile.birthDate) {
+      await page.getByLabel("Date de naissance").fill(toolProfile.birthDate);
+      await page
+        .getByLabel("Sexe utilisé pour les calculs")
+        .selectOption(toolProfile.equation);
+    }
     await page.getByLabel("Votre objectif").selectOption("target");
     await page.getByLabel("Mon départ").fill("80");
     await page.getByLabel("Ma cible").fill("75");
@@ -111,10 +121,18 @@ try {
     ).toBeVisible();
     assert.equal(account.goal?.target, 75);
     assert.equal(account.profile.height, 172);
+    assert.deepEqual(account.profile.toolProfile, toolProfile);
     await page.reload();
     await expect(
       page.getByRole("heading", { name: "Nouvelle mesure", exact: true }),
     ).toBeVisible();
+    await page.getByText("Données pour les outils", { exact: true }).click();
+    await expect(page.getByLabel("Date de naissance")).toHaveValue(
+      toolProfile.birthDate ?? "",
+    );
+    await expect(
+      page.getByLabel("Équation pour le RFM et la dépense au repos"),
+    ).toHaveValue(toolProfile.equation);
     // La récupération crée aussi une session, mais reste sur le changement de mot de passe.
     await page.goto(
       `http://127.0.0.1:4178/mesura/?reset=1#${new URLSearchParams({ ...Object.fromEntries(fragment), type: "recovery" })}`,
