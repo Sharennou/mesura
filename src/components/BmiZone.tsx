@@ -1,9 +1,9 @@
 // Adult thresholds: https://www.cdc.gov/bmi/adult-calculator/bmi-categories.html
 const zones = [
-  { label: "Insuffisance pondérale", range: "< 18,5", tone: "low" },
-  { label: "Corpulence normale", range: "18,5 à < 25", tone: "normal" },
-  { label: "Surpoids", range: "25 à < 30", tone: "high" },
-  { label: "Obésité", range: "≥ 30", tone: "very-high" },
+  { range: "< 18,5", tone: "low" },
+  { range: "18,5 à < 25", tone: "normal" },
+  { range: "25 à < 30", tone: "high" },
+  { range: "≥ 30", tone: "very-high" },
 ] as const;
 
 export function bmiZoneIndex(value: number) {
@@ -16,7 +16,7 @@ export function BmiZone({ value }: { value: number }) {
   return (
     <div className="bmi-zone">
       <span className={`bmi-zone-label bmi-tone-${zone.tone}`}>
-        {zone.label} · {zone.range}
+        {zone.range}
       </span>
       <div className="bmi-zone-scale" aria-hidden="true">
         {zones.map((item, i) => (

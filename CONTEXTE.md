@@ -17,7 +17,7 @@ Mesura est une application web de suivi corporel conçue pour le téléphone, en
 - Production : GitHub Pages + Supabase Free. Version locale : Fastify + SQLite + Better Auth.
 - Deux destinations principales : Mesures (saisie et historique) et Analyse (évolution et comparaison).
 - Analyse : sélection de plusieurs mesures, comparaison en pourcentage avec valeurs exactes par date, IMC et ratios directement sous le graphique. Périodes 3M, 6M, 1A, MAX ; menus « Les autres mesures » et indicateurs retirés.
-- Indicateurs : une phrase courte sous chaque valeur ; IMC avec zone colorée, libellé et seuils adultes (< 18,5 ; 18,5 à < 25 ; 25 à < 30 ; ≥ 30). Classification avant arrondi. Textes introductifs sur la période et la hauteur retirés.
+- Indicateurs : une phrase courte sous chaque valeur ; IMC avec couleurs et plages numériques uniquement (< 18,5 ; 18,5 à < 25 ; 25 à < 30 ; ≥ 30), sans libellés de corpulence. Zone déterminée avant arrondi. Textes introductifs sur la période et la hauteur retirés.
 - Refonte UX en développement : [diagnostic et validation](docs/ux-parcours.md), états d’analyse selon les données, détail distinct de l’édition, retours et brouillons conservés en mémoire. Cette session n’est pas publiée.
 - Compte obligatoire, aucune donnée fictive dans les comptes ordinaires, aucune confirmation d’email à l’inscription.
 - Compte de développement dédié autorisé par le propriétaire : « Développement · données fictives », 30 entrées et 383 valeurs injectées par `scripts/seed-development-account.ts`. Identifiants privés dans `.runtime`, jamais dans la documentation.

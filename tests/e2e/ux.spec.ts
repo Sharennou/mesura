@@ -911,7 +911,7 @@ test("analyse : plusieurs courbes, indicateurs visibles et périodes à partir d
     "25,5 kg/m²",
   );
   await expect(page.locator(".bmi-zone-label")).toHaveText(
-    "Surpoids · 25 à < 30",
+    "25 à < 30",
   );
   await expect(page.locator(".bmi-zone-scale .is-current")).toHaveClass(
     /bmi-tone-high/,
