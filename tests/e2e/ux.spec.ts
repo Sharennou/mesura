@@ -910,6 +910,19 @@ test("analyse : plusieurs courbes, indicateurs visibles et périodes à partir d
   await expect(page.locator(".indicator-detail").first()).toContainText(
     "25,5 kg/m²",
   );
+  await expect(page.locator(".bmi-zone-label")).toHaveText(
+    "Surpoids · 25 à < 30",
+  );
+  await expect(page.locator(".bmi-zone-scale .is-current")).toHaveClass(
+    /bmi-tone-high/,
+  );
+  await expect(page.locator(".indicator-explanation")).toHaveCount(3);
+  await expect(
+    page.getByText("Derniers indicateurs de la période sélectionnée."),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText(/Chaque calcul utilise les valeurs d’une même entrée/),
+  ).toHaveCount(0);
   await choices
     .getByRole("button", { name: "Tour de taille", exact: true })
     .click();

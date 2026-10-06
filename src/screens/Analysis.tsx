@@ -6,6 +6,7 @@ import {
   Ruler,
 } from "lucide-react";
 import { ComparisonChart } from "../components/ComparisonChart";
+import { BmiZone } from "../components/BmiZone";
 import { useApp } from "../context";
 import { useViewState } from "../useViewState";
 import {
@@ -292,13 +293,6 @@ export function AnalysisScreen() {
             <div className="section-heading">
               <h2 id="analysis-indicators-title">IMC et ratios</h2>
             </div>
-            <p className="small muted">
-              Derniers indicateurs de la période sélectionnée.
-            </p>
-            <p className="small">
-              Hauteur : votre hauteur corporelle en cm, distincte du tour de
-              taille. Chaque calcul utilise les valeurs d’une même entrée.
-            </p>
             <div className="indicator-card">
               {(
                 [
@@ -307,21 +301,24 @@ export function AnalysisScreen() {
                     sources.bmi,
                     "Ajoutez un poids et une hauteur dans la même entrée.",
                     1,
+                    "Situe votre poids par rapport à votre hauteur, sans distinguer muscle et graisse.",
                   ],
                   [
                     "Tour de taille / hauteur",
                     sources.waistHeight,
                     "Ajoutez un tour de taille et une hauteur dans la même entrée.",
                     2,
+                    "Compare votre tour de taille à votre hauteur corporelle.",
                   ],
                   [
                     "Tour de taille / tour de hanches",
                     sources.waistHips,
                     "Ajoutez un tour de taille et un tour de hanches dans la même entrée.",
                     2,
+                    "Compare votre tour de taille à vos hanches pour décrire vos proportions.",
                   ],
                 ] as const
-              ).map(([label, source, missing, decimals]) => (
+              ).map(([label, source, missing, decimals, explanation]) => (
                 <div className="indicator-detail" key={label}>
                   <span>{label}</span>
                   {source ? (
@@ -330,6 +327,7 @@ export function AnalysisScreen() {
                         {number(source.value, decimals)}
                         {label === "IMC" ? " kg/m²" : ""}
                       </strong>
+                      {label === "IMC" && <BmiZone value={source.value} />}
                       <small>
                         <DateLabel date={source.date} />
                       </small>
@@ -339,6 +337,9 @@ export function AnalysisScreen() {
                       {missing} Aucune valeur calculable sur cette période.
                     </p>
                   )}
+                  <p className="small muted indicator-explanation">
+                    {explanation}
+                  </p>
                 </div>
               ))}
             </div>
