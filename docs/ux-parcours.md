@@ -80,4 +80,4 @@ Le clavier des tests est simulé par une réduction du `visualViewport` : naviga
 - Parcours réels sur le backend Supabase, avec des comptes de test dédiés, avant publication.
 - Petits essais utilisateurs pour confirmer que les huit tâches demandées se trouvent et se réalisent facilement.
 
-Mise à jour du 6 octobre 2026 : étapes du guide raccourcies, blocs « À éviter » et « Bien mesurer à chaque séance » retirés, sources conservées. Favoris ordonnés par glisser-déposer avec prise en charge tactile, clavier et annulation. La fonctionnalité photo, y compris l’avatar et les options associées, est retirée ; les anciennes données restent privées et leur nettoyage reste assuré.
+Mise à jour du 6 octobre 2026 : étapes du guide raccourcies, blocs « À éviter » et « Bien mesurer à chaque séance » retirés, sources conservées. Favoris ordonnés par glisser-déposer avec prise en charge tactile, clavier et annulation. La fonctionnalité de photos associées aux mesures et ses options sont retirées ; la photo de profil reste disponible ; les anciennes données restent privées et leur nettoyage reste assuré.

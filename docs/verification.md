@@ -24,7 +24,8 @@ Validation : compilation locale et GitHub Pages, **83 tests de calculs / API / P
 - Compatibilité des anciens callbacks du bundle cloud : confirmation email dans un navigateur neuf sans vérificateur PKCE, validation de session auprès d’Auth, nettoyage des jetons dans l’URL, objectif enregistré, lien expiré et séparation du parcours de récupération. Ces réponses Auth sont simulées ; elles ne constituent pas un test d’envoi d’email externe.
 
 - Favoris : glisser-déposer à la souris et au doigt, annulation, clavier et persistance de l’ordre.
-- Photos : absence de formulaires de fichiers, de comparaison et d’option d’export ; nouveaux envois refusés.
+- Photos de mesures : absence de formulaires de fichiers, de comparaison et d’option d’export ; nouveaux envois refusés.
+- Photo de profil : ajout, retrait, persistance et affichage rond dans l’en-tête.
 - Rappels hebdomadaires : plusieurs jours, persistance et occurrences sans doublon, y compris au changement d’heure.
 
 Captures et traces sont dans `test-results/`, ignoré par Git. Les contrôles axe ne remplacent pas une revue humaine et un lecteur d’écran.

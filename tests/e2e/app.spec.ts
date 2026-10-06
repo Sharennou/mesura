@@ -1,3 +1,4 @@
+import sharp from "sharp";
 import { test, expect } from "./fixtures";
 import AxeBuilder from "@axe-core/playwright";
 
@@ -173,12 +174,51 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
   await expect(page.getByText("Fuseau horaire", { exact: true })).toHaveCount(
     0,
   );
-  await expect(page.locator('input[type="file"]')).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /photo/i })).toHaveCount(0);
+  const avatarBytes = await sharp({
+    create: { width: 240, height: 160, channels: 3, background: "#c5ee22" },
+  })
+    .png()
+    .toBuffer();
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "profil.png",
+    mimeType: "image/png",
+    buffer: avatarBytes,
+  });
+  await expect(page.getByAltText("Votre photo de profil")).toBeVisible();
   await page.getByRole("button", { name: "Enregistrer mon profil" }).click();
   await expect(
     page.getByText("Profil enregistré.", { exact: true }),
   ).toBeVisible();
+  await page.reload();
+  await expect(page.getByAltText("Votre photo de profil")).toBeVisible();
+  const withAvatar = await (await page.request.get("/api/account")).json();
+  await expect(
+    page
+      .getByRole("button", { name: "Mon compte et mes réglages" })
+      .locator("img"),
+  ).toHaveAttribute("src", withAvatar.profile.avatar);
+  const accountButton = page.getByRole("button", {
+    name: "Mon compte et mes réglages",
+  });
+  const buttonBounds = await accountButton.boundingBox();
+  const imageBounds = await accountButton.locator("img").boundingBox();
+  expect(imageBounds).toEqual(buttonBounds);
+  expect(imageBounds!.width).toBe(imageBounds!.height);
+  await expect(accountButton).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  expect(withAvatar.profile.avatar).toMatch(/^data:image\/jpeg;base64,/);
+  expect(withAvatar.profile.timezone).toBe(setup.profile.timezone);
+  await page.getByRole("button", { name: "Retirer la photo" }).click();
+  await page.getByRole("button", { name: "Enregistrer mon profil" }).click();
+  await expect(
+    page.getByText("Profil enregistré.", { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(page.getByAltText("Votre photo de profil")).toHaveCount(0);
+  await expect(
+    page
+      .getByRole("button", { name: "Mon compte et mes réglages" })
+      .locator("img"),
+  ).toHaveCount(0);
   await page.goto("/#measure");
   await expect(page.getByLabel("Poids", { exact: true })).toHaveValue("");
   await expect(page.getByLabel("Tour de taille en cm")).toHaveValue("");

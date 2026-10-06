@@ -26,7 +26,7 @@ Le service SMTP Auth Brevo ne configure pas automatiquement les rappels email de
 | `src/screens/Account.tsx`                        | Inscription, connexion et récupération                 |
 | `src/screens/OnboardingScreen.tsx`               | Taille et objectif après inscription                   |
 | `src/screens/Measure.tsx`, `Analysis.tsx`        | Mesures et analyse                                     |
-| `src/screens/ProfileScreen.tsx`                  | Pseudo et taille                                       |
+| `src/screens/ProfileScreen.tsx`                  | Pseudo, taille et photo de profil                      |
 | `src/screens/Reminder.tsx`                       | Jours hebdomadaires, heure et canal                    |
 | `src/api.ts`, `src/cloud-auth.ts`                | Adaptation entre API locale et cloud                   |
 | `shared/config.ts`, `shared/types.ts`            | Nom, consentements, constantes et contrats             |
@@ -41,8 +41,8 @@ Les paramètres publics sont dans `shared/cloud-config.ts`. Ne pas ajouter de se
 ## Migrations
 
 - Supabase : les quatre fichiers de `supabase/migrations/`, dans l’ordre numérique ; le dernier retire la condition de confirmation d’email des contrôles SQL de session.
-- Local : migrations Better Auth, puis les cinq fichiers de `server/migrations/`. `004_avatar.sql` garde une colonne d’avatar historique, désormais inutilisée ; `005_reminder_days.sql` ajoute les jours multiples.
-- L’ancien avatar cloud et les jours multiples sont dans le JSON privé du compte ; aucune colonne Postgres supplémentaire n’était nécessaire.
+- Local : migrations Better Auth, puis les cinq fichiers de `server/migrations/`. `004_avatar.sql` garde la colonne de photo de profil privée ; `005_reminder_days.sql` ajoute les jours multiples.
+- L’avatar cloud et les jours multiples sont dans le JSON privé du compte ; aucune colonne Postgres supplémentaire n’était nécessaire.
 - Préserver les données réelles et les journaux de suppression. Ne jamais réinitialiser le projet de production pour tester.
 
 ## Commandes

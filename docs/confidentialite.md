@@ -60,4 +60,4 @@ Pour une demande : authentifier la personne sans collecte excessive, proposer l�
 
 Avant ouverture : compléter les documents, vérifier chiffrement et restauration, valider qualification, transferts et analyse d’impact. Le [guide RGPD du développeur de la CNIL](https://www.cnil.fr/fr/guide-rgpd-du-developpeur) fournit un cadre pour cette revue.
 
-Depuis le 6 octobre 2026, aucun nouvel envoi de photo ni d’avatar n’est accepté. Les anciens fichiers restent privés et sont nettoyés lors du retrait du suivi, de la suppression d’une entrée ou du compte.
+Depuis le 6 octobre 2026, aucun nouvel envoi de photo associée aux mesures n’est accepté. La photo de profil reste disponible. Les anciens fichiers restent privés et sont nettoyés lors du retrait du suivi, de la suppression d’une entrée ou du compte.

@@ -423,11 +423,19 @@ export default function App() {
                   )}
               </button>
               <button
-                className="circle account-circle"
+                className={`circle account-circle ${accountOwner === session?.user.id && data.profile.avatar ? "has-avatar" : ""}`}
                 aria-label="Mon compte et mes réglages"
                 onClick={() => navigate("account")}
               >
-                <Icon as={UserRound} />
+                {accountOwner === session?.user.id && data.profile.avatar ? (
+                  <img
+                    className="header-avatar"
+                    src={data.profile.avatar}
+                    alt=""
+                  />
+                ) : (
+                  <Icon as={UserRound} />
+                )}
               </button>
             </div>
           )}

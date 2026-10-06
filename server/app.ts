@@ -1,3 +1,4 @@
+import { avatarSchema } from "../shared/avatar";
 import Fastify, { type FastifyRequest } from "fastify";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
@@ -218,6 +219,7 @@ export async function buildApp() {
     const s = await owner(req);
     const p = z
       .object({
+        avatar: avatarSchema,
         name: z.string().trim().min(1).max(100),
         height: z.number().positive().max(300).nullable(),
         timezone: zoneSchema,
@@ -243,6 +245,11 @@ export async function buildApp() {
       db.prepare(
         "INSERT INTO profiles (user_id,height,timezone,visible) VALUES (?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET height = excluded.height, timezone = excluded.timezone, visible = excluded.visible",
       ).run(s.user.id, p.height, p.timezone, JSON.stringify(p.visible));
+      if (p.avatar !== undefined)
+        db.prepare("UPDATE profiles SET avatar = ? WHERE user_id = ?").run(
+          p.avatar,
+          s.user.id,
+        );
     })();
     return accountData(s.user.id, p.name);
   });

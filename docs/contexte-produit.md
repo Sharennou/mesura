@@ -22,7 +22,7 @@ Analyse distingue aucune entrée, premier repère et évolution sur plusieurs jo
 
 ## Mon espace
 
-Mon espace commence par un menu : Profil, Objectifs, Mesures favorites, Rappels, Données et confidentialité. Le profil s’ouvre depuis ce menu et permet de modifier le pseudo et la hauteur. L’en-tête utilise l’icône de personnage pour accéder au compte.
+Mon espace commence par un menu : Profil, Objectifs, Mesures favorites, Rappels, Données et confidentialité. Le profil s’ouvre depuis ce menu et permet de modifier le pseudo, la hauteur et la photo de profil. La photo peut être remplacée ou retirée puis enregistrée. Elle apparaît en cercle dans le profil et l’en-tête ; sans photo, l’icône de personnage est affichée.
 
 Le champ du fuseau horaire est absent de Mon espace. Sa valeur technique reste conservée pour le calendrier. L’écran Rappel possède encore son réglage de fuseau horaire.
 
@@ -40,6 +40,6 @@ Les règles historiques quinze jours et mois restent comprises par le moteur pou
 
 ## Données personnelles
 
-Les données sont isolées par propriétaire. L’utilisateur peut exporter, retirer ses autorisations et supprimer son compte après confirmation de son mot de passe. L’ajout de photos, leur comparaison et l’avatar ont été retirés. Les API refusent les nouveaux envois. Le nettoyage des anciens fichiers est conservé pour le retrait du suivi et la suppression du compte. Voir [confidentialite.md](confidentialite.md) pour les documents et paramètres de l’exploitant restant à compléter.
+Les données sont isolées par propriétaire. L’utilisateur peut exporter, retirer ses autorisations et supprimer son compte après confirmation de son mot de passe. L’ajout de photos aux mesures et leur comparaison ont été retirés ; la photo de profil est conservée. Les API refusent les nouveaux envois de photos de mesures. Le nettoyage des anciens fichiers est conservé pour le retrait du suivi et la suppression du compte. Voir [confidentialite.md](confidentialite.md) pour les documents et paramètres de l’exploitant restant à compléter.
 
 La refonte UX du 5 octobre 2026 reste en développement. Voir [le diagnostic et la validation](ux-parcours.md) pour le détail et les essais sur téléphone encore nécessaires.

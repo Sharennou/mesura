@@ -378,7 +378,7 @@ describe("Comptes et contrôle d’accès", () => {
         .reminder,
     ).toBeNull();
   });
-  it("refuse la réactivation des photos et ignore les anciens champs de profil", async () => {
+  it("refuse les photos de mesures mais conserve la photo de profil", async () => {
     const response = await call("POST", "/api/consents", {
       purpose: "photos",
       granted: true,
@@ -391,11 +391,26 @@ describe("Comptes et contrôle d’accès", () => {
       avatar: "data:image/jpeg;base64,/9j/2Q==",
     });
     expect(updated.statusCode).toBe(200);
-    expect(updated.json().profile.avatar).toBeUndefined();
+    expect(updated.json().profile.avatar).toBe(
+      "data:image/jpeg;base64,/9j/2Q==",
+    );
     expect(
       db.prepare("SELECT avatar FROM profiles WHERE user_id = ?").get(alice.id)
         .avatar,
-    ).toBeNull();
+    ).toBe("data:image/jpeg;base64,/9j/2Q==");
+    expect(
+      (
+        await call("PATCH", "/api/profile", {
+          ...profile,
+          avatar: "https://example.com/tracker.jpg",
+        })
+      ).statusCode,
+    ).toBe(400);
+    const removed = await call("PATCH", "/api/profile", {
+      ...profile,
+      avatar: null,
+    });
+    expect(removed.json().profile.avatar).toBeNull();
     expect((await call("GET", "/api/photos/ancienne-photo")).statusCode).toBe(
       404,
     );

@@ -2497,3 +2497,44 @@ select {
 .favorite-row > strong {
   font-size: 14px;
 }
+
+.profile-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.profile-photo-actions {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.header-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.account-circle.has-avatar,
+.account-circle.has-avatar:hover,
+.intro-icon.has-avatar {
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+.has-avatar > .header-avatar,
+.has-avatar > .profile-avatar {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}

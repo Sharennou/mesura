@@ -21,7 +21,7 @@ Mesura est une application web de suivi corporel conçue pour le téléphone, en
 - Après inscription : connexion immédiate, puis taille et objectifs avant le suivi.
 - Historique en bas de Mesures ; guide en trois étapes courtes, sans « À éviter » ni « Bien mesurer à chaque séance », avec sources.
 - Favoris ordonnés par glisser-déposer, à la souris ou au doigt, avec commande au clavier.
-- Fonction photo retirée, y compris l’avatar et les options d’export. Nouveaux envois refusés ; anciennes données conservées privées jusqu’au nettoyage habituel.
+- Fonction photo retirée, à l’exception de la photo de profil, avec retrait des options d’export d’images. Nouveaux envois de photos de mesures refusés ; anciennes données conservées privées jusqu’au nettoyage habituel.
 - Les rappels proposés sont hebdomadaires, avec plusieurs jours possibles et une heure commune.
 - Nom centralisé dans `shared/config.ts`. Logo fourni dans `src/assets/mesura-logo.png`.
 

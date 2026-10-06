@@ -39,7 +39,6 @@ export interface Reminder {
   nextAt?: string | null;
 }
 export interface Profile {
-  // Legacy field; uploads and display have been retired.
   avatar?: string | null;
   onboardingCompleted?: boolean;
   name: string;

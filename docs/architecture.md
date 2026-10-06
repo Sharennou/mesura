@@ -45,7 +45,8 @@ erDiagram
 - `consents` : événements avec finalité, texte, version, statut et date UTC. Le dernier événement fait autorité.
 - `measures` : personnalisations, unité et archive. Les quinze mesures standard, poids inclus, viennent du catalogue partagé.
 - `entries` : jour local ISO, stature historique, valeurs présentes en JSON, note, dates techniques et clé d’idempotence.
-- `photos` et la colonne `profiles.avatar` : stockage historique conservé pour compatibilité, sans nouvel envoi ni affichage.
+- `photos` : stockage historique conservé pour compatibilité, sans nouvel envoi ni affichage.
+- `profiles.avatar` : photo de profil privée, ajout et retrait disponibles, affichage rond dans le profil et dans l’en-tête.
 - `goals` : départ, cible, mesure et date ; un objectif actif par compte.
 - `reminders` : règle locale, ancre, canal, occurrence UTC et révision.
 - `subscriptions` : compte et appareil.
@@ -68,7 +69,7 @@ Les logs HTTP détaillés sont désactivés : aucune mesure, note, image, adress
 
 ## Anciennes photos
 
-La fonctionnalité photo a été retirée le 6 octobre 2026. Les formulaires, la galerie, la comparaison et l’avatar sont supprimés, ainsi que le traitement et l’envoi d’images dans les API locale et cloud. Les entrées sont enregistrées en JSON ; une mesure ou une note est nécessaire. Les exports ZIP contiennent uniquement les données JSON et CSV.
+La fonctionnalité de photos associées aux mesures a été retirée le 6 octobre 2026. Les formulaires de photos de mesures, la galerie et la comparaison sont supprimés, ainsi que leur traitement dans les API locale et cloud. La photo de profil reste disponible : JPEG réduit et validé, enregistré dans le profil privé. Les entrées sont enregistrées en JSON ; une mesure ou une note est nécessaire. Les exports ZIP contiennent uniquement les données JSON et CSV.
 
 Les anciennes tables, fichiers privés et métadonnées sont conservés pour compatibilité. Le retrait du suivi, la suppression d’une entrée et la suppression du compte continuent de nettoyer ces fichiers. La révocation d’un ancien consentement photo reste possible côté API ; son activation est refusée.
 

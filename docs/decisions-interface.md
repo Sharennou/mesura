@@ -29,7 +29,7 @@ Placer l’historique en bas de Mesures. Garder les schémas, trois étapes cour
 
 ## Photos retirées
 
-Retirer ajout de photos, galerie, comparaison, avatar et options associées. Les anciens fichiers restent privés et le nettoyage lié au retrait du suivi et à la suppression du compte reste compatible. Ne pas réintroduire les photos.
+Retirer ajout de photos aux mesures, galerie, comparaison et options associées. Conserver la photo de profil, son ajout, son retrait et son affichage rond dans l’en-tête. Les anciens fichiers restent privés et le nettoyage lié au retrait du suivi et à la suppression du compte reste compatible. Ne pas réintroduire les photos de mesures.
 
 ## Rappels
 

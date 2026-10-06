@@ -98,4 +98,6 @@ La refonte du parcours conserve la technologie, les données et l’identité vi
 
 Voir [le diagnostic, les changements et la validation](docs/ux-parcours.md). Le script `scripts/ux-preview.ts` prépare uniquement des comptes fictifs sur un serveur **local de développement**, sans réinitialiser de données. Les changements de cette session ne sont pas publiés.
 
-Les photos ont été retirées le 6 octobre 2026 : ajout, galerie, comparaison, avatar, consentement proposé et inclusion dans les exports ZIP. Les API refusent les nouveaux envois. Les anciens fichiers et champs restent privés et compatibles avec le nettoyage lors du retrait du suivi ou de la suppression du compte ; aucune migration destructive n’est appliquée.
+Les photos associées aux mesures ont été retirées le 6 octobre 2026 : ajout aux mesures, galerie, comparaison, consentement proposé et inclusion dans les exports ZIP. Les API refusent les nouveaux envois de photos de mesures. Les anciens fichiers et champs restent privés et compatibles avec le nettoyage lors du retrait du suivi ou de la suppression du compte ; aucune migration destructive n’est appliquée.
+
+La photo de profil est conservée : ajout, remplacement et retrait dans « Profil », avec affichage rond dans l’en-tête. Elle est réduite en JPEG sans métadonnées et enregistrée dans le profil privé.

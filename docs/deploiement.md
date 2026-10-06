@@ -74,7 +74,7 @@ Pour les rappels email facultatifs : renseigner `RESEND_API_KEY` et `MAIL_FROM` 
 
 Un canal n’apparaît disponible que lorsque ses secrets sont configurés et que le planificateur a réellement appelé la fonction dans les trois dernières minutes. Les tâches réclament chaque occurrence en base avant l’envoi ; une même occurrence n’est pas renvoyée après un redémarrage. Un échec est enregistré et un endpoint expiré retiré.
 
-La fonctionnalité photo a été retirée le 6 octobre 2026. Déployer aussi la fonction API mise à jour pour refuser les nouveaux envois. Les anciens fichiers restent dans le bucket privé pour compatibilité avec leur nettoyage ; les exports ZIP contiennent uniquement JSON et CSV.
+La fonctionnalité de photos associées aux mesures a été retirée le 6 octobre 2026. Déployer aussi la fonction API mise à jour pour refuser les nouveaux envois. Les anciens fichiers restent dans le bucket privé pour compatibilité avec leur nettoyage ; les exports ZIP contiennent uniquement JSON et CSV.
 
 Les changements de compte sont validés avec une révision Postgres : un accord retiré pendant une sauvegarde bloque sa nouvelle tentative. Une file persistante efface les fichiers remplacés, retirés ou abandonnés après un crash. La suppression crée un tombstone avant l’effacement Auth. Le worker reapplique les suppressions ; une restauration ne réactive pas un compte dont le tombstone actuel est conservé.
 
