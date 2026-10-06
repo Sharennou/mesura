@@ -21,7 +21,7 @@ Mesura est une application web de suivi corporel conçue pour le téléphone, en
 - Indicateurs : une phrase courte sous chaque valeur ; IMC adulte éligible avec couleurs et plages numériques uniquement (< 18,5 ; 18,5 à < 25 ; 25 à < 30 ; ≥ 30), sans libellés de corpulence. Zone déterminée avant arrondi. Textes introductifs sur la période et la hauteur retirés.
 - Refonte UX en développement : [diagnostic et validation](docs/ux-parcours.md), états d’analyse selon les données, détail distinct de l’édition, retours et brouillons conservés en mémoire. Cette session n’est pas publiée.
 - Compte obligatoire, aucune donnée fictive dans les comptes ordinaires, aucune confirmation d’email à l’inscription.
-- Compte de développement dédié autorisé par le propriétaire : « Développement · données fictives », 30 entrées et 383 valeurs injectées par `scripts/seed-development-account.ts`. Identifiants privés dans `.runtime`, jamais dans la documentation.
+- Compte de développement dédié autorisé par le propriétaire : « Développement · données fictives », 32 entrées et 415 valeurs injectées par `scripts/seed-development-account.ts`, dont deux séances complètes pour les cinq outils. Identifiants privés dans `.runtime`, jamais dans la documentation.
 - Après inscription : connexion immédiate, puis hauteur, date de naissance facultative (âge calculé), sexe utilisé pour les équations et objectifs avant le suivi.
 - Historique en bas de Mesures ; guide en trois étapes courtes, sans « À éviter » ni « Bien mesurer à chaque séance », avec sources.
 - Favoris ordonnés par glisser-déposer, à la souris ou au doigt, avec commande au clavier.
