@@ -128,7 +128,7 @@ export const cloudAuthClient = {
     email: async ({ email, password }: any) =>
       response(await cloud!.auth.signInWithPassword({ email, password })),
   },
-  signOut: async () => response(await cloud!.auth.signOut()),
+  signOut: async () => response(await cloud!.auth.signOut({ scope: "local" })),
   requestPasswordReset: async ({ email, redirectTo }: any) =>
     response(await cloud!.auth.resetPasswordForEmail(email, { redirectTo })),
   resetPassword: async ({ newPassword }: any) => {

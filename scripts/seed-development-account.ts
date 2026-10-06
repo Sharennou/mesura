@@ -209,7 +209,7 @@ if (target === "cloud") {
     return result as T;
   };
   dispose = async () => {
-    await cloud.auth.signOut();
+    await cloud.auth.signOut({ scope: "local" });
   };
 } else {
   const url = options.url!;

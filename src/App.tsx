@@ -10,7 +10,7 @@ import {
 import type { AccountData, Capabilities, Entry } from "../shared/types";
 import { APP_NAME } from "../shared/config";
 import logo from "./assets/mesura-logo.png";
-import { api, useSession } from "./api";
+import { api, useSession, authClient } from "./api";
 import { CLOUD } from "./deployment";
 import { emptyAccountData } from "./account-data";
 import {
@@ -479,6 +479,22 @@ export default function App() {
             <div className="empty">
               <h1>Connexion interrompue</h1>
               <p>Réessayez pour retrouver vos mesures.</p>
+              <button
+                className="secondary"
+                onClick={async () => {
+                  const result = await authClient.signOut();
+                  if (result.error) {
+                    setLoadError(
+                      "Impossible de fermer cette session. Vérifiez votre connexion et réessayez.",
+                    );
+                    return;
+                  }
+                  setLoadError("");
+                  navigate("account");
+                }}
+              >
+                Revenir à la connexion
+              </button>
             </div>
           ) : screen === "onboarding" ? (
             <OnboardingScreen key={session?.user.id} />

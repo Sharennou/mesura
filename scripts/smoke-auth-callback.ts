@@ -142,6 +142,59 @@ try {
     ).toBeVisible();
     await expect(page.getByRole("navigation")).toHaveCount(0);
     await context.close();
+    // Revoked account session: cached Auth state must not trap the user.
+    // A network failure or a forbidden resource must preserve the session
+    // until the user explicitly chooses to leave it.
+    for (const failure of [401, 403, "network"] as const) {
+      const rejectedContext = await browser.newContext({
+        viewport: { width, height: 844 },
+        serviceWorkers: "block",
+      });
+      const rejected = await rejectedContext.newPage();
+      let logouts = 0;
+      await rejected.route("**/auth/v1/user", (r) => r.fulfill({ json: user }));
+      await rejected.route("**/auth/v1/logout**", (r) => {
+        assert.equal(
+          new URL(r.request().url()).searchParams.get("scope"),
+          "local",
+        );
+        logouts++;
+        return r.fulfill({ status: 401, json: { message: "Session revoked" } });
+      });
+      await rejected.route("**/functions/v1/mesura-api/**", (r) => {
+        if (new URL(r.request().url()).pathname.endsWith("/config"))
+          return r.fulfill({ json: caps });
+        return failure === "network"
+          ? r.abort()
+          : r.fulfill({
+              status: failure,
+              json: { error: "Connectez-vous pour accéder à votre espace." },
+            });
+      });
+      await rejected.goto(`http://127.0.0.1:4178/mesura/#${fragment}`);
+      if (failure !== 401) {
+        await expect(
+          rejected.getByRole("heading", { name: "Connexion interrompue" }),
+        ).toBeVisible();
+        assert.equal(logouts, 0);
+        await rejected
+          .getByRole("button", { name: "Revenir à la connexion" })
+          .click();
+      }
+      await expect(
+        rejected.getByLabel("Adresse email", { exact: true }),
+      ).toBeVisible();
+      await expect(
+        rejected.getByRole("heading", { name: "Connexion interrompue" }),
+      ).toHaveCount(0);
+      await expect(rejected.getByRole("navigation")).toHaveCount(0);
+      assert.equal(logouts, 1);
+      await rejected.reload();
+      await expect(
+        rejected.getByLabel("Adresse email", { exact: true }),
+      ).toBeVisible();
+      await rejectedContext.close();
+    }
     const expired = await browser.newPage({
       viewport: { width, height: 844 },
       serviceWorkers: "block",
@@ -160,7 +213,7 @@ try {
     await expired.close();
   }
   console.log(
-    "Confirmation email : session automatique dans un navigateur neuf, démarrage avec cible, reprise, lien expiré et récupération vérifiés à 390 et 360 px (Auth simulé).",
+    "Auth à 390 et 360 px : confirmation, démarrage, reprise, récupération, session révoquée (401), erreur 403 et coupure réseau ; retour à la connexion et déconnexion limitée à la session courante vérifiés (Auth simulé).",
   );
 } finally {
   await browser.close();

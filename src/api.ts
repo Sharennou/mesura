@@ -39,6 +39,9 @@ export async function apiResponse(
     );
   }
   if (!response.ok) {
+    // An expired/deleted session must release the authenticated screen. Network
+    // failures and forbidden resources must not log the user out.
+    if (response.status === 401) await authClient.signOut();
     const error = await response.json().catch(() => null);
     throw new Error(error?.error || "Le service est indisponible. Réessayez.");
   }
