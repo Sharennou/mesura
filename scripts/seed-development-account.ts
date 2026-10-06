@@ -8,6 +8,11 @@ import { CONSENT_VERSION } from "../shared/config";
 import { SUPABASE_PUBLIC_KEY, SUPABASE_URL } from "../shared/cloud-config";
 import { localDate, shiftDate } from "../shared/calculations";
 import type { AccountData, Entry } from "../shared/types";
+import {
+  newToolContext,
+  entryTools,
+  type ToolProfile,
+} from "../shared/body-tools";
 
 const { values: options } = parseArgs({
   options: {
@@ -36,6 +41,13 @@ if (options.email && options.email !== credentials.email)
     "Un compte de développement est déjà enregistré pour cette cible dans .runtime.",
   );
 const name = "Développement · données fictives";
+const toolProfile: ToolProfile = { birthDate: "1990-01-01", equation: "male" };
+type SeedEntry = Pick<
+  Entry,
+  "date" | "values" | "height" | "note" | "tools"
+> & {
+  requestId: string;
+};
 const round = (value: number) => Math.round(value * 10) / 10;
 function requestId(index: number) {
   const hash = createHash("sha256")
@@ -45,7 +57,7 @@ function requestId(index: number) {
     .digest("hex");
   return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-4${hash.slice(13, 16)}-a${hash.slice(17, 20)}-${hash.slice(20, 32)}`;
 }
-const entries = Array.from({ length: 28 }, (_, i) => {
+const entries: SeedEntry[] = Array.from({ length: 28 }, (_, i) => {
   const progress = i / 27;
   const wobble = Math.sin(i * 1.7);
   const values: Record<string, number> = {
@@ -103,11 +115,34 @@ entries.push({
   note: "[Données fictives] Seconde mesure le même jour pour tester la moyenne.",
   requestId: requestId(29),
 });
+// Separate, explicitly synthetic sessions: do not relabel legacy protocols.
+for (const index of [26, 27]) {
+  const sample = entries[index];
+  entries.push({
+    ...sample,
+    values: { ...sample.values, "waist-rfm": round(sample.values.waist + 1.5) },
+    note: "[Données fictives] Séance complète pour les outils : adulte fictif, équation masculine, protocoles NICE et RFM distincts.",
+    tools: {
+      ...newToolContext(toolProfile),
+      situation: "none",
+      waistProtocol: "nice-midpoint",
+      rfmWaistProtocol: "iliac-crest",
+      heightDate: sample.date,
+      heightOrigin: "session",
+    },
+    requestId: requestId(index + 4),
+  });
+}
 function matchesEntry(stored: Entry, entry: (typeof entries)[number]) {
   return (
     stored.date === entry.date &&
     stored.note === entry.note &&
     stored.height === entry.height &&
+    (!entry.tools ||
+      Object.entries(entry.tools).every(
+        ([key, value]) =>
+          stored.tools?.[key as keyof NonNullable<Entry["tools"]>] === value,
+      )) &&
     Object.keys(stored.values).length === Object.keys(entry.values).length &&
     Object.entries(entry.values).every(
       ([id, value]) => stored.values[id] === value,
@@ -217,6 +252,7 @@ try {
   if (freshAccount) {
     account = await api<AccountData>("/onboarding", "POST", {
       height: 175,
+      toolProfile,
       consent: true,
       version: CONSENT_VERSION,
       goal: { measureId: "weight", start: 83.6, target: 74 },
@@ -226,9 +262,11 @@ try {
     throw new Error(
       "Le suivi de ce compte a été retiré. Aucune donnée ne sera réinjectée.",
     );
-  if (freshAccount || !account.entries.length)
-    await api("/profile", "PATCH", {
+  if (freshAccount || !account.entries.length || !account.profile.toolProfile)
+    account = await api<AccountData>("/profile", "PATCH", {
       ...account.profile,
+      toolProfile: account.profile.toolProfile ?? toolProfile,
+      heightDate: account.profile.heightDate ?? entries[0].date,
       visible: [
         "waist",
         "hips",
@@ -253,11 +291,28 @@ try {
   for (const entry of entries)
     if (!saved.entries.some((stored) => matchesEntry(stored, entry)))
       throw new Error("Une séance n’a pas été retrouvée après sauvegarde.");
+  for (const entry of entries.filter((entry) => entry.tools)) {
+    const stored = saved.entries.find((candidate) =>
+      matchesEntry(candidate, entry),
+    )!;
+    const results = entryTools(stored);
+    if (
+      results.bmi === null ||
+      results.waistHips === null ||
+      results.abdominal.category === null ||
+      results.rfm.value === null ||
+      results.energy.value === null
+    )
+      throw new Error(
+        "Les outils d’une séance fictive complète restent indisponibles.",
+      );
+  }
   console.log(
     JSON.stringify({
       ...summary,
       email: credentials.email,
       totalSavedEntries: saved.entries.length,
+      completeToolSessions: entries.filter((entry) => entry.tools).length,
       credentialsFile: credentialsPath,
     }),
   );
