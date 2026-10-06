@@ -13,17 +13,18 @@ Validation : compilation locale et GitHub Pages, **83 tests de calculs / API / P
 - Fuseaux, heure d’hiver / printemps, quinze jours calendaires et règle mensuelle absente.
 - Isolation de deux comptes pour entrées, images, mesures, objectifs, rappels, appareils, exports et tâches.
 - Rejet d’une origine tierce et d’une mutation sans protection.
-- Idempotence ; vrai décodage des photos, EXIF retiré et absence de sauvegarde si le fichier est invalide.
+- Idempotence ; envois de fichiers refusés sans sauvegarde et nettoyage des anciennes photos.
 - Retrait effectif, effacement, vérification du mot de passe et révocation des sessions.
 - Déduplication du worker, contrôle du consentement à l’envoi, expiration d’abonnement et texte discret.
 - Ledger sur compte restauré et purge d’inactivité.
-- Playwright à 390 × 844 et 360 × 800 : navigation, débordements, axe WCAG, compte / connexion immédiate, saisie, sauvegarde, rechargement, correction, note comme texte, photo, export et suppression.
+- Playwright à 390 × 844 et 360 × 800 : navigation, débordements, axe WCAG, compte / connexion immédiate, saisie, sauvegarde, rechargement, correction, note comme texte, export et suppression.
 - Connexion obligatoire au premier affichage, aucun accès aux écrans de suivi pendant la vérification de session, liens directs protégés, confirmation email supprimée, compte initial vide et retour au formulaire après déconnexion ou suppression.
 - Compilation cloud sous `/mesura/` : formulaire de compte, bascule vers la connexion, rechargement, protection des liens directs et portée du service worker.
 - Démarrage après inscription : taille obligatoire, cible ou suivi sans cible, une autorisation de suivi, conservation des champs après échec, transaction sans activation partielle et reprise sans afficher le démarrage une deuxième fois.
 - Compatibilité des anciens callbacks du bundle cloud : confirmation email dans un navigateur neuf sans vérificateur PKCE, validation de session auprès d’Auth, nettoyage des jetons dans l’URL, objectif enregistré, lien expiré et séparation du parcours de récupération. Ces réponses Auth sont simulées ; elles ne constituent pas un test d’envoi d’email externe.
 
-- Photo de profil : remplacement, retrait, persistance, affichage rond dans l’en-tête et absence de fond noir.
+- Favoris : glisser-déposer à la souris et au doigt, annulation, clavier et persistance de l’ordre.
+- Photos : absence de formulaires de fichiers, de comparaison et d’option d’export ; nouveaux envois refusés.
 - Rappels hebdomadaires : plusieurs jours, persistance et occurrences sans doublon, y compris au changement d’heure.
 
 Captures et traces sont dans `test-results/`, ignoré par Git. Les contrôles axe ne remplacent pas une revue humaine et un lecteur d’écran.
@@ -40,7 +41,7 @@ Captures et traces sont dans `test-results/`, ignoré par Git. Les contrôles ax
 | Désactivation / suppression | Arrêt des futurs rappels et révocation des accès                                   |
 | Fuseau / changement d’heure | Dates correctes et une seule occurrence                                            |
 | Clavier mobile              | Champ visible, validation accessible et barre fixe retirée pendant la saisie       |
-| VoiceOver / TalkBack        | Lecture, erreurs, focus, graphique et comparaison photo                            |
+| VoiceOver / TalkBack        | Lecture, erreurs, focus, graphique et ordre des favoris                            |
 | Zoom / grandes polices      | Absence de coupure à 360 px et davantage                                           |
 | Hors connexion              | Pas de faux succès, champs conservés et réessai                                    |
 | SMTP                        | Récupération, sessions révoquées au reset et rappel choisi                         |

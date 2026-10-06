@@ -1,5 +1,4 @@
 import { request } from "@playwright/test";
-import sharp from "sharp";
 import { CONSENT_VERSION } from "../shared/config";
 import { localDate, shiftDate } from "../shared/calculations";
 
@@ -44,10 +43,6 @@ for (const [name, count] of [
     if (!result.ok()) throw new Error(await result.text());
   }
   if (count && !account.entries.length) {
-    if (count > 1)
-      await client.post("/api/consents", {
-        data: { purpose: "photos", granted: true, version: CONSENT_VERSION },
-      });
     for (let i = 0; i < count; i++) {
       const data = JSON.stringify({
         date: shiftDate(today, -50 + i * 10),
@@ -63,34 +58,9 @@ for (const [name, count] of [
         note: i === 0 ? "Note de test · reprise du suivi" : "",
         requestId: crypto.randomUUID(),
       });
-      const photo =
-        count > 1 && [0, 5].includes(i)
-          ? await sharp({
-              create: {
-                width: 240,
-                height: 320,
-                channels: 3,
-                background: i ? "#434FED" : "#D3F653",
-              },
-            })
-              .png()
-              .toBuffer()
-          : null;
-      const result = await client.post(
-        "/api/entries",
-        photo
-          ? {
-              multipart: {
-                data,
-                face: {
-                  name: "test.png",
-                  mimeType: "image/png",
-                  buffer: photo,
-                },
-              },
-            }
-          : { data: JSON.parse(data) },
-      );
+      const result = await client.post("/api/entries", {
+        data: JSON.parse(data),
+      });
       if (!result.ok()) throw new Error(await result.text());
     }
   }

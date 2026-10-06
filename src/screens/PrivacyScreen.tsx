@@ -6,9 +6,8 @@ import { api, authClient, downloadExport } from "../api";
 import { CONSENT_TEXTS, CONSENT_VERSION } from "../../shared/config";
 import type { AccountData, ConsentPurpose } from "../../shared/types";
 
-const labels: Record<ConsentPurpose, string> = {
+const labels: Record<Exclude<ConsentPurpose, "photos">, string> = {
   body: "Suivi corporel",
-  photos: "Photos privées",
   push: "Notifications sur téléphone",
   email: "Rappels par email",
 };
@@ -22,11 +21,12 @@ export function PrivacyScreen() {
   const [deleteAccount, setDeleteAccount] = useState(false);
   const [password, setPassword] = useState("");
   const [format, setFormat] = useState("json");
-  const [includePhotos, setIncludePhotos] = useState(false);
   const [audit, setAudit] = useState<any[]>([]);
   useEffect(() => {
     void api<any[]>("/consents")
-      .then(setAudit)
+      .then((choices) =>
+        setAudit(choices.filter((choice) => choice.purpose !== "photos")),
+      )
       .catch(() => {});
   }, [data.consents]);
   async function change(purpose: ConsentPurpose, granted: boolean) {
@@ -62,7 +62,7 @@ export function PrivacyScreen() {
         à tout moment.
       </p>
       <div className="stack">
-        {(["body", "photos", "push", "email"] as const).map((p) => (
+        {(["body", "push", "email"] as const).map((p) => (
           <section className="consent-card" key={p}>
             <div className="card-top">
               <h2>{labels[p]}</h2>
@@ -77,8 +77,7 @@ export function PrivacyScreen() {
                 checked={data.consents[p]}
                 disabled={busy || (p !== "body" && !data.consents.body)}
                 onChange={(e) => {
-                  if (!e.target.checked && (p === "body" || p === "photos"))
-                    setWithdraw(p);
+                  if (!e.target.checked && p === "body") setWithdraw(p);
                   else void change(p, e.target.checked);
                 }}
               />
@@ -93,7 +92,7 @@ export function PrivacyScreen() {
         {audit.length ? (
           audit.map((a, i) => (
             <p key={i}>
-              {labels[a.purpose as ConsentPurpose]} ·{" "}
+              {labels[a.purpose as keyof typeof labels]} ·{" "}
               {a.granted ? "autorisé" : "retiré"} ·{" "}
               {new Date(a.date).toLocaleString("fr-FR")} · version {a.version}
             </p>
@@ -116,19 +115,9 @@ export function PrivacyScreen() {
           <select value={format} onChange={(e) => setFormat(e.target.value)}>
             <option value="json">JSON · toutes mes données</option>
             <option value="csv">CSV · mesures et notes</option>
-            <option value="zip">Archive ZIP · données et photos</option>
+            <option value="zip">Archive ZIP · mesures et notes</option>
           </select>
         </label>
-        {format === "zip" && (
-          <label className="check-label">
-            <input
-              type="checkbox"
-              checked={includePhotos}
-              onChange={(e) => setIncludePhotos(e.target.checked)}
-            />
-            <span>Inclure mes photos privées</span>
-          </label>
-        )}
         <Button
           disabled={busy}
           onClick={async () => {
@@ -136,7 +125,7 @@ export function PrivacyScreen() {
             setBusy(true);
             setError("");
             try {
-              await downloadExport(format, includePhotos);
+              await downloadExport(format);
               toast("Votre export est prêt.");
             } catch (e: any) {
               setError(e.message);
@@ -167,8 +156,8 @@ export function PrivacyScreen() {
       <section className="plain-card">
         <h2>Supprimer mon compte</h2>
         <p>
-          Cette action supprime vos mesures, notes, photos, objectifs, rappels
-          et sessions. Elle est définitive.
+          Cette action supprime vos mesures, notes, objectifs, rappels et
+          sessions. Elle est définitive.
         </p>
         <Button
           onClick={() => {
@@ -194,16 +183,8 @@ export function PrivacyScreen() {
       </button>
       {withdraw && (
         <Confirm
-          title={
-            withdraw === "body"
-              ? "Arrêter et effacer mon suivi ?"
-              : "Effacer mes photos ?"
-          }
-          text={
-            withdraw === "body"
-              ? "Le retrait efface vos mesures, notes, photos et objectif, puis arrête tous les rappels. Exportez vos données avant de continuer si vous souhaitez les conserver."
-              : "Toutes vos photos seront supprimées. Les mesures et notes seront conservées."
-          }
+          title="Arrêter et effacer mon suivi ?"
+          text="Le retrait efface vos mesures, notes et objectif, puis arrête tous les rappels. Exportez vos données avant de continuer si vous souhaitez les conserver."
           onClose={() => setWithdraw(null)}
           onConfirm={() => void change(withdraw, false)}
           busy={busy}

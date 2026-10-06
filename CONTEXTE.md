@@ -1,6 +1,6 @@
 # Contexte de Mesura
 
-Dernière mise à jour : 5 octobre 2026.
+Dernière mise à jour : 6 octobre 2026.
 
 Mesura est une application web de suivi corporel conçue pour le téléphone, entièrement en français. Le projet existe déjà et est publié : les prochaines modifications doivent prolonger cette application et ses données réelles.
 
@@ -19,7 +19,9 @@ Mesura est une application web de suivi corporel conçue pour le téléphone, en
 - Refonte UX en développement : [diagnostic et validation](docs/ux-parcours.md), états d’analyse selon les données, détail distinct de l’édition, retours et brouillons conservés en mémoire. Cette session n’est pas publiée.
 - Compte obligatoire, aucune donnée fictive, aucune confirmation d’email à l’inscription.
 - Après inscription : connexion immédiate, puis taille et objectifs avant le suivi.
-- Photo de profil privée, ronde, sans fond noir ; elle remplace l’icône du compte dans l’en-tête.
+- Historique en bas de Mesures ; guide en trois étapes courtes, sans « À éviter » ni « Bien mesurer à chaque séance », avec sources.
+- Favoris ordonnés par glisser-déposer, à la souris ou au doigt, avec commande au clavier.
+- Fonction photo retirée, y compris l’avatar et les options d’export. Nouveaux envois refusés ; anciennes données conservées privées jusqu’au nettoyage habituel.
 - Les rappels proposés sont hebdomadaires, avec plusieurs jours possibles et une heure commune.
 - Nom centralisé dans `shared/config.ts`. Logo fourni dans `src/assets/mesura-logo.png`.
 

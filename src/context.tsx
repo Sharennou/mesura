@@ -17,7 +17,6 @@ export type Screen =
   | "entry"
   | "edit"
   | "profile"
-  | "photos"
   | "compare"
   | "monthly"
   | "goal"
@@ -27,7 +26,6 @@ export interface MeasurementDraft {
   values: Record<string, string>;
   date: string;
   note: string;
-  photos: Record<string, File>;
   requestId: string;
 }
 export interface EditingDraft extends MeasurementDraft {

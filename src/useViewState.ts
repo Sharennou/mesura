@@ -1,7 +1,7 @@
 import { useApp } from "./context";
 import type { SetStateAction } from "react";
 
-// Session-only UI context: no measurements or photos are written to browser storage.
+// Session-only UI context: no measurements are written to browser storage.
 export function useViewState<T>(
   key: string,
   initial: T,

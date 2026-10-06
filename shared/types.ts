@@ -6,6 +6,7 @@ export interface Measure {
   custom?: boolean;
   archived?: boolean;
 }
+// Legacy photo metadata is retained only for existing data and its cleanup.
 export interface Photo {
   id: string;
   entryId: string;
@@ -38,6 +39,7 @@ export interface Reminder {
   nextAt?: string | null;
 }
 export interface Profile {
+  // Legacy field; uploads and display have been retired.
   avatar?: string | null;
   onboardingCompleted?: boolean;
   name: string;

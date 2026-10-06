@@ -1,6 +1,6 @@
 # État technique et reprise du travail
 
-État au 5 octobre 2026 ; dernière évolution fonctionnelle publiée : `860762e`, rappels hebdomadaires fixes.
+État au 6 octobre 2026 ; dernière évolution fonctionnelle publiée : `860762e`, rappels hebdomadaires fixes.
 
 ## Déploiement actuel
 
@@ -12,7 +12,7 @@
 | Authentification   | Supabase Auth, confirmation email désactivée, mot de passe minimum six caractères            |
 | Emails Auth        | SMTP Brevo configuré ; une IP de connexion SMTP a été autorisée après un rejet               |
 | Données            | Postgres, compte JSON privé, contrôles RLS et sessions actives                               |
-| Photos d’évolution | Bucket privé et traitement d’image côté serveur                                              |
+| Photos d’évolution | Fonction retirée ; anciennes données privées et nettoyage conservés                          |
 | Notifications      | Web Push, clés VAPID dans Vault, planificateur serveur                                       |
 | Publication        | GitHub Actions pour Pages ; intégration Supabase sur `main` pour migrations et fonction Edge |
 
@@ -20,29 +20,29 @@ Le service SMTP Auth Brevo ne configure pas automatiquement les rappels email de
 
 ## Organisation du code
 
-| Chemin                                           | Responsabilité                                               |
-| ------------------------------------------------ | ------------------------------------------------------------ |
-| `src/App.tsx`                                    | Session, accès aux écrans, démarrage et photo dans l’en-tête |
-| `src/screens/Account.tsx`                        | Inscription, connexion et récupération                       |
-| `src/screens/OnboardingScreen.tsx`               | Taille et objectif après inscription                         |
-| `src/screens/Measure.tsx`, `Analysis.tsx`        | Mesures et analyse                                           |
-| `src/screens/ProfileScreen.tsx`                  | Pseudo, taille et photo de profil                            |
-| `src/screens/Reminder.tsx`                       | Jours hebdomadaires, heure et canal                          |
-| `src/api.ts`, `src/cloud-auth.ts`                | Adaptation entre API locale et cloud                         |
-| `shared/config.ts`, `shared/types.ts`            | Nom, consentements, constantes et contrats                   |
-| `shared/calculations.ts`, `shared/recurrence.ts` | Calculs et calendrier partagé entre affichage et envoi       |
-| `shared/cloud-domain.ts`, `shared/avatar.ts`     | Mutations cloud et validation de l’avatar                    |
-| `server/`                                        | Version native Fastify / Better Auth / SQLite                |
-| `supabase/functions/mesura-api/index.ts`         | API et tâches Edge                                           |
-| `.github/workflows/pages.yml`                    | Compilation et publication du bundle                         |
+| Chemin                                           | Responsabilité                                         |
+| ------------------------------------------------ | ------------------------------------------------------ |
+| `src/App.tsx`                                    | Session, accès aux écrans, démarrage et navigation     |
+| `src/screens/Account.tsx`                        | Inscription, connexion et récupération                 |
+| `src/screens/OnboardingScreen.tsx`               | Taille et objectif après inscription                   |
+| `src/screens/Measure.tsx`, `Analysis.tsx`        | Mesures et analyse                                     |
+| `src/screens/ProfileScreen.tsx`                  | Pseudo et taille                                       |
+| `src/screens/Reminder.tsx`                       | Jours hebdomadaires, heure et canal                    |
+| `src/api.ts`, `src/cloud-auth.ts`                | Adaptation entre API locale et cloud                   |
+| `shared/config.ts`, `shared/types.ts`            | Nom, consentements, constantes et contrats             |
+| `shared/calculations.ts`, `shared/recurrence.ts` | Calculs et calendrier partagé entre affichage et envoi |
+| `shared/cloud-domain.ts`                         | Mutations cloud et validation des données              |
+| `server/`                                        | Version native Fastify / Better Auth / SQLite          |
+| `supabase/functions/mesura-api/index.ts`         | API et tâches Edge                                     |
+| `.github/workflows/pages.yml`                    | Compilation et publication du bundle                   |
 
 Les paramètres publics sont dans `shared/cloud-config.ts`. Ne pas ajouter de secret dans cette documentation, dans les sources frontend ou dans Git.
 
 ## Migrations
 
 - Supabase : les quatre fichiers de `supabase/migrations/`, dans l’ordre numérique ; le dernier retire la condition de confirmation d’email des contrôles SQL de session.
-- Local : migrations Better Auth, puis les cinq fichiers de `server/migrations/`. `004_avatar.sql` ajoute la photo de profil ; `005_reminder_days.sql` ajoute les jours multiples.
-- L’avatar cloud et les jours multiples sont dans le JSON privé du compte ; aucune colonne Postgres supplémentaire n’était nécessaire.
+- Local : migrations Better Auth, puis les cinq fichiers de `server/migrations/`. `004_avatar.sql` garde une colonne d’avatar historique, désormais inutilisée ; `005_reminder_days.sql` ajoute les jours multiples.
+- L’ancien avatar cloud et les jours multiples sont dans le JSON privé du compte ; aucune colonne Postgres supplémentaire n’était nécessaire.
 - Préserver les données réelles et les journaux de suppression. Ne jamais réinitialiser le projet de production pour tester.
 
 ## Commandes
@@ -75,7 +75,7 @@ Le préfixe `/mesura/` est indispensable sur GitHub Pages. Ne pas publier direct
 
 ## Vérification et limites connues
 
-La dernière validation fonctionnelle complète comprend 83 tests unitaires / API / SQL et quatre parcours mobiles à 390 et 360 px. Elle couvre notamment la connexion immédiate, le démarrage, la sauvegarde et le retrait d’avatar, son affichage rond dans l’en-tête, les jours multiples et le passage à l’heure d’hiver. Les workflows de la dernière livraison ont réussi.
+La validation locale du 6 octobre 2026 comprend 81 tests unitaires / API / SQL et 20 parcours mobiles, à 390 et 360 px. Elle couvre notamment les favoris à la souris, au doigt et au clavier, l’ordre sauvegardé, le guide simplifié, l’absence des contrôles photo et le nettoyage des anciennes données. Ces modifications ne sont pas publiées.
 
 Les callbacks Auth cloud sont aussi testés avec des réponses simulées. Un véritable parcours multiutilisateur cloud et la réception des notifications sur les téléphones cibles restent à vérifier ; les tests de livraison sont simulés. Les coordonnées et documents de l’exploitant restent à compléter selon [confidentialite.md](confidentialite.md). Les sauvegardes externes doivent être organisées : la formule Free ne fournit pas la sauvegarde automatique attendue.
 

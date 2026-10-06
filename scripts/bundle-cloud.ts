@@ -11,7 +11,6 @@ await build({
   external: ["npm:*", "https://*"],
   alias: {
     "@supabase/supabase-js": "npm:@supabase/supabase-js@2.117.2",
-    imagescript: "https://deno.land/x/imagescript@1.3.0/mod.ts",
     zod: "npm:zod@4.6.5",
     luxon: "npm:luxon@3.7.2",
     fflate: "npm:fflate@0.8.3",

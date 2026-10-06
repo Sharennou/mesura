@@ -2,7 +2,6 @@ import { createAuthClient } from "better-auth/react";
 import { APP_NAME, APP_SLUG } from "../shared/config";
 import { CLOUD } from "./deployment";
 import { cloudAuthClient, cloudEndpoint, cloudHeaders } from "./cloud-auth";
-import { prepareCloudPhotos } from "./cloud-photos";
 const localAuthClient = CLOUD
   ? null
   : createAuthClient({ baseURL: window.location.origin });
@@ -25,11 +24,7 @@ export async function apiResponse(
   headers.set("X-Timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
   if (options.body && !(options.body instanceof FormData))
     headers.set("Content-Type", "application/json");
-  if (CLOUD) {
-    await cloudHeaders(headers);
-    if (options.body instanceof FormData)
-      options = { ...options, body: await prepareCloudPhotos(options.body) };
-  }
+  if (CLOUD) await cloudHeaders(headers);
   let response: Response;
   try {
     response = await fetch(CLOUD ? `${cloudEndpoint}${path}` : `/api${path}`, {
@@ -49,7 +44,7 @@ export async function apiResponse(
   }
   return response;
 }
-export async function downloadExport(format: string, includePhotos: boolean) {
+export async function downloadExport(format: string) {
   const response = await apiResponse("/export", {
     method: "POST",
     headers: {
@@ -57,7 +52,7 @@ export async function downloadExport(format: string, includePhotos: boolean) {
       "X-Requested-With": APP_NAME,
     },
     credentials: "same-origin",
-    body: JSON.stringify({ format, includePhotos }),
+    body: JSON.stringify({ format }),
   });
   if (!response.ok)
     throw new Error((await response.json()).error || "L’export a échoué.");

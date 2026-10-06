@@ -1,6 +1,5 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import AxeBuilder from "@axe-core/playwright";
-import sharp from "sharp";
 
 test("la connexion est obligatoire, y compris pendant le chargement et par lien direct", async ({
   page,
@@ -92,7 +91,7 @@ test("la connexion est obligatoire, y compris pendant le chargement et par lien 
   ).toEqual([]);
 });
 
-test("compte réel : accessibilité, consentement, sauvegarde, photos, correction, export et suppression", async ({
+test("compte réel : accessibilité, consentement, sauvegarde, correction, export et suppression", async ({
   page,
   context,
 }, testInfo) => {
@@ -174,51 +173,12 @@ test("compte réel : accessibilité, consentement, sauvegarde, photos, correctio
   await expect(page.getByText("Fuseau horaire", { exact: true })).toHaveCount(
     0,
   );
-  const avatarBytes = await sharp({
-    create: { width: 240, height: 160, channels: 3, background: "#c5ee22" },
-  })
-    .png()
-    .toBuffer();
-  await page.locator('input[type="file"]').setInputFiles({
-    name: "profil.png",
-    mimeType: "image/png",
-    buffer: avatarBytes,
-  });
-  await expect(page.getByAltText("Votre photo de profil")).toBeVisible();
+  await expect(page.locator('input[type="file"]')).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /photo/i })).toHaveCount(0);
   await page.getByRole("button", { name: "Enregistrer mon profil" }).click();
   await expect(
     page.getByText("Profil enregistré.", { exact: true }),
   ).toBeVisible();
-  await page.reload();
-  await expect(page.getByAltText("Votre photo de profil")).toBeVisible();
-  const withAvatar = await (await page.request.get("/api/account")).json();
-  await expect(
-    page
-      .getByRole("button", { name: "Mon compte et mes réglages" })
-      .locator("img"),
-  ).toHaveAttribute("src", withAvatar.profile.avatar);
-  const accountButton = page.getByRole("button", {
-    name: "Mon compte et mes réglages",
-  });
-  const buttonBounds = await accountButton.boundingBox();
-  const imageBounds = await accountButton.locator("img").boundingBox();
-  expect(imageBounds).toEqual(buttonBounds);
-  expect(imageBounds!.width).toBe(imageBounds!.height);
-  await expect(accountButton).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
-  expect(withAvatar.profile.avatar).toMatch(/^data:image\/jpeg;base64,/);
-  expect(withAvatar.profile.timezone).toBe(setup.profile.timezone);
-  await page.getByRole("button", { name: "Retirer la photo" }).click();
-  await page.getByRole("button", { name: "Enregistrer mon profil" }).click();
-  await expect(
-    page.getByText("Profil enregistré.", { exact: true }),
-  ).toBeVisible();
-  await page.reload();
-  await expect(page.getByAltText("Votre photo de profil")).toHaveCount(0);
-  await expect(
-    page
-      .getByRole("button", { name: "Mon compte et mes réglages" })
-      .locator("img"),
-  ).toHaveCount(0);
   await page.goto("/#measure");
   await expect(page.getByLabel("Poids", { exact: true })).toHaveValue("");
   await expect(page.getByLabel("Tour de taille en cm")).toHaveValue("");
@@ -310,33 +270,14 @@ test("compte réel : accessibilité, consentement, sauvegarde, photos, correctio
   await expect(page.locator(".graph-value")).toContainText("79,0");
   await page.getByRole("button", { name: "Mesures", exact: true }).click();
   await page.getByText("Ajouter une note", { exact: false }).click();
-  await page.getByLabel("Note de cette entrée").fill("Une photo privée");
-  await page.getByText("Ajouter des photos", { exact: false }).click();
-  await page.locator("label.photo-upload").first().click();
-  await page.getByRole("dialog").getByRole("checkbox").check();
-  await page.getByRole("button", { name: "Autoriser mes photos" }).click();
-  await expect(page.getByRole("dialog")).not.toBeVisible();
-  const photo = await sharp({
-    create: { width: 120, height: 160, channels: 3, background: "#D7FF3F" },
-  })
-    .jpeg()
-    .toBuffer();
-  await page.getByLabel("Ajouter une photo de face").setInputFiles({
-    name: "photo.jpg",
-    mimeType: "image/jpeg",
-    buffer: photo,
-  });
+  await page.getByLabel("Note de cette entrée").fill("Une note privée");
+  await expect(page.locator('input[type="file"]')).toHaveCount(0);
   await page
     .getByRole("button", { name: "Enregistrer la mesure", exact: true })
     .click();
-  await expect(page.getByText("1 photo privée")).toBeVisible();
-  await page.goto("/#photos");
-  await expect(page.locator(".photo-gallery img")).toBeVisible();
-  expect(
-    await page
-      .locator(".photo-gallery img")
-      .evaluate((el: HTMLImageElement) => el.naturalWidth),
-  ).toBe(120);
+  await expect(
+    page.getByRole("heading", { name: "Mesure enregistrée", exact: true }),
+  ).toBeVisible();
   const cachedPrivate = await page.evaluate(async () => {
     const names = await caches.keys();
     const keys = await Promise.all(

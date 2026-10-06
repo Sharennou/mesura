@@ -55,7 +55,6 @@ try {
     for (const route of [
       "analysis",
       "measure",
-      "photos",
       "privacy",
       "history",
       "reminder",

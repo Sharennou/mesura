@@ -170,8 +170,8 @@ export function OnboardingScreen() {
           <span>{CONSENT_TEXTS.body}</span>
         </label>
         <p className="small muted">
-          Les photos et les rappels sont facultatifs. Vous pourrez les activer
-          quand vous en aurez besoin.
+          Les rappels sont facultatifs. Vous pourrez les activer quand vous en
+          aurez besoin.
         </p>
         <ErrorMessage>{error}</ErrorMessage>
         <button type="submit" className="primary" disabled={busy}>

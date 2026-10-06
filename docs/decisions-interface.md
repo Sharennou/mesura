@@ -1,10 +1,10 @@
 # Décisions d’interface validées
 
-État au 5 octobre 2026. Ces décisions résultent des demandes du propriétaire. Elles servent à éviter de réintroduire des éléments retirés.
+État au 6 octobre 2026. Ces décisions résultent des demandes du propriétaire. Elles servent à éviter de réintroduire des éléments retirés.
 
 ## Identité visuelle
 
-Les accents ont été légèrement adoucis : vert `#D3F653` et bleu `#434FED`. Appliquer cette palette aux surfaces et accents sans baisser l’opacité des textes ou des photos.
+Les accents ont été légèrement adoucis : vert `#D3F653` et bleu `#434FED`. Appliquer cette palette aux surfaces et accents sans baisser l’opacité des textes.
 
 Conserver l’interface mobile existante : police Archivo locale, palette centralisée, contours et ombres sans flou. Tous les textes visibles sont en français. Le logo fourni est conservé dans `src/assets/mesura-logo.png`.
 
@@ -23,9 +23,13 @@ Le nom textuel est centralisé dans `shared/config.ts` ; le logo contient aussi 
 
 Le bloc de données du graphique était situé dans `Analysis.tsx`, même si la demande le nommait « page mesure ». Les moyennes utilisées par les courbes n’ont pas été supprimées.
 
-## Photo de profil
+## Mesures, guide et favoris
 
-Afficher uniquement la photo dans un cercle rempli, sans fond noir ni bordure. Ce comportement concerne Mon espace et le bouton de compte en haut à droite. Garder le bouton accessible par son libellé et l’icône de personnage en l’absence de photo. Préserver l’isolation entre comptes lors du chargement.
+Placer l’historique en bas de Mesures. Garder les schémas, trois étapes courtes et les sources dans le guide. Retirer « À éviter » et « Bien mesurer à chaque séance ». Remplacer les flèches d’ordre des favoris par des poignées de glisser-déposer utilisables à la souris, au doigt et au clavier.
+
+## Photos retirées
+
+Retirer ajout de photos, galerie, comparaison, avatar et options associées. Les anciens fichiers restent privés et le nettoyage lié au retrait du suivi et à la suppression du compte reste compatible. Ne pas réintroduire les photos.
 
 ## Rappels
 
@@ -37,7 +41,7 @@ Privilégier les changements précis demandés, conserver le design existant et 
 
 ## Parcours mobiles corrigés (développement)
 
-Les nouvelles instructions du propriétaire précisent les noms « Historique des mesures », « Photos de comparaison », « Comparer deux périodes » et « Bilan mensuel ». L’historique appartient à Mesures. La carte de poids reste reconnaissable, avec un état vide compact et un champ délimité. Les anciennes valeurs sont des textes de repère distincts de la saisie. Les détails d’analyse sont repliés ; aucune projection ou courbe vide n’est ajoutée pour remplir l’écran. Les hausses et baisses restent descriptives et neutres.
+Les nouvelles instructions du propriétaire précisent les noms « Historique des mesures », « Comparer deux périodes » et « Bilan mensuel ». L’historique appartient à Mesures. La carte de poids reste reconnaissable, avec un état vide compact et un champ délimité. Les anciennes valeurs sont des textes de repère distincts de la saisie. Les détails d’analyse sont repliés ; aucune projection ou courbe vide n’est ajoutée pour remplir l’écran. Les hausses et baisses restent descriptives et neutres.
 
 Les écrans de consultation et de modification d’une entrée sont distincts. Les retours et les deux types de brouillons conservent le contexte en mémoire de session. Aucun accueil intermédiaire, nouveau canal ou changement de technologie n’est introduit. Voir [le compte rendu UX](ux-parcours.md).
 

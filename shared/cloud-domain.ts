@@ -1,4 +1,3 @@
-import { avatarSchema } from "./avatar.ts";
 import { z } from "zod";
 import { DateTime } from "luxon";
 import { STANDARD_MEASURES, DEFAULT_VISIBLE } from "./catalog.ts";
@@ -10,7 +9,6 @@ import type {
   Capabilities,
   ConsentPurpose,
   Entry,
-  Photo,
 } from "./types.ts";
 
 export interface CloudAccount extends AccountData {
@@ -55,9 +53,10 @@ export function emptyCloudAccount(
 }
 export function publicCloudAccount(a: CloudAccount): AccountData {
   const { profile, entries, measures, goal, consents, reminder } = a;
+  const { avatar: _legacyAvatar, ...publicProfile } = profile;
   return {
     profile: {
-      ...profile,
+      ...publicProfile,
       onboardingCompleted:
         profile.onboardingCompleted ??
         Boolean(profile.height || entries.length),
@@ -95,7 +94,6 @@ export function mutateCloudAccount(
   path: string,
   raw: unknown,
   caps: Capabilities,
-  uploads: Photo[] = [],
   now: DateTime = DateTime.now(),
 ) {
   const a = structuredClone(input);
@@ -136,7 +134,6 @@ export function mutateCloudAccount(
   } else if (resource === "profile" && method === "PATCH") {
     const p = z
       .object({
-        avatar: avatarSchema,
         name: z.string().trim().min(1).max(100),
         height: z.number().positive().max(300).nullable(),
         timezone: zone,
@@ -164,6 +161,8 @@ export function mutateCloudAccount(
         version: z.literal(CONSENT_VERSION),
       })
       .parse(raw);
+    if (c.granted && c.purpose === "photos")
+      cloudFail("L’ajout de photos a été retiré.", 410);
     if (c.granted && c.purpose !== "body") bodyRequired();
     const record = (purpose: ConsentPurpose, granted: boolean) => {
       a.consents[purpose] = granted;
@@ -250,10 +249,6 @@ export function mutateCloudAccount(
       cloudFail("La date ne peut pas être dans le futur.");
     const old = id ? a.entries.find((e) => e.id === id) : undefined;
     if (id && !old) cloudFail("Entrée introuvable.", 404);
-    if (uploads.length && !a.consents.photos)
-      cloudFail("Acceptez le stockage privé des photos avant leur envoi.", 403);
-    if (new Set(uploads.map((p) => p.orientation)).size !== uploads.length)
-      cloudFail("Une seule photo par orientation est autorisée.");
     if (
       Object.keys(e.values).some(
         (v) =>
@@ -267,12 +262,6 @@ export function mutateCloudAccount(
       !id && a.entries.find((x) => x.id === a.requestIds[e.requestId]);
     if (duplicate) return { account: a, result: duplicate };
     const entryId = id || crypto.randomUUID();
-    const photos = [
-      ...(old?.photos || []).filter(
-        (p) => !uploads.some((u) => u.orientation === p.orientation),
-      ),
-      ...uploads.map((p) => ({ ...p, entryId })),
-    ];
     const entry: Entry = {
       id: entryId,
       date: e.date,
@@ -280,10 +269,10 @@ export function mutateCloudAccount(
       note: e.note,
       height: e.height,
       createdAt: old?.createdAt || now.toISO()!,
-      photos,
+      photos: old?.photos ?? [],
     };
-    if (!hasContent(entry))
-      cloudFail("Ajoutez au moins une mesure, une note ou une photo.");
+    if (!Object.keys(entry.values).length && !entry.note.trim())
+      cloudFail("Ajoutez au moins une mesure ou une note.");
     a.entries = [entry, ...a.entries.filter((x) => x.id !== entryId)].sort(
       (x, y) =>
         y.date.localeCompare(x.date) || y.createdAt.localeCompare(x.createdAt),
@@ -297,11 +286,6 @@ export function mutateCloudAccount(
     a.requestIds = Object.fromEntries(
       Object.entries(a.requestIds).filter(([, v]) => v !== id),
     );
-  } else if (resource === "photos" && method === "DELETE") {
-    if (!photoIds(a).includes(id)) cloudFail("Photo introuvable.", 404);
-    a.entries = a.entries
-      .map((e) => ({ ...e, photos: e.photos.filter((p) => p.id !== id) }))
-      .filter(hasContent);
   } else if (resource === "goal" && method === "PUT") {
     bodyRequired();
     const g = z

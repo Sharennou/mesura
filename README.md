@@ -6,14 +6,14 @@ Application web mobile de suivi corporel, en français. Deux destinations : **Me
 
 Le workflow GitHub compile React puis publie uniquement `dist/` à l’adresse **https://sharennou.github.io/mesura/**. La page vide venait de la publication du fichier TypeScript source sans compilation et de chemins sans le préfixe `/mesura/`.
 
-Les comptes, mesures et photos privées utilisent le projet Supabase Free fourni par le propriétaire. Les paramètres publics sont centralisés dans `shared/cloud-config.ts`. Les secrets restent dans Supabase. La version locale Fastify / SQLite reste disponible.
+Les comptes et mesures privées utilisent le projet Supabase Free fourni par le propriétaire. Les paramètres publics sont centralisés dans `shared/cloud-config.ts`. Les secrets restent dans Supabase. La version locale Fastify / SQLite reste disponible.
 
 1. Installer toutes les migrations du dossier `supabase/migrations/` dans Supabase.
 2. Déployer la fonction `mesura-api` avec vérification JWT de la passerelle désactivée : la fonction vérifie elle-même chaque utilisateur et sa session. `npm run bundle:cloud` prépare aussi un fichier autonome pour l’éditeur Supabase.
 3. Supabase Auth : définir l’URL du site et les URLs de retour sur `https://sharennou.github.io/mesura/`, désactiver « Confirm email » et définir le minimum de mot de passe à six caractères. Le SMTP sert à la récupération de mot de passe ; Brevo est configuré pour Auth.
 4. Dans GitHub, choisir « Settings → Pages → Source → GitHub Actions », puis pousser sur `main`. Le workflow « Publier Mesura sur GitHub Pages » lance les contrôles et le déploiement.
 
-Voir le [guide complet](docs/deploiement.md) pour les instructions exactes et les rappels. L’offre gratuite comporte des quotas et peut mettre un projet en pause après une semaine sans activité. Elle ne fournit pas de sauvegardes automatiques. Les comptes et photos sont conservés dans Supabase, indépendamment d’un redéploiement GitHub.
+Voir le [guide complet](docs/deploiement.md) pour les instructions exactes et les rappels. L’offre gratuite comporte des quotas et peut mettre un projet en pause après une semaine sans activité. Elle ne fournit pas de sauvegardes automatiques. Les comptes et mesures sont conservés dans Supabase, indépendamment d’un redéploiement GitHub.
 
 ## Lancement local
 
@@ -25,7 +25,7 @@ cp .env.example .env
 npm run dev
 ```
 
-Ouvrir **http://localhost:5173**. L’API écoute sur le port 3001. La base SQLite et les photos persistent dans `data/`, même après redémarrage. Secrets et données privées sont ignorés par Git.
+Ouvrir **http://localhost:5173**. L’API écoute sur le port 3001. La base SQLite persiste dans `data/`, même après redémarrage. Secrets et données privées sont ignorés par Git.
 
 Dans cet espace, un Node 24 vérifié par SHA-256 est aussi disponible dans `.runtime/`. Si votre terminal n’a pas Node :
 
@@ -40,15 +40,15 @@ npm run dev
 2. Créer un compte : la session s’ouvre immédiatement, sans email de confirmation. Ou se connecter à son compte existant.
 3. Le SMTP reste utilisé pour la récupération du mot de passe et les rappels facultatifs.
 4. Après l’inscription, renseigner sa taille, choisir une cible ou le suivi sans cible et cocher une seule autorisation sur l’écran de démarrage. Le tout est sauvegardé ensemble ; cet écran ne revient pas après sa validation.
-5. Enregistrer une mesure, une note ou une photo, puis consulter l’analyse.
+5. Enregistrer une mesure ou une note, puis consulter l’analyse.
 
-Les nouveaux comptes commencent sans mesure, note ni photo. Leur taille et leur éventuel objectif viennent du formulaire de démarrage. Les photos et les rappels sont autorisés au moment de leur activation ; les choix restent indépendants et modifiables en une action dans « Données et confidentialité ». Le mode découverte et ses données fictives ont été supprimés. Une ancienne valeur personnelle est affichée séparément comme repère ; les champs de nouvelle mesure restent vides. Le serveur bloque toute collecte sans consentement et n’annonce la réussite qu’après une sauvegarde réelle. Un fichier invalide empêche la sauvegarde complète, sans perdre les champs.
+Les nouveaux comptes commencent sans mesure ni note. Leur taille et leur éventuel objectif viennent du formulaire de démarrage. Les rappels sont autorisés au moment de leur activation ; les choix restent indépendants et modifiables en une action dans « Données et confidentialité ». Le mode découverte et ses données fictives ont été supprimés. Une ancienne valeur personnelle est affichée séparément comme repère ; les champs de nouvelle mesure restent vides. Le serveur bloque toute collecte sans consentement et n’annonce la réussite qu’après une sauvegarde réelle.
 
 ## Fonctionnalités
 
 - Comptes Better Auth : inscription avec session immédiate, connexion, récupération, déconnexion et révocation des autres sessions.
-- Poids, 14 mensurations standard, mesures personnalisées, favoris ordonnés et archivage avec historique.
-- Notes privées et photos Face / Profil / Dos ; galerie et comparaison accessible, sans recadrage.
+- Poids, 14 mensurations standard, mesures personnalisées, favoris ordonnés par glisser-déposer et archivage avec historique.
+- Notes privées ; guide illustré avec trois étapes courtes et sources.
 - Historique, modification, correction explicite de la stature historique et suppression.
 - Courbes réelles, cinq périodes et moyennes journalières.
 - IMC, ratios, objectifs dans les deux directions ou de maintien et projection conditionnelle.
@@ -66,7 +66,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Les tests couvrent les calculs, calendriers, deux comptes isolés, photos et tâches de fond. Playwright vérifie les écrans à 390 et 360 px, les contrôles axe et le parcours d’un vrai compte. Les livraisons push sont simulées dans les tests, sans envoi à un appareil.
+Les tests couvrent les calculs, calendriers, deux comptes isolés, rejet des envois de fichiers, nettoyage des anciennes photos et tâches de fond. Playwright vérifie les écrans à 390 et 360 px, les contrôles axe et le parcours d’un vrai compte. Les livraisons push sont simulées dans les tests, sans envoi à un appareil.
 
 ## Architecture et documentation
 
@@ -88,12 +88,14 @@ Le texte joint annonce neuf couleurs sans leur tableau de codes. Encre `#0C0C10`
 
 Les essais sur téléphones, la configuration des prestataires et la validation juridique sont détaillés dans les documents. Cette livraison ne prétend pas valider ces paramètres externes.
 
-Dans « Mon espace », une photo de profil JPEG/PNG/WebP peut être remplacée ou retirée. Elle est recadrée au centre en 192 × 192 px et réencodée en JPEG sans métadonnées par le navigateur. Sa version réduite (50 000 caractères maximum) est conservée dans le profil privé, avec les mêmes droits d’accès et la suppression du compte. Le fuseau horaire reste géré automatiquement pour les rappels, sans champ à renseigner.
+Le fuseau horaire reste géré automatiquement pour les rappels, sans champ à renseigner.
 
 Les rappels hebdomadaires acceptent plusieurs jours, à une heure commune. L’aperçu et les tâches d’envoi utilisent la même règle. Les anciens rappels à un seul jour sont repris automatiquement. Le rythme proposé est toujours hebdomadaire ; réenregistrer un ancien rappel le convertit à ce rythme.
 
 ## Parcours mobiles — version de développement
 
-La refonte du parcours conserve la technologie, les données et l’identité visuelle. Mesures donne accès à l’historique et conserve les brouillons pendant la navigation. L’Analyse adapte ses résultats aux données et rapproche les outils de comparaison. Les entrées ont un détail distinct de leur édition ; les retours restaurent le contexte. Mon espace commence par un menu, et les rappels distinguent horaires enregistrés et appareil configuré.
+La refonte du parcours conserve la technologie, les données et l’identité visuelle. Mesures donne accès à l’historique en bas de page et conserve les brouillons pendant la navigation. L’Analyse adapte ses résultats aux données et rapproche les outils de comparaison. Les entrées ont un détail distinct de leur édition ; les retours restaurent le contexte. Mon espace commence par un menu, et les rappels distinguent horaires enregistrés et appareil configuré.
 
 Voir [le diagnostic, les changements et la validation](docs/ux-parcours.md). Le script `scripts/ux-preview.ts` prépare uniquement des comptes fictifs sur un serveur **local de développement**, sans réinitialiser de données. Les changements de cette session ne sont pas publiés.
+
+Les photos ont été retirées le 6 octobre 2026 : ajout, galerie, comparaison, avatar, consentement proposé et inclusion dans les exports ZIP. Les API refusent les nouveaux envois. Les anciens fichiers et champs restent privés et compatibles avec le nettoyage lors du retrait du suivi ou de la suppression du compte ; aucune migration destructive n’est appliquée.

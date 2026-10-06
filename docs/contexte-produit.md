@@ -1,10 +1,10 @@
 # Produit et parcours
 
-État au 5 octobre 2026. Point d’entrée : [CONTEXTE.md](../CONTEXTE.md).
+État au 6 octobre 2026. Point d’entrée : [CONTEXTE.md](../CONTEXTE.md).
 
 ## Objectif
 
-Permettre à une personne de saisir ses mesures corporelles, de suivre leur évolution, d’ajouter des notes et des photos et de gérer ses données personnelles. Interface mobile en français, sauvegarde réelle et organisation permettant une évolution SaaS.
+Permettre à une personne de saisir ses mesures corporelles, de suivre leur évolution, d’ajouter des notes et de gérer ses données personnelles. Interface mobile en français, sauvegarde réelle et organisation permettant une évolution SaaS.
 
 ## Compte et démarrage
 
@@ -12,17 +12,17 @@ Le visiteur voit le formulaire de création de compte ou de connexion. Les liens
 
 L’inscription ouvre directement une session, sans email de confirmation. Le minimum de mot de passe actuel est de six caractères. La récupération du mot de passe conserve son lien par email.
 
-Le nouvel utilisateur renseigne sa hauteur, choisit un objectif chiffré ou un suivi sans cible, puis autorise le suivi corporel en une case. Ces informations sont sauvegardées ensemble. Aucun poids, mesure, note, photo ou objectif fictif n’est ajouté. Les autorisations de photos d’évolution et de rappels sont demandées à leur utilisation.
+Le nouvel utilisateur renseigne sa hauteur, choisit un objectif chiffré ou un suivi sans cible, puis autorise le suivi corporel en une case. Ces informations sont sauvegardées ensemble. Aucun poids, mesure, note ou objectif fictif n’est ajouté. Les autorisations de rappels sont demandées à leur utilisation.
 
 ## Mesures et Analyse
 
-Mesures propose date, poids, mensurations favorites, guide des mesures puis note et photos facultatives. L’ajout direct d’autres mensurations a été retiré ; « Personnaliser » permet toujours de choisir et ordonner les favorites. Les valeurs non favorites déjà présentes dans une entrée ou un brouillon restent consultables et modifiables. Le [guide illustré](guide-mensurations.md) couvre chaque mensuration du catalogue, avec les favorites en premier, les repères et les gestes à reproduire. L’historique est accessible directement. Les anciennes valeurs sont des repères séparés des champs vides. Les brouillons de nouvelle saisie et d’édition restent en mémoire pendant la navigation.
+Mesures propose date, poids, mensurations favorites, guide des mesures puis note facultative. L’ajout direct d’autres mensurations a été retiré ; « Personnaliser » permet toujours de choisir et ordonner les favorites par glisser-déposer. Les valeurs non favorites déjà présentes dans une entrée ou un brouillon restent consultables et modifiables. Le [guide illustré](guide-mensurations.md) couvre chaque mensuration du catalogue, avec les favorites en premier, les repères et les gestes à reproduire. L’historique est accessible en bas de Mesures. Les anciennes valeurs sont des repères séparés des champs vides. Les brouillons de nouvelle saisie et d’édition restent en mémoire pendant la navigation.
 
-Analyse distingue aucune entrée, premier repère et évolution sur plusieurs jours. Le choix de la mesure précède le graphique. « Comparer deux périodes », « Photos de comparaison » et « Bilan mensuel » suivent le repère principal ; les indicateurs et objectifs facultatifs sont repliés. La dernière valeur connue est distincte des valeurs de période. L’historique propose une consultation datée avant l’édition. Les retours restaurent période, mesure, filtres et défilement. Un objectif actif est actuellement enregistré par compte, malgré le titre au pluriel. Les calculs viennent des données réelles ; leurs conventions sont dans [calculs.md](calculs.md).
+Analyse distingue aucune entrée, premier repère et évolution sur plusieurs jours. Le choix de la mesure précède le graphique. « Comparer deux périodes » et « Bilan mensuel » suivent le repère principal ; les indicateurs et objectifs facultatifs sont repliés. La dernière valeur connue est distincte des valeurs de période. L’historique propose une consultation datée avant l’édition. Les retours restaurent période, mesure, filtres et défilement. Un objectif actif est actuellement enregistré par compte, malgré le titre au pluriel. Les calculs viennent des données réelles ; leurs conventions sont dans [calculs.md](calculs.md).
 
 ## Mon espace
 
-Mon espace commence par un menu : Profil, Objectifs, Mesures favorites, Rappels, Données et confidentialité. Le profil s’ouvre depuis ce menu et permet de modifier le pseudo, la hauteur et la photo de profil. La photo peut être remplacée ou retirée, puis enregistrée avec « Enregistrer mon profil ». Elle est privée, recadrée au centre en carré et affichée en cercle. Dans l’en-tête, elle remplace l’icône de personnage après sauvegarde ; sans photo, l’icône reste affichée.
+Mon espace commence par un menu : Profil, Objectifs, Mesures favorites, Rappels, Données et confidentialité. Le profil s’ouvre depuis ce menu et permet de modifier le pseudo et la hauteur. L’en-tête utilise l’icône de personnage pour accéder au compte.
 
 Le champ du fuseau horaire est absent de Mon espace. Sa valeur technique reste conservée pour le calendrier. L’écran Rappel possède encore son réglage de fuseau horaire.
 
@@ -40,6 +40,6 @@ Les règles historiques quinze jours et mois restent comprises par le moteur pou
 
 ## Données personnelles
 
-Les données sont isolées par propriétaire. L’utilisateur peut exporter, retirer ses autorisations et supprimer son compte après confirmation de son mot de passe. Les photos d’évolution sont stockées dans un espace privé. La photo de profil réduite est conservée dans le profil privé. Voir [confidentialite.md](confidentialite.md) pour les documents et paramètres de l’exploitant restant à compléter.
+Les données sont isolées par propriétaire. L’utilisateur peut exporter, retirer ses autorisations et supprimer son compte après confirmation de son mot de passe. L’ajout de photos, leur comparaison et l’avatar ont été retirés. Les API refusent les nouveaux envois. Le nettoyage des anciens fichiers est conservé pour le retrait du suivi et la suppression du compte. Voir [confidentialite.md](confidentialite.md) pour les documents et paramètres de l’exploitant restant à compléter.
 
 La refonte UX du 5 octobre 2026 reste en développement. Voir [le diagnostic et la validation](ux-parcours.md) pour le détail et les essais sur téléphone encore nécessaires.

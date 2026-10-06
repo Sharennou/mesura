@@ -3,7 +3,6 @@ import { Edit3, History, Plus, Trash2 } from "lucide-react";
 import { useApp } from "../context";
 import { useViewState } from "../useViewState";
 import { api } from "../api";
-import { PhotoImage } from "../PhotoImage";
 import {
   Button,
   Confirm,
@@ -82,31 +81,6 @@ export function HistoryScreen() {
                 </>
               )}
             </section>
-            {entry.photos.length > 0 && (
-              <>
-                <div className="section-heading">
-                  <h2>Photos de cette entrée</h2>
-                </div>
-                <div className="photo-gallery">
-                  {entry.photos.map((p) => (
-                    <figure key={p.id}>
-                      <PhotoImage
-                        photoId={p.id}
-                        alt={`${p.orientation} du ${entry.date}`}
-                      />
-                      <figcaption>
-                        {p.orientation === "face"
-                          ? "Face"
-                          : p.orientation === "profil"
-                            ? "Profil"
-                            : "Dos"}{" "}
-                        · <DateLabel date={entry.date} />
-                      </figcaption>
-                    </figure>
-                  ))}
-                </div>
-              </>
-            )}
             <Button
               onClick={() => {
                 if (requireAccount()) edit(entry);
@@ -205,7 +179,6 @@ export function HistoryScreen() {
                         ? `${Object.keys(e.values).length} valeurs`
                         : "",
                       e.note ? "Note ajoutée" : "",
-                      e.photos.length ? `${e.photos.length} photo(s)` : "",
                     ]
                       .filter(Boolean)
                       .join(" · ")}
@@ -237,7 +210,7 @@ export function HistoryScreen() {
       {remove && (
         <Confirm
           title="Supprimer cette mesure ?"
-          text="Les mesures, la note et les photos associées seront supprimées. Votre analyse sera recalculée."
+          text="Les mesures et la note seront supprimées. Votre analyse sera recalculée."
           busy={busy}
           onClose={() => setRemove(null)}
           onConfirm={async () => {

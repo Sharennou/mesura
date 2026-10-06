@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
-  Camera,
   Check,
   ChevronDown,
   CalendarDays,
@@ -11,15 +10,12 @@ import {
   History,
   Ruler,
   LockKeyhole,
-  ImagePlus,
 } from "lucide-react";
-import { useViewState } from "../useViewState";
 import { MeasurementGuide } from "../components/MeasurementGuide";
 import { useApp } from "../context";
 import {
   ActionBar,
   Badge,
-  Button,
   DateLabel,
   Empty,
   ErrorMessage,
@@ -35,12 +31,7 @@ import {
   goalProgress,
   streak,
 } from "../../shared/calculations";
-import {
-  CONSENT_TEXTS,
-  CONSENT_VERSION,
-  MAX_PHOTO_BYTES,
-} from "../../shared/config";
-import type { AccountData, Entry, Measure } from "../../shared/types";
+import type { Entry, Measure } from "../../shared/types";
 import { api } from "../api";
 export function MeasureScreen() {
   const {
@@ -49,14 +40,12 @@ export function MeasureScreen() {
     navigate,
     requireAccount,
     saved,
-    setData,
     draft,
     setDraft,
     editingDrafts,
     setEditingDrafts,
   } = useApp();
   const today = localDate(data.profile.timezone);
-  const [openPhotos] = useViewState("measure.photos", false);
   const editingDraft = editing ? editingDrafts[editing.id] : null;
   const currentDraft = editing ? editingDraft : draft;
   const initial =
@@ -71,13 +60,8 @@ export function MeasureScreen() {
     currentDraft?.date ?? editing?.date ?? today,
   );
   const [note, setNote] = useState(currentDraft?.note ?? editing?.note ?? "");
-  const [photos, setPhotos] = useState<Record<string, File>>(
-    currentDraft?.photos ?? {},
-  );
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [photoConsent, setPhotoConsent] = useState(false);
-  const [accepted, setAccepted] = useState(false);
   const [historicalHeight, setHistoricalHeight] = useState(
     editingDraft?.height ?? (editing?.height ? number(editing.height) : ""),
   );
@@ -86,7 +70,7 @@ export function MeasureScreen() {
   const completed = useRef(false);
   useEffect(() => {
     if (completed.current) return;
-    const next = { values, date, note, photos, requestId: requestId.current };
+    const next = { values, date, note, requestId: requestId.current };
     if (editing)
       setEditingDrafts((drafts) => ({
         ...drafts,
@@ -97,7 +81,6 @@ export function MeasureScreen() {
     values,
     date,
     note,
-    photos,
     historicalHeight,
     editing,
     setDraft,
@@ -105,22 +88,11 @@ export function MeasureScreen() {
   ]);
   const formRef = useRef<HTMLFormElement>(null);
   useEffect(() => {
-    if (openPhotos) {
-      formRef.current
-        ?.querySelector<HTMLElement>("[data-photo-section]")
-        ?.scrollIntoView({ block: "center" });
-    }
-  }, []);
-  useEffect(() => {
     if (error)
       formRef.current
         ?.querySelector<HTMLElement>("[role=alert]")
         ?.scrollIntoView({ block: "center" });
   }, [error]);
-  const photoCount = new Set([
-    ...Object.keys(photos),
-    ...(editing?.photos.map((p) => p.orientation) ?? []),
-  ]).size;
   const weight = parseDecimal(values.weight || "");
   const previousEntries = data.entries.filter(
     (e) =>
@@ -209,25 +181,6 @@ export function MeasureScreen() {
     if (!Number.isFinite(current) || current + amount <= 0) return;
     update("weight", number(Math.round((current + amount) * 10) / 10));
   }
-  async function grantPhotos() {
-    if (!accepted) return;
-    if (!requireAccount()) return;
-    try {
-      setData(
-        await api<AccountData>("/consents", {
-          method: "POST",
-          body: JSON.stringify({
-            purpose: "photos",
-            granted: true,
-            version: CONSENT_VERSION,
-          }),
-        }),
-      );
-      setPhotoConsent(false);
-    } catch (e: any) {
-      setError(e.message);
-    }
-  }
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (submitting.current || !requireAccount()) return;
@@ -252,13 +205,8 @@ export function MeasureScreen() {
         parsed[id] = result;
       }
     }
-    if (
-      !Object.keys(parsed).length &&
-      !note.trim() &&
-      !Object.keys(photos).length &&
-      !editing?.photos.length
-    ) {
-      setError("Ajoutez au moins une mesure, une note ou une photo.");
+    if (!Object.keys(parsed).length && !note.trim()) {
+      setError("Ajoutez au moins une mesure ou une note.");
       return;
     }
     if (!date || date > today) {
@@ -286,16 +234,12 @@ export function MeasureScreen() {
       height,
       requestId: requestId.current,
     };
-    const body = new FormData();
-    body.set("data", JSON.stringify(payload));
-    for (const [orientation, file] of Object.entries(photos))
-      body.set(orientation, file);
     try {
       const entry = await api<Entry>(
         editing ? `/entries/${editing.id}` : "/entries",
         {
           method: editing ? "PUT" : "POST",
-          body: Object.keys(photos).length ? body : JSON.stringify(payload),
+          body: JSON.stringify(payload),
         },
       );
       completed.current = true;
@@ -316,8 +260,8 @@ export function MeasureScreen() {
           back={false}
         />
         <Empty title="Votre corps, vos choix" icon={Ruler}>
-          Activez le suivi corporel pour commencer. Les photos et les rappels
-          restent facultatifs.
+          Activez le suivi corporel pour commencer. Les rappels restent
+          facultatifs.
         </Empty>
         <ActionBar onClick={() => navigate("privacy")}>
           Choisir mes consentements
@@ -330,17 +274,8 @@ export function MeasureScreen() {
         title={editing ? "Modifier la mesure" : "Nouvelle mesure"}
         back={Boolean(editing)}
       />
-      {!editing && (
-        <button
-          className="text-button history-access"
-          onClick={() => navigate("history")}
-        >
-          <Icon as={History} size={18} /> Historique des mesures
-        </button>
-      )}
       <p className="small form-help">
-        Une mesure, une note ou une photo suffit. Les autres champs peuvent
-        rester vides.
+        Une mesure ou une note suffit. Les autres champs peuvent rester vides.
       </p>
       <form id="measurement-form" onSubmit={submit} ref={formRef} noValidate>
         <div className="date-row">
@@ -495,71 +430,6 @@ export function MeasureScreen() {
             <span className="counter">{note.length} / 2 000</span>
           </div>
         </details>
-        <details
-          className="optional-panel"
-          data-photo-section
-          open={
-            openPhotos || Object.keys(photos).length || editing?.photos.length
-              ? true
-              : undefined
-          }
-        >
-          <summary>
-            {Object.keys(photos).length || editing?.photos.length
-              ? `${photoCount} photo${photoCount > 1 ? "s" : ""} ajoutée${photoCount > 1 ? "s" : ""} · modifier`
-              : "Ajouter des photos"}{" "}
-            <span className="optional">Facultatif</span>
-          </summary>
-          <div className="photo-upload-grid">
-            {(["face", "profil", "dos"] as const).map((orientation) => (
-              <label
-                key={orientation}
-                className={`photo-upload ${photos[orientation] ? "selected" : ""}`}
-                onClick={(e) => {
-                  if (!data.consents.photos) {
-                    e.preventDefault();
-                    if (requireAccount()) setPhotoConsent(true);
-                  }
-                }}
-              >
-                <Icon as={photos[orientation] ? Check : ImagePlus} size={24} />
-                <strong>
-                  {orientation === "face"
-                    ? "Face"
-                    : orientation === "profil"
-                      ? "Profil"
-                      : "Dos"}
-                </strong>
-                <small>
-                  {photos[orientation]
-                    ? "Prête à envoyer"
-                    : editing?.photos.some((p) => p.orientation === orientation)
-                      ? "Remplacer"
-                      : "Ajouter"}
-                </small>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,.heic,.heif"
-                  aria-label={`Ajouter une photo de ${orientation}`}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    if (file.size > MAX_PHOTO_BYTES) {
-                      setError("Photo trop volumineuse. Maximum : 10 Mo.");
-                      return;
-                    }
-                    setPhotos((p) => ({ ...p, [orientation]: file }));
-                  }}
-                />
-              </label>
-            ))}
-          </div>
-          {Object.keys(photos).length > 0 && (
-            <Button onClick={() => setPhotos({})}>
-              Retirer les photos sélectionnées
-            </Button>
-          )}
-        </details>
         {editing && (
           <section className="plain-card">
             <label className="field-label">
@@ -578,7 +448,7 @@ export function MeasureScreen() {
         )}
         <p className="privacy-caption">
           <Icon as={LockKeyhole} size={14} />
-          Vos mesures, notes et photos restent privées.
+          Vos mesures et notes restent privées.
         </p>
         {error && (
           <ErrorMessage>
@@ -596,36 +466,13 @@ export function MeasureScreen() {
           {editing ? "Enregistrer les modifications" : "Enregistrer la mesure"}
         </ActionBar>
       </form>
-      {photoConsent && (
-        <div className="modal-overlay">
-          <div
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="photos-title"
-          >
-            <h2 id="photos-title">Vos photos restent à vous.</h2>
-            <p>
-              JPEG, PNG ou WebP, 10 Mo maximum. L’orientation est corrigée et
-              les métadonnées, dont la localisation, sont supprimées. Les images
-              ne sont pas analysées.
-            </p>
-            <label className="check-label">
-              <input
-                type="checkbox"
-                checked={accepted}
-                onChange={(e) => setAccepted(e.target.checked)}
-              />
-              <span>{CONSENT_TEXTS.photos}</span>
-            </label>
-            <div className="stack">
-              <Button disabled={!accepted} onClick={() => void grantPhotos()}>
-                Autoriser mes photos
-              </Button>
-              <Button onClick={() => setPhotoConsent(false)}>Plus tard</Button>
-            </div>
-          </div>
-        </div>
+      {!editing && (
+        <button
+          className="text-button history-access"
+          onClick={() => navigate("history")}
+        >
+          <Icon as={History} size={18} /> Historique des mesures
+        </button>
       )}
     </>
   );
@@ -727,12 +574,6 @@ export function SuccessScreen() {
           </div>
         ))}
         {entry.note && <p className="saved-note">{entry.note}</p>}
-        {entry.photos.length > 0 && (
-          <p>
-            {entry.photos.length} photo{entry.photos.length > 1 ? "s" : ""}{" "}
-            privée{entry.photos.length > 1 ? "s" : ""}
-          </p>
-        )}
       </div>
       <div className="streak-card">
         <Icon as={Flame} size={32} />

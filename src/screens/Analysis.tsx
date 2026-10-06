@@ -1,5 +1,4 @@
 import {
-  Camera,
   CalendarRange,
   CalendarDays,
   History,
@@ -211,12 +210,6 @@ export function AnalysisScreen() {
           title="Comparer deux périodes"
           description="Comparer les moyennes de vos mesures."
           onClick={() => navigate("compare")}
-        />
-        <LinkCard
-          icon={Camera}
-          title="Photos de comparaison"
-          description="Face, Profil ou Dos, à deux dates."
-          onClick={() => navigate("photos")}
         />
         <LinkCard
           icon={CalendarDays}

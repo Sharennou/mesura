@@ -26,6 +26,7 @@ export default defineConfig({
       MESURA_WEB_PORT: "5181",
       MESURA_API_URL: "http://127.0.0.1:3011",
       DATA_DIR: testDataDir,
+      TRUST_PROXY: "127.0.0.1",
       SMTP_HOST: "",
       MAIL_FROM: "",
     },

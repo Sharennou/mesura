@@ -231,8 +231,8 @@ export function AccountScreen() {
                 >
                   conditions d’utilisation
                 </button>
-                . Mon suivi sera configuré à la prochaine étape. Les photos et
-                les rappels restent facultatifs.
+                . Mon suivi sera configuré à la prochaine étape. Les rappels
+                restent facultatifs.
               </span>
             </label>
           )}

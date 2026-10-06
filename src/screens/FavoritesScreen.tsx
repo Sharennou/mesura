@@ -1,5 +1,12 @@
-import { useState, type FormEvent } from "react";
-import { ArrowDown, ArrowUp, Edit3, Plus, X } from "lucide-react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type PointerEvent,
+  type KeyboardEvent,
+} from "react";
+import { GripVertical, Edit3, Plus, X } from "lucide-react";
 import { useApp } from "../context";
 import { api } from "../api";
 import {
@@ -10,7 +17,6 @@ import {
   Icon,
   PageTitle,
 } from "../components";
-import { number } from "../../shared/calculations";
 import type { AccountData, Measure } from "../../shared/types";
 
 export function FavoritesScreen() {
@@ -23,15 +29,144 @@ export function FavoritesScreen() {
   const [error, setError] = useState("");
   const [archive, setArchive] = useState<Measure | null>(null);
   const [renaming, setRenaming] = useState<Measure | null>(null);
-  function reorder(index: number, direction: number) {
-    const result = [...visible];
-    const next = index + direction;
-    if (next < 0 || next >= result.length) return;
-    [result[index], result[next]] = [result[next], result[index]];
-    setVisible(result);
+  const listRef = useRef<HTMLDivElement>(null);
+  const drag = useRef<{
+    id: string;
+    original: string[];
+    pointerId?: number;
+    y: number;
+    offset: number;
+    left: number;
+    width: number;
+  } | null>(null);
+  const [movingId, setMovingId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
+  const [announcement, setAnnouncement] = useState("");
+  function reorder(id: string, next: number) {
+    setVisible((current) => {
+      const index = current.indexOf(id);
+      if (index < 0 || next < 0 || next >= current.length || next === index)
+        return current;
+      const result = [...current];
+      result.splice(index, 1);
+      result.splice(next, 0, id);
+      return result;
+    });
   }
+  function movePointer() {
+    const current = drag.current;
+    if (!current || current.pointerId === undefined) return;
+    const rows = Array.from(
+      listRef.current?.querySelectorAll<HTMLElement>(".favorite-row") ?? [],
+    );
+    const next = rows.reduce(
+      (closest, row, index) => {
+        const rect = row.getBoundingClientRect();
+        const distance = Math.abs(current.y - (rect.top + rect.height / 2));
+        return distance < closest.distance ? { index, distance } : closest;
+      },
+      { index: 0, distance: Infinity },
+    ).index;
+    reorder(current.id, next);
+    setPreview({
+      top: current.y - current.offset,
+      left: current.left,
+      width: current.width,
+    });
+  }
+  function finishMove(cancel = false) {
+    const current = drag.current;
+    if (!current) return;
+    if (cancel) setVisible(current.original);
+    const name = data.measures.find((m) => m.id === current.id)?.name;
+    setAnnouncement(
+      cancel
+        ? "Déplacement annulé."
+        : `${name} en position ${visible.indexOf(current.id) + 1} sur ${visible.length}.`,
+    );
+    drag.current = null;
+    setMovingId(null);
+    setPreview(null);
+  }
+  function startPointer(e: PointerEvent<HTMLButtonElement>, id: string) {
+    if (busy || (e.pointerType === "mouse" && e.button !== 0)) return;
+    e.preventDefault();
+    e.currentTarget.focus({ preventScroll: true });
+    listRef.current!.setPointerCapture(e.pointerId);
+    const rect = e.currentTarget
+      .closest(".favorite-row")!
+      .getBoundingClientRect();
+    drag.current = {
+      id,
+      original: [...visible],
+      pointerId: e.pointerId,
+      y: e.clientY,
+      offset: e.clientY - rect.top,
+      left: rect.left,
+      width: rect.width,
+    };
+    setMovingId(id);
+    setPreview({ top: rect.top, left: rect.left, width: rect.width });
+    setAnnouncement(
+      `${data.measures.find((m) => m.id === id)?.name} sélectionnée.`,
+    );
+  }
+  function moveKeyboard(e: KeyboardEvent<HTMLButtonElement>, id: string) {
+    if (busy) return;
+    if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      if (drag.current) finishMove();
+      else {
+        drag.current = {
+          id,
+          original: [...visible],
+          y: 0,
+          offset: 0,
+          left: 0,
+          width: 0,
+        };
+        setMovingId(id);
+        setAnnouncement(
+          "Mesure sélectionnée. Utilisez les flèches haut et bas, puis Entrée pour déposer.",
+        );
+      }
+    } else if (
+      drag.current?.id === id &&
+      (e.key === "ArrowUp" || e.key === "ArrowDown")
+    ) {
+      e.preventDefault();
+      const next = visible.indexOf(id) + (e.key === "ArrowUp" ? -1 : 1);
+      reorder(id, next);
+      if (next >= 0 && next < visible.length)
+        setAnnouncement(`Position ${next + 1} sur ${visible.length}.`);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      finishMove(true);
+    }
+  }
+  useEffect(() => {
+    if (!movingId || drag.current?.pointerId === undefined) return;
+    let frame: number;
+    const scroll = () => {
+      const current = drag.current;
+      if (!current) return;
+      const bottom = window.innerHeight - 160;
+      const step = current.y < 100 ? -8 : current.y > bottom ? 8 : 0;
+      if (step) {
+        window.scrollBy(0, step);
+        movePointer();
+      }
+      frame = requestAnimationFrame(scroll);
+    };
+    frame = requestAnimationFrame(scroll);
+    return () => cancelAnimationFrame(frame);
+  }, [movingId]);
   async function save() {
-    if (!requireAccount() || busy) return;
+    if (!requireAccount() || busy || movingId) return;
     setBusy(true);
     try {
       setData(
@@ -77,36 +212,72 @@ export function FavoritesScreen() {
       {visible.length > 0 && (
         <section className="plain-card">
           <h2>Votre ordre de saisie</h2>
-          {visible.map((id, i) => {
-            const m = data.measures.find((m) => m.id === id);
-            return (
-              <div className="favorite-row" key={id}>
-                <span className="favorite-index">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <strong>{m?.name}</strong>
-                <div className="row-actions">
+          <p id="favorites-drag-help" className="small muted">
+            Glissez la poignée pour changer l’ordre.
+          </p>
+          <span id="favorites-keyboard-help" className="sr-only">
+            Au clavier : Espace pour saisir, flèches haut et bas pour déplacer,
+            Entrée pour déposer, Échap pour annuler.
+          </span>
+          <div
+            ref={listRef}
+            className="favorite-list"
+            role="list"
+            aria-label="Ordre des mesures favorites"
+            onPointerMove={(e) => {
+              if (drag.current?.pointerId !== e.pointerId) return;
+              drag.current.y = e.clientY;
+              movePointer();
+            }}
+            onPointerUp={() => finishMove()}
+            onPointerCancel={() => finishMove(true)}
+            onLostPointerCapture={() => finishMove(true)}
+          >
+            {visible.map((id, i) => {
+              const m = data.measures.find((m) => m.id === id);
+              return (
+                <div
+                  className={`favorite-row ${movingId === id ? "is-moving" : ""}`}
+                  key={id}
+                  role="listitem"
+                >
+                  <span className="favorite-index">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <strong>{m?.name}</strong>
                   <button
-                    className="circle"
-                    disabled={i === 0}
-                    aria-label={`Monter ${m?.name}`}
-                    onClick={() => reorder(i, -1)}
+                    type="button"
+                    className="circle favorite-grip"
+                    disabled={busy || visible.length < 2}
+                    aria-label={`Déplacer ${m?.name}`}
+                    aria-describedby="favorites-drag-help favorites-keyboard-help"
+                    aria-pressed={movingId === id}
+                    onPointerDown={(e) => startPointer(e, id)}
+                    onKeyDown={(e) => moveKeyboard(e, id)}
+                    onBlur={() => {
+                      if (drag.current?.pointerId === undefined) finishMove();
+                    }}
                   >
-                    <Icon as={ArrowUp} size={17} />
-                  </button>
-                  <button
-                    className="circle"
-                    disabled={i === visible.length - 1}
-                    aria-label={`Descendre ${m?.name}`}
-                    onClick={() => reorder(i, 1)}
-                  >
-                    <Icon as={ArrowDown} size={17} />
+                    <Icon as={GripVertical} size={20} />
                   </button>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </section>
+      )}
+      <span className="sr-only" role="status" aria-live="polite">
+        {announcement}
+      </span>
+      {preview && movingId && (
+        <div
+          className="favorite-row favorite-drag-preview"
+          style={preview}
+          aria-hidden="true"
+        >
+          <Icon as={GripVertical} size={20} />
+          <strong>{data.measures.find((m) => m.id === movingId)?.name}</strong>
+        </div>
       )}
       <div className="section-heading">
         <h2>Les mesures disponibles</h2>
@@ -120,6 +291,7 @@ export function FavoritesScreen() {
                 <input
                   type="checkbox"
                   checked={visible.includes(m.id)}
+                  disabled={busy || Boolean(movingId)}
                   onChange={(e) =>
                     setVisible((v) =>
                       e.target.checked
@@ -185,7 +357,11 @@ export function FavoritesScreen() {
         </details>
       )}
       <ErrorMessage>{error}</ErrorMessage>
-      <ActionBar onClick={() => void save()} busy={busy}>
+      <ActionBar
+        onClick={() => void save()}
+        busy={busy}
+        disabled={Boolean(movingId)}
+      >
         Enregistrer mes favoris
       </ActionBar>
       {(custom || renaming) && (

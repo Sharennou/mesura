@@ -1,16 +1,13 @@
-import { avatarSchema } from "../shared/avatar";
 import Fastify, { type FastifyRequest } from "fastify";
 import helmet from "@fastify/helmet";
-import multipart from "@fastify/multipart";
 import rateLimit from "@fastify/rate-limit";
 import fastifyStatic from "@fastify/static";
 import { fromNodeHeaders } from "better-auth/node";
 import { z } from "zod";
 import { DateTime } from "luxon";
 import { randomUUID } from "node:crypto";
-import { createReadStream, existsSync, writeFileSync, rmSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import sharp from "sharp";
 import { ZipArchive } from "archiver";
 import { PassThrough } from "node:stream";
 import {
@@ -20,7 +17,7 @@ import {
   emailConfigured,
   initializeDatabase,
 } from "./auth";
-import { db, dataDir } from "./db";
+import { db } from "./db";
 import {
   accountData,
   consent,
@@ -44,7 +41,6 @@ import {
   APP_SLUG,
   CONSENT_TEXTS,
   CONSENT_VERSION,
-  MAX_PHOTO_BYTES,
 } from "../shared/config";
 import type { ConsentPurpose, Reminder } from "../shared/types";
 z.config(z.locales.fr());
@@ -96,9 +92,6 @@ export async function buildApp() {
       error: "Trop de tentatives. Patientez quelques instants puis réessayez.",
     }),
   });
-  await app.register(multipart, {
-    limits: { fileSize: MAX_PHOTO_BYTES, files: 3, fields: 1, parts: 4 },
-  });
   app.decorateRequest("owner", null);
   app.addHook("onRequest", async (req, reply) => {
     if (req.url.startsWith("/api/"))
@@ -132,7 +125,7 @@ export async function buildApp() {
     reply.status(status).send({
       error:
         status === 413
-          ? "Photo trop volumineuse. Maximum : 10 Mo par photo."
+          ? "Requête trop volumineuse."
           : status < 500
             ? error.message
             : "La sauvegarde a échoué. Vos champs sont conservés ; réessayez.",
@@ -225,7 +218,6 @@ export async function buildApp() {
     const s = await owner(req);
     const p = z
       .object({
-        avatar: avatarSchema,
         name: z.string().trim().min(1).max(100),
         height: z.number().positive().max(300).nullable(),
         timezone: zoneSchema,
@@ -251,11 +243,6 @@ export async function buildApp() {
       db.prepare(
         "INSERT INTO profiles (user_id,height,timezone,visible) VALUES (?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET height = excluded.height, timezone = excluded.timezone, visible = excluded.visible",
       ).run(s.user.id, p.height, p.timezone, JSON.stringify(p.visible));
-      if (p.avatar !== undefined)
-        db.prepare("UPDATE profiles SET avatar = ? WHERE user_id = ?").run(
-          p.avatar,
-          s.user.id,
-        );
     })();
     return accountData(s.user.id, p.name);
   });
@@ -314,6 +301,8 @@ export async function buildApp() {
         version: z.literal(CONSENT_VERSION),
       })
       .parse(req.body);
+    if (c.granted && c.purpose === "photos")
+      fail("L’ajout de photos a été retiré.", 410);
     if (c.granted && c.purpose !== "body" && !consent(s.user.id, "body"))
       fail("Le suivi principal doit être activé avant cette option.");
     // This endpoint completes all processing effects before acknowledging withdrawal.
@@ -414,25 +403,6 @@ export async function buildApp() {
         .get(entryId, userId)
     )
       fail("Entrée introuvable.", 404);
-    let raw = req.body;
-    const uploads: { orientation: string; data: Buffer }[] = [];
-    if (req.isMultipart())
-      for await (const part of req.parts()) {
-        if (part.type === "field" && part.fieldname === "data") {
-          try {
-            raw = JSON.parse(String(part.value));
-          } catch {
-            fail("Données d’entrée invalides.");
-          }
-        } else if (part.type === "file") {
-          if (!["face", "profil", "dos"].includes(part.fieldname))
-            fail("Orientation de photo invalide.");
-          const data = await part.toBuffer();
-          if (part.file.truncated)
-            fail("Photo trop volumineuse. Maximum : 10 Mo.", 413);
-          uploads.push({ orientation: part.fieldname, data });
-        }
-      }
     const e = z
       .object({
         date: dateSchema,
@@ -444,7 +414,7 @@ export async function buildApp() {
         height: z.number().positive().max(300).nullable(),
         requestId: z.uuid(),
       })
-      .parse(raw);
+      .parse(req.body);
     const tz =
       (
         db
@@ -463,142 +433,46 @@ export async function buildApp() {
       .map((m) => m.id);
     if (Object.keys(e.values).some((id) => !allowed.includes(id)))
       fail("Mesure inconnue ou archivée.");
-    const existingPhotos = entryId
-      ? (
-          db
-            .prepare(
-              "SELECT COUNT(*) AS n FROM photos WHERE user_id = ? AND entry_id = ?",
-            )
-            .get(userId, entryId) as any
-        ).n
-      : 0;
-    if (
-      !Object.keys(e.values).length &&
-      !e.note.trim() &&
-      !uploads.length &&
-      !existingPhotos
-    )
-      fail("Ajoutez au moins une mesure, une note ou une photo.");
-    if (uploads.length && !consent(userId, "photos"))
-      fail("Acceptez le stockage privé des photos avant leur envoi.", 403);
-    if (new Set(uploads.map((p) => p.orientation)).size !== uploads.length)
-      fail("Une seule photo par orientation est autorisée.");
+    if (!Object.keys(e.values).length && !e.note.trim())
+      fail("Ajoutez au moins une mesure ou une note.");
     const duplicate =
       !entryId &&
       (db
         .prepare("SELECT id FROM entries WHERE user_id = ? AND request_id = ?")
         .get(userId, e.requestId) as any);
     if (duplicate) return getEntries(userId).find((x) => x.id === duplicate.id);
-    const converted: {
-      id: string;
-      orientation: string;
-      filename: string;
-      data: Buffer;
-    }[] = [];
-    for (const photo of uploads) {
-      try {
-        const image = sharp(photo.data, {
-          limitInputPixels: 40_000_000,
-          animated: false,
-        });
-        const meta = await image.metadata();
-        if (!["jpeg", "png", "webp"].includes(meta.format || ""))
-          fail(
-            "Choisissez une photo JPEG, PNG ou WebP. Pour une photo HEIC, exportez-la en JPEG depuis votre téléphone.",
-          );
-        const id = randomUUID();
-        converted.push({
-          id,
-          orientation: photo.orientation,
-          filename: `${id}.webp`,
-          data: await image
-            .rotate()
-            .resize({
-              width: 1600,
-              height: 2200,
-              fit: "inside",
-              withoutEnlargement: true,
-            })
-            .webp({ quality: 88 })
-            .toBuffer(),
-        });
-      } catch (error: any) {
-        fail(
-          error.statusCode
-            ? error.message
-            : "Cette photo ne peut pas être lue. Choisissez un fichier JPEG, PNG ou WebP valide.",
-        );
-      }
-    }
     const id = entryId || randomUUID();
     const now = new Date().toISOString();
-    const replacedFiles: string[] = [];
-    try {
-      db.transaction(() => {
-        if (
-          !consent(userId, "body") ||
-          (converted.length && !consent(userId, "photos"))
-        )
-          fail("Le consentement a changé. Vérifiez vos réglages.", 403);
-        if (entryId)
-          db.prepare(
-            "UPDATE entries SET date = ?, height = ?, values_json = ?, note = ?, updated_at = ? WHERE id = ? AND user_id = ?",
-          ).run(
-            e.date,
-            e.height,
-            JSON.stringify(e.values),
-            e.note,
-            now,
-            id,
-            userId,
-          );
-        else
-          db.prepare(
-            "INSERT INTO entries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-          ).run(
-            id,
-            userId,
-            e.date,
-            e.height,
-            JSON.stringify(e.values),
-            e.note,
-            now,
-            now,
-            e.requestId,
-          );
-        for (const p of converted) {
-          const old = db
-            .prepare(
-              "SELECT * FROM photos WHERE user_id = ? AND entry_id = ? AND orientation = ?",
-            )
-            .get(userId, id, p.orientation) as any;
-          writeFileSync(resolve(dataDir, "photos", p.filename), p.data, {
-            mode: 0o600,
-          });
-          if (old) {
-            db.prepare("DELETE FROM photos WHERE id = ? AND user_id = ?").run(
-              old.id,
-              userId,
-            );
-            replacedFiles.push(old.filename);
-          }
-          db.prepare("INSERT INTO photos VALUES (?, ?, ?, ?, ?, ?)").run(
-            p.id,
-            userId,
-            id,
-            p.orientation,
-            p.filename,
-            now,
-          );
-        }
-      })();
-    } catch (error) {
-      for (const p of converted)
-        rmSync(resolve(dataDir, "photos", p.filename), { force: true });
-      throw error;
-    }
-    for (const filename of replacedFiles)
-      rmSync(resolve(dataDir, "photos", filename), { force: true });
+    db.transaction(() => {
+      if (!consent(userId, "body"))
+        fail("Le consentement a changé. Vérifiez vos réglages.", 403);
+      if (entryId)
+        db.prepare(
+          "UPDATE entries SET date = ?, height = ?, values_json = ?, note = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+        ).run(
+          e.date,
+          e.height,
+          JSON.stringify(e.values),
+          e.note,
+          now,
+          id,
+          userId,
+        );
+      else
+        db.prepare(
+          "INSERT INTO entries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        ).run(
+          id,
+          userId,
+          e.date,
+          e.height,
+          JSON.stringify(e.values),
+          e.note,
+          now,
+          now,
+          e.requestId,
+        );
+    })();
     return getEntries(userId).find((x) => x.id === id);
   };
   app.post(
@@ -625,43 +499,6 @@ export async function buildApp() {
       id,
       s.user.id,
     );
-    return { ok: true };
-  });
-  app.get("/api/photos/:id", async (req, reply) => {
-    const s = await owner(req);
-    if (!consent(s.user.id, "body") || !consent(s.user.id, "photos"))
-      fail("Le stockage des photos est désactivé.", 403);
-    const { id } = z.object({ id: z.string() }).parse(req.params);
-    const p = db
-      .prepare("SELECT filename FROM photos WHERE id = ? AND user_id = ?")
-      .get(id, s.user.id) as any;
-    if (!p) fail("Photo introuvable.", 404);
-    return reply
-      .type("image/webp")
-      .send(createReadStream(resolve(dataDir, "photos", p.filename)));
-  });
-  app.delete("/api/photos/:id", async (req) => {
-    const s = await owner(req);
-    const { id } = z.object({ id: z.string() }).parse(req.params);
-    const p = db
-      .prepare("SELECT * FROM photos WHERE id = ? AND user_id = ?")
-      .get(id, s.user.id) as any;
-    if (!p) fail("Photo introuvable.", 404);
-    const entry = getEntries(s.user.id).find((e) => e.id === p.entry_id)!;
-    db.prepare("DELETE FROM photos WHERE id = ? AND user_id = ?").run(
-      id,
-      s.user.id,
-    );
-    rmSync(resolve(dataDir, "photos", p.filename), { force: true });
-    if (
-      !Object.keys(entry.values).length &&
-      !entry.note.trim() &&
-      entry.photos.length === 1
-    )
-      db.prepare("DELETE FROM entries WHERE id = ? AND user_id = ?").run(
-        p.entry_id,
-        s.user.id,
-      );
     return { ok: true };
   });
   app.put("/api/goal", async (req) => {
@@ -822,7 +659,6 @@ export async function buildApp() {
       const opts = z
         .object({
           format: z.enum(["json", "csv", "zip"]),
-          includePhotos: z.boolean().default(false),
         })
         .parse(req.body);
       const data = accountData(s.user.id, s.user.name);
@@ -879,13 +715,6 @@ export async function buildApp() {
       zip.pipe(stream);
       zip.append(JSON.stringify(exported, null, 2), { name: "donnees.json" });
       zip.append(csv, { name: "mesures.csv" });
-      if (opts.includePhotos && consent(s.user.id, "photos"))
-        for (const p of db
-          .prepare("SELECT * FROM photos WHERE user_id = ?")
-          .all(s.user.id) as any[])
-          zip.file(resolve(dataDir, "photos", p.filename), {
-            name: `photos/${p.entry_id}-${p.orientation}.webp`,
-          });
       void zip.finalize();
       return reply.type("application/zip").send(stream);
     },

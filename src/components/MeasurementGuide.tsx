@@ -389,7 +389,7 @@ export function MeasurementGuide({
                 <strong>
                   {side === "côté gauche" ? "Côté gauche" : "Côté droit"}
                 </strong>{" "}
-                de votre corps, quel que soit votre côté dominant.
+                de votre corps. Gardez ce côté à chaque séance.
               </p>
             )}
             {guide ? (
@@ -403,13 +403,12 @@ export function MeasurementGuide({
                 />
                 <ol className="guide-steps">
                   {guide.steps.map((step) => (
-                    <li key={step}>{step}</li>
+                    <li key={step}>
+                      <strong>{step.slice(0, step.indexOf(" "))}</strong>
+                      {step.slice(step.indexOf(" "))}
+                    </li>
                   ))}
                 </ol>
-                <p className="guide-avoid">
-                  <strong>À éviter</strong>
-                  {guide.avoid}
-                </p>
               </>
             ) : (
               <>
@@ -417,57 +416,16 @@ export function MeasurementGuide({
                   <Icon as={Ruler} size={48} />
                   <span>Repère à définir</span>
                 </div>
-                <p>
-                  Cette mesure est personnalisée. Son nom ne suffit pas à
-                  déterminer un emplacement anatomique fiable.
-                </p>
+                <p>Mesure personnalisée : choisissez votre propre repère.</p>
                 <ol className="guide-steps">
-                  <li>
-                    Définissez le point exact, la posture et l’instrument
-                    utilisés.
-                  </li>
-                  <li>
-                    Notez votre méthode dans la note de l’entrée, puis
-                    reprenez-la à chaque séance.
-                  </li>
-                  <li>
-                    Lisez dans l’unité choisie : {selected.unit}. N’appliquez
-                    les conseils de ruban ci-dessous que s’il s’agit d’un tour
-                    corporel.
-                  </li>
+                  <li>Choisissez le point, la posture et l’instrument.</li>
+                  <li>Notez la méthode et gardez-la à chaque séance.</li>
+                  <li>Lisez en {selected.unit}.</li>
                 </ol>
               </>
             )}
           </article>
         )}
-        <details className="guide-basics">
-          <summary>Bien mesurer à chaque séance</summary>
-          <ul>
-            <li>
-              Utilisez un ruban souple non extensible. Pour les tours, posez-le
-              sur la peau, à plat, au contact sans creuser la peau.
-            </li>
-            <li>
-              Gardez le même moment de la journée et mesurez avant une séance de
-              sport. Faites-vous aider pour vérifier le dos et les épaules.
-            </li>
-            <li>
-              Retirez et replacez le ruban pour une seconde lecture. Si elle
-              diffère, vérifiez le repère, la posture et la tension, puis
-              recommencez avant de saisir.
-            </li>
-            <li>
-              Lisez en centimètres ; 1 mm correspond à 0,1 cm. Saisissez la
-              précision lisible sur votre ruban, par exemple 82,4, sans ajouter
-              de décimales artificielles.
-            </li>
-            <li>
-              Si vous utilisiez déjà un autre repère, gardez votre méthode pour
-              comparer vos anciennes entrées, ou indiquez le changement dans une
-              note.
-            </li>
-          </ul>
-        </details>
         <details className="guide-basics guide-sources">
           <summary>Méthodes et sources</summary>
           <p>

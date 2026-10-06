@@ -41,11 +41,11 @@ erDiagram
 ```
 
 - Tables Better Auth : `user`, `account`, `session`, `verification`, `rateLimit`.
-- `profiles` : taille facultative, avatar privé, démarrage terminé, fuseau, ordre des favoris et dernière activité.
+- `profiles` : taille facultative, démarrage terminé, fuseau, ordre des favoris et dernière activité.
 - `consents` : événements avec finalité, texte, version, statut et date UTC. Le dernier événement fait autorité.
 - `measures` : personnalisations, unité et archive. Les quinze mesures standard, poids inclus, viennent du catalogue partagé.
 - `entries` : jour local ISO, stature historique, valeurs présentes en JSON, note, dates techniques et clé d’idempotence.
-- `photos` : propriétaire, entrée, orientation, fichier opaque ; une photo par angle et entrée.
+- `photos` et la colonne `profiles.avatar` : stockage historique conservé pour compatibilité, sans nouvel envoi ni affichage.
 - `goals` : départ, cible, mesure et date ; un objectif actif par compte.
 - `reminders` : règle locale, ancre, canal, occurrence UTC et révision.
 - `subscriptions` : compte et appareil.
@@ -58,7 +58,7 @@ Les migrations Better Auth précèdent les fichiers SQL, appliqués dans l’ord
 
 ## Règles d’accès
 
-Chaque route privée obtient l’utilisateur de sa session vérifiée. Aucun identifiant de propriétaire fourni par le navigateur n’est utilisé. Toutes les lectures et mutations utilisent ce propriétaire, y compris photos, mesures, objectifs, abonnements, exports et rappels. Les clés étrangères ont `ON DELETE CASCADE`.
+Chaque route privée obtient l’utilisateur de sa session vérifiée. Aucun identifiant de propriétaire fourni par le navigateur n’est utilisé. Toutes les lectures et mutations utilisent ce propriétaire, y compris mesures, objectifs, abonnements, exports et rappels. Les clés étrangères ont `ON DELETE CASCADE`.
 
 SQLite n’a pas de RLS : l’API est son unique point d’accès. Les tests avec deux comptes couvrent les identifiants modifiés. Les requêtes SQL sont paramétrées. Les notes sont rendues comme texte par React.
 
@@ -66,13 +66,11 @@ Les mutations contrôlent l’origine et un en-tête spécifique ; Better Auth p
 
 Les logs HTTP détaillés sont désactivés : aucune mesure, note, image, adresse push ou jeton n’est journalisé. Les fichiers privés restent hors de la racine publique. HTTPS et volumes / sauvegardes chiffrés doivent être configurés par l’exploitant ; SQLite ne fournit pas de chiffrement applicatif dans cette version.
 
-## Photos et sauvegardes
+## Anciennes photos
 
-Maximum 10 Mo par fichier, 40 millions de pixels décodés et trois angles par entrée. Sharp vérifie le type réel JPEG / PNG / WebP, corrige l’orientation et supprime EXIF et localisation. HEIC / HEIF reçoit une demande explicite de conversion en JPEG. La version WebP est limitée à 1600 × 2200 px, sans agrandissement ni recadrage. Aucune IA n’est utilisée.
+La fonctionnalité photo a été retirée le 6 octobre 2026. Les formulaires, la galerie, la comparaison et l’avatar sont supprimés, ainsi que le traitement et l’envoi d’images dans les API locale et cloud. Les entrées sont enregistrées en JSON ; une mesure ou une note est nécessaire. Les exports ZIP contiennent uniquement les données JSON et CSV.
 
-Tous les fichiers sont convertis avant la transaction. L’entrée et les références sont écrites ensemble, avec nouvelle vérification des consentements. Un échec retire les nouveaux fichiers. Les versions remplacées sont effacées après commit ; les orphelins d’un crash sont purgés après une heure.
-
-`/api/photos/:id` vérifie propriétaire et consentements à chaque accès. Il n’existe aucune URL publique permanente.
+Les anciennes tables, fichiers privés et métadonnées sont conservés pour compatibilité. Le retrait du suivi, la suppression d’une entrée et la suppression du compte continuent de nettoyer ces fichiers. La révocation d’un ancien consentement photo reste possible côté API ; son activation est refusée.
 
 ## PWA et tâches
 

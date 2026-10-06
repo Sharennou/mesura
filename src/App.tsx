@@ -31,7 +31,6 @@ import {
 import { ReminderScreen } from "./screens/Reminder";
 import {
   HistoryScreen,
-  PhotosScreen,
   CompareScreen,
   MonthlyScreen,
   GoalScreen,
@@ -50,7 +49,6 @@ const screens: Screen[] = [
   "entry",
   "edit",
   "profile",
-  "photos",
   "compare",
   "monthly",
   "goal",
@@ -161,7 +159,7 @@ export default function App() {
     if (history.state?.mesuraParent) history.back();
     else
       navigate(
-        ["photos", "compare", "monthly"].includes(routeRef.current)
+        ["compare", "monthly"].includes(routeRef.current)
           ? "analysis"
           : "measure",
       );
@@ -222,21 +220,8 @@ export default function App() {
       setEditingDrafts({});
       setSuccess(null);
       setEntryId(null);
-    } else if (!data.consents.photos) {
-      setDraft((d) => (d ? { ...d, photos: {} } : null));
-      setEditingDrafts((drafts) =>
-        Object.fromEntries(
-          Object.entries(drafts).map(([id, d]) => [id, { ...d, photos: {} }]),
-        ),
-      );
     }
-  }, [
-    data.consents.body,
-    data.consents.photos,
-    canAccess,
-    accountOwner,
-    session?.user.id,
-  ]);
+  }, [data.consents.body, canAccess, accountOwner, session?.user.id]);
   useEffect(() => {
     setEditingDrafts((drafts) =>
       Object.fromEntries(
@@ -298,7 +283,6 @@ export default function App() {
       entry: "Détail de la mesure",
       history: "Historique des mesures",
       analysis: "Analyse",
-      photos: "Photos de comparaison",
       compare: "Comparer deux périodes",
       monthly: "Bilan mensuel",
       success: success ? "Mesure enregistrée" : "Nouvelle mesure",
@@ -383,7 +367,6 @@ export default function App() {
       setMessage("");
       if (!editing) {
         setDraft(null);
-        setViewState((state) => ({ ...state, "measure.photos": false }));
       }
       setData((d) => ({
         ...d,
@@ -403,13 +386,9 @@ export default function App() {
       }
     },
   };
-  const analysisActive = [
-    "analysis",
-    "photos",
-    "compare",
-    "monthly",
-    "goal",
-  ].includes(screen);
+  const analysisActive = ["analysis", "compare", "monthly", "goal"].includes(
+    screen,
+  );
   const hasAction =
     ["measure", "edit", "reminder", "success", "goal", "favorites"].includes(
       screen,
@@ -444,19 +423,11 @@ export default function App() {
                   )}
               </button>
               <button
-                className={`circle account-circle ${accountOwner === session?.user.id && data.profile.avatar ? "has-avatar" : ""}`}
+                className="circle account-circle"
                 aria-label="Mon compte et mes réglages"
                 onClick={() => navigate("account")}
               >
-                {accountOwner === session?.user.id && data.profile.avatar ? (
-                  <img
-                    className="header-avatar"
-                    src={data.profile.avatar}
-                    alt=""
-                  />
-                ) : (
-                  <Icon as={UserRound} />
-                )}
+                <Icon as={UserRound} />
               </button>
             </div>
           )}
@@ -527,7 +498,6 @@ export default function App() {
               {(screen === "history" || screen === "entry") && (
                 <HistoryScreen />
               )}
-              {screen === "photos" && <PhotosScreen />}
               {screen === "compare" && <CompareScreen />}
               {screen === "monthly" && <MonthlyScreen />}
               {screen === "goal" && <GoalScreen />}

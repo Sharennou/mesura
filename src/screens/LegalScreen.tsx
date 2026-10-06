@@ -15,20 +15,19 @@ export function LegalScreen() {
         <p>
           {APP_NAME} enregistre les informations nécessaires à votre compte :
           email, pseudonyme facultatif, fuseau horaire et préférences. Vos
-          mesures, notes, stature, objectifs et photos sont traités avec votre
+          mesures, notes, stature et objectifs sont traités avec votre
           consentement explicite pour votre suivi personnel.
         </p>
         <p>
-          Les photos et les canaux de rappel sont facultatifs. Vos données ne
-          sont ni publiques, ni utilisées pour la publicité ou une analyse par
-          IA. Elles sont accessibles à votre compte et aux prestataires
-          techniques nécessaires au service.
+          Les canaux de rappel sont facultatifs. Vos données ne sont ni
+          publiques, ni utilisées pour la publicité ou une analyse par IA. Elles
+          sont accessibles à votre compte et aux prestataires techniques
+          nécessaires au service.
         </p>
         <p>
           Vous pouvez consulter, rectifier, exporter et supprimer vos données,
           ainsi que retirer chaque consentement. Le retrait du suivi efface les
-          données corporelles actives. Le retrait des photos efface les images.
-          Le retrait d’un canal arrête ses rappels.
+          données corporelles actives. Le retrait d’un canal arrête ses rappels.
         </p>
         <p>
           Les données sont conservées pendant la vie du compte. Les journaux de

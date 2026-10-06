@@ -1,6 +1,6 @@
 # Guide des mesures
 
-Ajout du 5 octobre 2026, en développement. Un guide repliable apparaît juste sous les champs des mensurations favorites. Le choix propose les favorites dans leur ordre, puis toutes les autres mensurations actives. Une fiche est affichée à la fois : schéma SVG annoté, repère, trois étapes, erreurs à éviter. L’ouverture et le choix sont conservés en mémoire pendant la navigation ; les valeurs du formulaire restent indépendantes.
+Mise à jour du 6 octobre 2026, en développement. Un guide repliable apparaît juste sous les champs des mensurations favorites. Le choix propose les favorites dans leur ordre, puis toutes les autres mensurations actives. Une fiche est affichée à la fois : schéma SVG annoté, repère, trois étapes courtes et sources. L’ouverture et le choix sont conservés en mémoire pendant la navigation ; les valeurs du formulaire restent indépendantes.
 
 Les 14 mensurations du catalogue sont couvertes. Les quatre paires de membres identifient le côté de la personne mesurée, indépendamment du côté dominant. Les schémas sont des illustrations originales de repérage, non à l’échelle. Une mesure personnalisée conserve son nom et son unité, mais reçoit uniquement une explication pour définir sa méthode : aucune anatomie n’est déduite du nom.
 
@@ -23,12 +23,12 @@ Ce guide est une adaptation pour le suivi à domicile, sans diagnostic ni interp
 
 Pour la poitrine et les épaules, Mesura propose une lecture en **fin d’expiration normale** afin de fixer une consigne reproductible pour ce suivi. Il s’agit d’une adaptation explicite : ANSUR II lit ces deux tours au maximum d’une respiration calme. Les arrondis militaires, seuils, extrapolations et procédures réservées aux examinateurs ne sont pas repris.
 
-Les conseils communs couvrent le ruban non extensible au contact sans compression, les conditions comparables, une seconde lecture après repositionnement et une vérification en cas de différence. La lecture en millimètres permet une saisie au dixième de centimètre si le ruban le permet ; elle ne garantit pas une exactitude clinique de 0,1 cm.
+Les blocs « À éviter » et « Bien mesurer à chaque séance » ont été retirés. Les consignes de placement, de posture et de lecture utiles restent dans les trois étapes de chaque fiche. La lecture en millimètres permet une saisie au dixième de centimètre si le ruban le permet ; elle ne garantit pas une exactitude clinique de 0,1 cm.
 
 ## Implémentation et validation
 
 - `src/measurement-guide.ts` : instructions par région, sans données utilisateur.
-- `src/components/MeasurementGuide.tsx` : sélection, schémas accessibles, conseils et liens de sources.
+- `src/components/MeasurementGuide.tsx` : sélection, schémas accessibles, étapes concises et liens de sources.
 - `src/screens/Measure.tsx` : insertion après les favorites ; personnalisation conservée, ajout d’autres mensurations retiré à la demande du propriétaire.
 - `tests/e2e/ux.spec.ts` : ouverture, sélection de toutes les mensurations, identification des côtés, cas personnalisé, conservation du brouillon et du choix, retour aux favoris, débordement, accessibilité et cibles tactiles à 360 / 390 px.
 

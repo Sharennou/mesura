@@ -1,14 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { DateTime } from "luxon";
-import sharp from "sharp";
-import { Image } from "imagescript";
 import {
   cloudCommit,
   emptyCloudAccount,
   mutateCloudAccount,
   publicCloudAccount,
 } from "../shared/cloud-domain";
-import { cloudImageDimensions } from "../shared/cloud-images";
 import { CONSENT_VERSION } from "../shared/config";
 const caps = {
   pushConfigured: true,
@@ -22,8 +19,7 @@ const change = (
   method: string,
   path: string,
   body: any,
-  uploads: any[] = [],
-) => mutateCloudAccount(a, method, path, body, caps, uploads, now);
+) => mutateCloudAccount(a, method, path, body, caps, now);
 const body = () => ({
   date: "2026-10-05",
   values: { weight: 80.4 },
@@ -76,24 +72,11 @@ describe("Sauvegarde distante", () => {
       name: "Alice modifiée",
     }).account;
     expect(updated.profile.onboardingCompleted).toBe(true);
-    const avatar = "data:image/jpeg;base64,/9j/2Q==";
-    const pictured = change(updated, "PATCH", "/profile", {
+    const withRemovedAvatar = change(updated, "PATCH", "/profile", {
       ...updated.profile,
-      avatar,
+      avatar: "data:image/jpeg;base64,/9j/2Q==",
     }).account;
-    expect(pictured.profile.avatar).toBe(avatar);
-    expect(() =>
-      change(pictured, "PATCH", "/profile", {
-        ...pictured.profile,
-        avatar: "https://example.com/tracker.jpg",
-      }),
-    ).toThrow();
-    expect(
-      change(pictured, "PATCH", "/profile", {
-        ...pictured.profile,
-        avatar: null,
-      }).account.profile.avatar,
-    ).toBeNull();
+    expect(withRemovedAvatar.profile.avatar).toBeUndefined();
 
     const noTarget = change(before, "POST", "/onboarding", {
       ...payload,
@@ -111,7 +94,7 @@ describe("Sauvegarde distante", () => {
   it("bloque la collecte avant consentement", () => {
     const a = emptyCloudAccount("Alice");
     expect(() => change(a, "POST", "/entries", body())).toThrow("désactivé");
-    expect(() => consent(a, "photos")).toThrow("désactivé");
+    expect(() => consent(a, "push")).toThrow("désactivé");
   });
   it("garde les nombres, notes et la stature historique", () => {
     const a = consent(emptyCloudAccount("Alice"));
@@ -143,26 +126,30 @@ describe("Sauvegarde distante", () => {
       change(a, "POST", "/entries", { ...body(), values: { weight: -1 } }),
     ).toThrow();
   });
-  it("un fichier exige un accord photo et une orientation unique", () => {
+  it("refuse la réactivation des photos", () => {
     const a = consent(emptyCloudAccount("Alice"));
-    const photo = { id: crypto.randomUUID(), entryId: "", orientation: "face" };
-    expect(() => change(a, "POST", "/entries", body(), [photo])).toThrow(
-      "photos",
-    );
+    expect(() => consent(a, "photos")).toThrow("retiré");
     expect(() =>
-      change(consent(a, "photos"), "POST", "/entries", body(), [photo, photo]),
-    ).toThrow("orientation");
+      change(a, "POST", "/entries", { ...body(), values: {}, note: "" }),
+    ).toThrow("mesure ou une note");
   });
   it("le retrait photo efface les photos et les entrées photo seules", () => {
-    let a = consent(consent(emptyCloudAccount("Alice")), "photos");
-    a = change(a, "POST", "/entries", { ...body(), values: {}, note: "" }, [
-      { id: crypto.randomUUID(), entryId: "", orientation: "face" },
-    ]).account;
+    const a = consent(emptyCloudAccount("Alice"));
+    a.consents.photos = true; // Existing account from before the feature was removed.
+    a.entries.push({
+      id: crypto.randomUUID(),
+      createdAt: now.toISO()!,
+      ...body(),
+      values: {},
+      note: "",
+      photos: [{ id: crypto.randomUUID(), entryId: "", orientation: "face" }],
+    });
     expect(a.entries).toHaveLength(1);
     expect(consent(a, "photos", false).entries).toEqual([]);
   });
   it("le retrait principal efface suivi et canaux tout en traçant les accords", () => {
-    let a = consent(consent(emptyCloudAccount("Alice")), "photos");
+    let a = consent(emptyCloudAccount("Alice"));
+    a.consents.photos = true; // Legacy consent still needs withdrawal cleanup.
     a = change(a, "POST", "/entries", body()).account;
     a = consent(a, "body", false);
     expect(a.entries).toEqual([]);
@@ -254,35 +241,5 @@ describe("Sauvegarde distante", () => {
         keys: { p256dh: "a".repeat(87), auth: "b".repeat(22) },
       }),
     ).toThrow("fournisseur");
-  });
-  it("décode réellement JPEG / PNG et retire leurs métadonnées", async () => {
-    for (const format of ["jpeg", "png"] as const) {
-      const bytes = await sharp({
-        create: { width: 15, height: 25, channels: 3, background: "red" },
-      })
-        [format]()
-        .withMetadata()
-        .toBuffer();
-      expect(cloudImageDimensions(bytes)).toEqual({ width: 15, height: 25 });
-      const decoded = await Image.decode(bytes);
-      const normalized = await (decoded as Image).encodeJPEG(88);
-      expect((await sharp(normalized).metadata()).exif).toBeUndefined();
-      expect((await sharp(normalized).metadata()).width).toBe(15);
-    }
-  });
-  it("refuse un faux JPEG et les dimensions excessives avant le décodeur", () => {
-    expect(() =>
-      cloudImageDimensions(
-        new TextEncoder().encode(
-          "Ceci n’est pas une photo mais un fichier de texte.",
-        ),
-      ),
-    ).toThrow();
-    const bytes = new Uint8Array(24);
-    bytes.set([137, 80, 78, 71, 13, 10, 26, 10]);
-    bytes.set([73, 72, 68, 82], 12);
-    new DataView(bytes.buffer).setUint32(16, 100000);
-    new DataView(bytes.buffer).setUint32(20, 100000);
-    expect(() => cloudImageDimensions(bytes)).toThrow("pixels");
   });
 });

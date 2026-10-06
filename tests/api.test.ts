@@ -1,9 +1,9 @@
 import { beforeAll, afterAll, describe, expect, it, vi } from "vitest";
-import { mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import sharp from "sharp";
 import webpush from "web-push";
+import { unzipSync } from "fflate";
 import { DateTime } from "luxon";
 import type { FastifyInstance } from "fastify";
 import { CONSENT_VERSION } from "../shared/config";
@@ -13,7 +13,6 @@ let dir: string;
 let alice: { cookie: string; id: string };
 let bob: { cookie: string; id: string };
 let entryId: string;
-let photoId: string;
 let customId: string;
 const initialPassword = "abc123";
 const headers = (cookie = "") => ({
@@ -379,72 +378,29 @@ describe("Comptes et contrôle d’accès", () => {
         .reminder,
     ).toBeNull();
   });
-  it("vérifie le contenu réel des photos et supprime les métadonnées", async () => {
-    await call(
-      "POST",
-      "/api/consents",
-      { purpose: "photos", granted: true, version: CONSENT_VERSION },
-      bob.cookie,
-    );
-    await call("POST", "/api/consents", {
+  it("refuse la réactivation des photos et ignore les anciens champs de profil", async () => {
+    const response = await call("POST", "/api/consents", {
       purpose: "photos",
       granted: true,
       version: CONSENT_VERSION,
     });
-    const image = await sharp({
-      create: { width: 80, height: 120, channels: 3, background: "#D7FF3F" },
-    })
-      .jpeg()
-      .withMetadata()
-      .toBuffer();
-    const form = new FormData();
-    form.set(
-      "data",
-      JSON.stringify({
-        date: "2026-09-05",
-        values: {},
-        height: null,
-        note: "",
-        requestId: crypto.randomUUID(),
-      }),
-    );
-    form.set(
-      "face",
-      new Blob([new Uint8Array(image)], { type: "image/jpeg" }),
-      "image.jpg",
-    );
-    const request = new Request("http://localhost/upload", {
-      method: "POST",
-      body: form,
+    expect(response.statusCode).toBe(410);
+    const profile = (await call("GET", "/api/account")).json().profile;
+    const updated = await call("PATCH", "/api/profile", {
+      ...profile,
+      avatar: "data:image/jpeg;base64,/9j/2Q==",
     });
-    const r = await app.inject({
-      method: "POST",
-      url: "/api/entries",
-      headers: {
-        ...headers(alice.cookie),
-        "content-type": request.headers.get("content-type")!,
-      },
-      payload: Buffer.from(await request.arrayBuffer()),
-    });
-    expect(r.statusCode).toBe(200);
-    photoId = r.json().photos[0].id;
-    const photo = await call("GET", `/api/photos/${photoId}`);
-    expect(photo.headers["cache-control"]).toContain("no-store");
-    const meta = await sharp(photo.rawPayload).metadata();
-    expect(meta.format).toBe("webp");
-    expect(meta.exif).toBeUndefined();
-    expect(meta.width).toBe(80);
-    expect(meta.height).toBe(120);
+    expect(updated.statusCode).toBe(200);
+    expect(updated.json().profile.avatar).toBeUndefined();
     expect(
-      (await call("GET", `/api/photos/${photoId}`, undefined, bob.cookie))
-        .statusCode,
-    ).toBe(404);
-    expect(
-      (await call("DELETE", `/api/photos/${photoId}`, undefined, bob.cookie))
-        .statusCode,
-    ).toBe(404);
+      db.prepare("SELECT avatar FROM profiles WHERE user_id = ?").get(alice.id)
+        .avatar,
+    ).toBeNull();
+    expect((await call("GET", "/api/photos/ancienne-photo")).statusCode).toBe(
+      404,
+    );
   });
-  it("ne sauvegarde rien si une photo n’est pas valide", async () => {
+  it("refuse les envois de fichiers sans créer d’entrée", async () => {
     const before = (await call("GET", "/api/account")).json().entries.length;
     const form = new FormData();
     form.set(
@@ -475,7 +431,7 @@ describe("Comptes et contrôle d’accès", () => {
       },
       payload: Buffer.from(await request.arrayBuffer()),
     });
-    expect(r.statusCode).toBe(400);
+    expect(r.statusCode).toBe(415);
     expect((await call("GET", "/api/account")).json().entries.length).toBe(
       before,
     );
@@ -493,7 +449,6 @@ describe("Comptes et contrôle d’accès", () => {
     expect(bobExport.entries).toHaveLength(0);
     const zip = await call("POST", "/api/export", {
       format: "zip",
-      includePhotos: true,
     });
     expect(zip.statusCode).toBe(200);
     expect(zip.rawPayload.subarray(0, 2).toString()).toBe("PK");
@@ -603,13 +558,31 @@ describe("Comptes et contrôle d’accès", () => {
     ).toBe(false);
     spy.mockRestore();
   });
-  it("effectue réellement le retrait des photos", async () => {
+  it("nettoie encore les anciennes photos lors d’un retrait", async () => {
+    const id = crypto.randomUUID();
+    const filename = `${id}.webp`;
+    db.prepare("INSERT INTO photos VALUES (?, ?, ?, ?, ?, ?)").run(
+      id,
+      alice.id,
+      entryId,
+      "face",
+      filename,
+      new Date().toISOString(),
+    );
+    writeFileSync(resolve(dir, "photos", filename), "legacy-image");
+    const archive = await call("POST", "/api/export", {
+      format: "zip",
+      includePhotos: true,
+    });
+    expect(Object.keys(unzipSync(archive.rawPayload)).sort()).toEqual([
+      "donnees.json",
+      "mesures.csv",
+    ]);
     await call("POST", "/api/consents", {
       purpose: "photos",
       granted: false,
       version: CONSENT_VERSION,
     });
-    expect((await call("GET", `/api/photos/${photoId}`)).statusCode).toBe(403);
     expect(readdirSync(resolve(dir, "photos"))).toHaveLength(0);
     expect(
       (await call("GET", "/api/account"))

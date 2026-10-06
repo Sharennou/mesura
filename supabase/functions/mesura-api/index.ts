@@ -1,5 +1,4 @@
 import { createClient, type User } from "@supabase/supabase-js";
-import { Image } from "imagescript";
 import { z } from "zod";
 import { DateTime } from "luxon";
 import { zipSync, strToU8 } from "fflate";
@@ -13,10 +12,9 @@ import {
   publicCloudAccount,
   type CloudAccount,
 } from "../../../shared/cloud-domain.ts";
-import { cloudImageDimensions } from "../../../shared/cloud-images.ts";
 import { APP_NAME, APP_SLUG } from "../../../shared/config.ts";
 import { nextOccurrences } from "../../../shared/recurrence.ts";
-import type { Capabilities, Photo } from "../../../shared/types.ts";
+import type { Capabilities } from "../../../shared/types.ts";
 
 const projectURL = Deno.env.get("SUPABASE_URL")!;
 const service = createClient(
@@ -180,21 +178,6 @@ async function rate(user: User, scope: string, max: number, seconds: number) {
       429,
     );
 }
-async function queue(userId: string, ids: string[], delayed = false) {
-  if (ids.length)
-    check(
-      await service.from("mesura_photo_gc").upsert(
-        ids.map((id) => ({
-          user_id: userId,
-          path: `${userId}/${id}.jpg`,
-          not_before: new Date(
-            Date.now() + (delayed ? 3600000 : 0),
-          ).toISOString(),
-        })),
-        { onConflict: "path" },
-      ),
-    );
-}
 async function cleanup(userId?: string) {
   let query = service
     .from("mesura_photo_gc")
@@ -224,52 +207,6 @@ async function erase(userId: string) {
   if (result.error && result.error.status !== 404)
     cloudFail("La suppression est en cours. Réessayez dans un instant.", 503);
 }
-async function prepareUploads(req: Request) {
-  let raw: unknown;
-  const uploads: { photo: Photo; bytes: Uint8Array }[] = [];
-  if (req.headers.get("content-type")?.includes("multipart/form-data")) {
-    const length = Number(req.headers.get("content-length"));
-    if (length > 32 * 1024 * 1024) cloudFail("Photos trop volumineuses.", 413);
-    const form = await req.formData();
-    raw = JSON.parse(String(form.get("data")));
-    for (const [orientation, file] of form) {
-      if (orientation === "data") continue;
-      if (
-        !["face", "profil", "dos"].includes(orientation) ||
-        !(file instanceof File) ||
-        uploads.some((u) => u.photo.orientation === orientation)
-      )
-        cloudFail("Orientation de photo invalide.");
-      if (file.size > 10 * 1024 * 1024)
-        cloudFail("Photo trop volumineuse. Maximum : 10 Mo.", 413);
-      try {
-        const bytes = new Uint8Array(await file.arrayBuffer());
-        cloudImageDimensions(bytes);
-        const image = await Image.decode(bytes);
-        if (!(image instanceof Image)) cloudFail("Photo invalide.");
-        const ratio = Math.min(1, 1600 / image.width, 2200 / image.height);
-        if (ratio < 1)
-          image.resize(
-            Math.max(1, Math.round(image.width * ratio)),
-            Math.max(1, Math.round(image.height * ratio)),
-          );
-        uploads.push({
-          photo: {
-            id: crypto.randomUUID(),
-            entryId: "",
-            orientation: orientation as Photo["orientation"],
-          },
-          bytes: await image.encodeJPEG(88),
-        });
-      } catch {
-        cloudFail(
-          "Cette photo ne peut pas être lue. Choisissez une photo JPEG, PNG ou WebP valide.",
-        );
-      }
-    }
-  } else raw = await req.json();
-  return { raw, uploads };
-}
 const csv = (a: CloudAccount) =>
   "\uFEFF" +
   [
@@ -298,16 +235,10 @@ const csv = (a: CloudAccount) =>
         .join(";"),
     )
     .join("\r\n");
-async function exportData(
-  req: Request,
-  user: User,
-  a: CloudAccount,
-  headers: Headers,
-) {
+async function exportData(req: Request, a: CloudAccount, headers: Headers) {
   const opts = z
     .object({
       format: z.enum(["json", "csv", "zip"]),
-      includePhotos: z.boolean().default(false),
     })
     .parse(await req.json());
   const json = JSON.stringify(
@@ -334,21 +265,6 @@ async function exportData(
     "donnees.json": strToU8(json),
     "mesures.csv": strToU8(csv(a)),
   };
-  let size = files["donnees.json"].length;
-  if (opts.includePhotos && a.consents.photos)
-    for (const e of a.entries)
-      for (const p of e.photos) {
-        const blob = check(await photos.download(`${user.id}/${p.id}.jpg`));
-        if (!blob) cloudFail("L’export d’une photo a échoué.", 503);
-        const bytes = new Uint8Array(await blob.arrayBuffer());
-        size += bytes.length;
-        if (size > 20 * 1024 * 1024)
-          cloudFail(
-            "Cet export dépasse 20 Mo. Exportez les données sans photos et téléchargez les photos séparément.",
-            413,
-          );
-        files[`photos/${e.id}-${p.orientation}.jpg`] = bytes;
-      }
   headers.set("Content-Type", "application/zip");
   return new Response(zipSync(files, { level: 3 }), { headers });
 }
@@ -601,22 +517,9 @@ Deno.serve(async (req) => {
         ),
       });
     }
-    if (path.startsWith("/photos/") && req.method === "GET") {
-      const id = path.split("/")[2];
-      if (
-        !current.data.consents.body ||
-        !current.data.consents.photos ||
-        !photoIds(current.data).includes(id)
-      )
-        cloudFail("Photo introuvable.", 404);
-      const blob = check(await photos.download(`${user.id}/${id}.jpg`));
-      if (!blob) cloudFail("Photo indisponible.", 404);
-      headers.set("Content-Type", "image/jpeg");
-      return new Response(blob, { headers });
-    }
     if (path === "/export" && req.method === "POST") {
       await rate(user, "export", 5, 60);
-      return await exportData(req, user, current.data, headers);
+      return await exportData(req, current.data, headers);
     }
     if (path === "/account" && req.method === "DELETE") {
       await rate(user, "delete", 5, 600);
@@ -642,52 +545,14 @@ Deno.serve(async (req) => {
       await rate(user, "entries", 30, 300);
       if (!current.data.consents.body)
         cloudFail("Le suivi corporel est désactivé.", 403);
-      const { raw, uploads } = await prepareUploads(req);
-      // Validate consent and values before any storage request.
-      mutateCloudAccount(
-        current.data,
-        req.method,
-        path,
-        raw,
-        await caps(),
-        uploads.map((u) => u.photo),
+      if (req.headers.get("content-type")?.includes("multipart/form-data"))
+        cloudFail("L’ajout de photos a été retiré.", 415);
+      const raw = await req.json();
+      const next = await apply(user, (a) =>
+        mutateCloudAccount(a, req.method, path, raw, envCaps),
       );
-      const ids = uploads.map((u) => u.photo.id);
-      await queue(user.id, ids, true);
-      let committed = false;
-      try {
-        for (const item of uploads)
-          check(
-            await photos.upload(`${user.id}/${item.photo.id}.jpg`, item.bytes, {
-              contentType: "image/jpeg",
-              cacheControl: "0",
-              upsert: false,
-            }),
-          );
-        const next = await apply(user, (a) =>
-          mutateCloudAccount(
-            a,
-            req.method,
-            path,
-            raw,
-            envCaps,
-            uploads.map((u) => u.photo),
-          ),
-        );
-        committed = true;
-        const used = photoIds(next.account);
-        await queue(
-          user.id,
-          ids.filter((id) => !used.includes(id)),
-        );
-        await cleanup(user.id);
-        return json(next.result);
-      } finally {
-        if (!committed) {
-          await queue(user.id, ids);
-          await cleanup(user.id);
-        }
-      }
+      await cleanup(user.id);
+      return json(next.result);
     }
     const raw =
       req.method === "DELETE" && path !== "/subscriptions"

@@ -1,6 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./fixtures";
 import AxeBuilder from "@axe-core/playwright";
-import sharp from "sharp";
 import { mkdir } from "node:fs/promises";
 import { emptyAccountData } from "../../src/account-data";
 import { CONSENT_VERSION } from "../../shared/config";
@@ -226,7 +225,7 @@ test("guide illustré : repères, côtés, mesure personnalisée et brouillon co
   await choose.selectOption("abdomen");
   await expect(guide.locator(".guide-landmark")).toContainText("nombril");
   await choose.selectOption("custom-test");
-  await expect(guide.getByText(/Son nom ne suffit pas/)).toBeVisible();
+  await expect(guide.getByText(/choisissez votre propre repère/)).toBeVisible();
   await expect(guide.getByRole("img")).toHaveCount(0);
   await choose.selectOption("biceps-right");
   await guide.evaluate((el) => el.scrollIntoView({ block: "start" }));
@@ -239,9 +238,10 @@ test("guide illustré : repères, côtés, mesure personnalisée et brouillon co
   await choose.selectOption("thigh-left");
   await guide.evaluate((el) => el.scrollIntoView({ block: "start" }));
   await screenshot(page, "guide-cuisse", info.project.name, false);
-  await guide
-    .getByText("Bien mesurer à chaque séance", { exact: true })
-    .click();
+  await expect(
+    guide.getByText("Bien mesurer à chaque séance", { exact: true }),
+  ).toHaveCount(0);
+  await expect(guide.getByText("À éviter", { exact: true })).toHaveCount(0);
   await guide.getByText("Méthodes et sources", { exact: true }).click();
   expect(
     (
@@ -274,20 +274,11 @@ test("guide illustré : repères, côtés, mesure personnalisée et brouillon co
   ).toHaveCount(0);
 });
 
-test("historique, analyse et outils : dates, photos et contexte restaurés", async ({
+test("historique, analyse et outils : dates et contexte restaurés", async ({
   page,
 }, info) => {
   const headers = await setup(page);
   const today = localDate("Europe/Paris");
-  await page.request.post("/api/consents", {
-    headers,
-    data: { purpose: "photos", granted: true, version: CONSENT_VERSION },
-  });
-  const image = await sharp({
-    create: { width: 120, height: 160, channels: 3, background: "#434FED" },
-  })
-    .png()
-    .toBuffer();
   for (let i = 0; i < 8; i++) {
     const entry = {
       date: shiftDate(today, -75 + i * 10),
@@ -297,18 +288,10 @@ test("historique, analyse et outils : dates, photos et contexte restaurés", asy
       height: 175,
       requestId: crypto.randomUUID(),
     };
-    const result = await page.request.post(
-      "/api/entries",
-      [0, 7].includes(i)
-        ? {
-            headers,
-            multipart: {
-              data: JSON.stringify(entry),
-              face: { name: "test.png", mimeType: "image/png", buffer: image },
-            },
-          }
-        : { headers, data: entry },
-    );
+    const result = await page.request.post("/api/entries", {
+      headers,
+      data: entry,
+    });
     expect(result.ok()).toBe(true);
   }
   await page.goto("/#measure");
@@ -369,7 +352,6 @@ test("historique, analyse et outils : dates, photos et contexte restaurés", asy
   await screenshot(page, "analyse", info.project.name);
   for (const [name, title] of [
     ["Comparer deux périodes", "Comparer deux périodes"],
-    ["Photos de comparaison", "Photos de comparaison"],
     ["Bilan mensuel", "Bilan mensuel"],
   ]) {
     const link = page
@@ -383,20 +365,9 @@ test("historique, analyse et outils : dates, photos et contexte restaurés", asy
     ).toBeVisible();
     await screenshot(
       page,
-      title === "Bilan mensuel"
-        ? "bilan"
-        : title === "Photos de comparaison"
-          ? "photos"
-          : "comparaison",
+      title === "Bilan mensuel" ? "bilan" : "comparaison",
       info.project.name,
     );
-    if (title === "Photos de comparaison") {
-      await expect(page.locator(".photo-side-by-side img")).toHaveCount(2);
-      await page.getByRole("button", { name: "Profil", exact: true }).click();
-      await expect(
-        page.getByRole("button", { name: "Ajouter une photo à une entrée" }),
-      ).toBeVisible();
-    }
     if (title === "Comparer deux périodes") {
       await page.getByText("Dates personnalisées", { exact: true }).click();
       await page
@@ -642,44 +613,21 @@ test("rappels : consentement, autorisation refusée et activation confirmée (ap
   await expect(page.locator(".occurrence")).toHaveCount(0);
 });
 
-test("note seule, période vide, photo unique et fichier conservé dans le brouillon", async ({
+test("note seule, période vide et note conservée dans le brouillon", async ({
   page,
 }) => {
   const headers = await setup(page);
   const today = localDate("Europe/Paris");
-  await page.request.post("/api/entries", {
-    headers,
-    data: {
-      date: today,
-      values: {},
-      note: "Entrée sans valeur chiffrée",
-      height: 175,
-      requestId: crypto.randomUUID(),
-    },
-  });
-  await page.request.post("/api/consents", {
-    headers,
-    data: { purpose: "photos", granted: true, version: CONSENT_VERSION },
-  });
-  const photo = await sharp({
-    create: { width: 120, height: 160, channels: 3, background: "#D3F653" },
-  })
-    .png()
-    .toBuffer();
-  const result = await page.request.post("/api/entries", {
-    headers,
-    multipart: {
-      data: JSON.stringify({
-        date: shiftDate(today, -450),
-        values: { weight: 79.2 },
-        note: "",
-        height: 175,
-        requestId: crypto.randomUUID(),
-      }),
-      face: { name: "test.png", mimeType: "image/png", buffer: photo },
-    },
-  });
-  expect(result.ok()).toBe(true);
+  for (const entry of [
+    { date: today, values: {}, note: "Entrée sans valeur chiffrée" },
+    { date: shiftDate(today, -450), values: { weight: 79.2 }, note: "" },
+  ]) {
+    const result = await page.request.post("/api/entries", {
+      headers,
+      data: { ...entry, height: 175, requestId: crypto.randomUUID() },
+    });
+    expect(result.ok()).toBe(true);
+  }
   await page.goto("/#analysis");
   await expect(page.locator(".graph-value")).toContainText("79,2");
   await expect(page.locator(".graph-caption")).toContainText("hors période");
@@ -687,23 +635,18 @@ test("note seule, période vide, photo unique et fichier conservé dans le broui
   await expect(
     page.getByText(/Aucune valeur sur la période choisie/),
   ).toBeVisible();
-  await page.getByRole("button", { name: /^Photos de comparaison/ }).click();
-  await expect(page.getByText(/Une seule date photographiée/)).toBeVisible();
-  await expect(page.getByRole("combobox")).toHaveCount(0);
-  await page
-    .getByRole("button", { name: "Ajouter une photo à une entrée" })
-    .click();
-  await expect(page.getByLabel("Ajouter une photo de face")).toBeVisible();
-  await page.getByLabel("Ajouter une photo de face").setInputFiles({
-    name: "nouvelle.png",
-    mimeType: "image/png",
-    buffer: photo,
-  });
+  await expect(
+    page.getByRole("button", { name: /Photos de comparaison/ }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Mesures", exact: true }).click();
+  await page.getByText("Ajouter une note", { exact: false }).click();
+  await page.getByLabel("Note de cette entrée").fill("Note du jour");
   await page.getByRole("button", { name: "Analyse", exact: true }).click();
   await page.goBack();
-  await expect(
-    page.getByText("1 photo ajoutée · modifier", { exact: false }),
-  ).toBeVisible();
+  await expect(page.getByLabel("Note de cette entrée")).toHaveValue(
+    "Note du jour",
+  );
+  await expect(page.locator('input[type="file"]')).toHaveCount(0);
   await page
     .getByRole("button", { name: "Enregistrer la mesure", exact: true })
     .click();
@@ -713,11 +656,9 @@ test("note seule, période vide, photo unique et fichier conservé dans le broui
   const entries = (await (await page.request.get("/api/account")).json())
     .entries;
   expect(entries).toHaveLength(3);
-  const saved = entries.find(
-    (entry: any) => entry.note === "" && entry.date === today,
-  );
-  expect(saved.values).toEqual({});
-  expect(saved.photos).toHaveLength(1);
+  expect(
+    entries.find((entry: any) => entry.note === "Note du jour").values,
+  ).toEqual({});
 });
 
 test("un rappel actif sur un autre appareil est conservé", async ({ page }) => {
@@ -795,4 +736,123 @@ test("un rappel actif sur un autre appareil est conservé", async ({ page }) => 
     .getByRole("button", { name: "Confirmer le rappel", exact: true })
     .click();
   await expect.poll(() => enabled).toBe(true);
+});
+
+test("favoris : glisser-déposer à la souris, au doigt et au clavier, ordre sauvegardé", async ({
+  page,
+}, info) => {
+  await setup(page);
+  await page.goto("/#favorites");
+  const rows = page
+    .getByRole("list", { name: "Ordre des mesures favorites" })
+    .getByRole("listitem");
+  const names = () => rows.locator("strong").allTextContents();
+  const original = await names();
+  expect(original.length).toBeGreaterThanOrEqual(3);
+  await expect(
+    page.getByRole("button", { name: /^(Monter|Descendre) / }),
+  ).toHaveCount(0);
+  const first = page.getByRole("button", {
+    name: `Déplacer ${original[0]}`,
+    exact: true,
+  });
+  await first.scrollIntoViewIfNeeded();
+  const start = (await first.boundingBox())!;
+  const target = (await rows.nth(2).boundingBox())!;
+  await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(
+    start.x + start.width / 2,
+    target.y + target.height / 2,
+    { steps: 8 },
+  );
+  await page.mouse.up();
+  const moved = [original[1], original[2], original[0], ...original.slice(3)];
+  await expect.poll(names).toEqual(moved);
+  await expect(page.locator(".favorite-drag-preview")).toHaveCount(0);
+
+  // Touch generates real pointer events, including capture and cancellation.
+  const touch = await page.context().newCDPSession(page);
+  await touch.send("Emulation.setTouchEmulationEnabled", { enabled: true });
+  const handle = (await first.boundingBox())!;
+  const destination = (await rows.nth(0).boundingBox())!;
+  const x = handle.x + handle.width / 2;
+  await touch.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x, y: handle.y + handle.height / 2 }],
+  });
+  await touch.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [{ x, y: destination.y + destination.height / 2 }],
+  });
+  await touch.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
+  await expect.poll(names).toEqual(original);
+  const cancelStart = (await first.boundingBox())!;
+  const cancelTarget = (await rows.nth(1).boundingBox())!;
+  await touch.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x, y: cancelStart.y + cancelStart.height / 2 }],
+  });
+  await touch.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [{ x, y: cancelTarget.y + cancelTarget.height / 2 }],
+  });
+  await expect.poll(names).not.toEqual(original);
+  await touch.send("Input.dispatchTouchEvent", {
+    type: "touchCancel",
+    touchPoints: [],
+  });
+  await expect.poll(names).toEqual(original);
+  await touch.send("Emulation.setTouchEmulationEnabled", { enabled: false });
+  await touch.detach();
+
+  await first.focus();
+  await first.press("Space");
+  await first.press("ArrowDown");
+  await first.press("Escape");
+  await expect.poll(names).toEqual(original);
+  await first.press("Space");
+  await first.press("ArrowDown");
+  await first.press("Enter");
+  const finalOrder = [original[1], original[0], ...original.slice(2)];
+  await expect.poll(names).toEqual(finalOrder);
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
+  await screenshot(page, "favoris-glisser-deposer", info.project.name, false);
+  await page.getByRole("button", { name: "Enregistrer mes favoris" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Nouvelle mesure", exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect
+    .poll(() =>
+      page
+        .locator(".measurement-grid")
+        .first()
+        .locator("label")
+        .allTextContents(),
+    )
+    .toEqual(finalOrder);
+  const history = await page
+    .getByRole("button", { name: "Historique des mesures", exact: true })
+    .boundingBox();
+  const lastFormElement = await page.locator(".privacy-caption").boundingBox();
+  expect(history!.y).toBeGreaterThan(
+    lastFormElement!.y + lastFormElement!.height,
+  );
+  await expect(page.locator('input[type="file"]')).toHaveCount(0);
+  await page.goto("/#privacy");
+  await expect(page.getByText("Photos privées", { exact: true })).toHaveCount(
+    0,
+  );
+  await page.getByLabel("Format d’export").selectOption("zip");
+  await expect(page.getByLabel("Inclure mes photos privées")).toHaveCount(0);
 });

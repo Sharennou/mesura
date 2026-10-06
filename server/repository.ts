@@ -7,7 +7,6 @@ import type {
   AccountData,
   ConsentPurpose,
   Entry,
-  Photo,
   Reminder,
 } from "../shared/types";
 export function consent(userId: string, purpose: ConsentPurpose): boolean {
@@ -91,7 +90,6 @@ export function accountData(userId: string, name: string): AccountData {
     .get(userId) as any;
   return {
     profile: {
-      avatar: p?.avatar ?? null,
       onboardingCompleted: Boolean(p?.onboarding_completed),
       name,
       height: p?.height ?? null,

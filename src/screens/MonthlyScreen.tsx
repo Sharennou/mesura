@@ -1,5 +1,5 @@
 import { useViewState } from "../useViewState";
-import { Camera, ChevronRight, History } from "lucide-react";
+import { ChevronRight, History } from "lucide-react";
 import { useApp } from "../context";
 import {
   Badge,
@@ -11,7 +11,6 @@ import {
   Progress,
 } from "../components";
 import {
-  delta,
   goalProgress,
   indicatorObservations,
   latest,
@@ -219,12 +218,6 @@ export function MonthlyScreen() {
                   </article>
                 ))}
             </>
-          )}
-          {entries.some((e) => e.photos.length) && (
-            <Button onClick={() => navigate("photos")}>
-              Photos de comparaison
-              <Icon as={Camera} />
-            </Button>
           )}
           <Button
             onClick={() => {
