@@ -1,6 +1,7 @@
 // Repères de suivi à domicile ; les méthodes et adaptations sont documentées
 // dans docs/guide-mensurations.md. Aucun protocole n’est déduit d’un nom personnalisé.
 export type GuideRegion =
+  | "waist-rfm"
   | "waist"
   | "hips"
   | "chest"
@@ -19,6 +20,16 @@ export interface MeasurementInstructions {
 }
 
 const instructions: Record<GuideRegion, MeasurementInstructions> = {
+  "waist-rfm": {
+    region: "waist-rfm",
+    landmark:
+      "Au bord supérieur de la crête iliaque droite, différent du milieu côte–bassin.",
+    steps: [
+      "Repérez le haut de l’os du bassin sur votre côté droit, sur peau nue.",
+      "Debout, placez le ruban horizontalement autour du tronc au niveau de ce repère, sans comprimer la peau.",
+      "Lisez à la fin d’une expiration naturelle. Enregistrez cette mesure séparément pour le RFM.",
+    ],
+  },
   waist: {
     region: "waist",
     landmark:

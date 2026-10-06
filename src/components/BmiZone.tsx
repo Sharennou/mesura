@@ -1,3 +1,5 @@
+import { bmiZoneIndex } from "../../shared/body-tools";
+export { bmiZoneIndex } from "../../shared/body-tools";
 // Adult thresholds: https://www.cdc.gov/bmi/adult-calculator/bmi-categories.html
 const zones = [
   { range: "< 18,5", tone: "low" },
@@ -5,10 +7,6 @@ const zones = [
   { range: "25 à < 30", tone: "high" },
   { range: "≥ 30", tone: "very-high" },
 ] as const;
-
-export function bmiZoneIndex(value: number) {
-  return value < 18.5 ? 0 : value < 25 ? 1 : value < 30 ? 2 : 3;
-}
 
 export function BmiZone({ value }: { value: number }) {
   const index = bmiZoneIndex(value);

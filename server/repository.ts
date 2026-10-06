@@ -32,6 +32,7 @@ export function getEntries(userId: string): Entry[] {
     date: row.date,
     createdAt: row.created_at,
     height: row.height,
+    ...(row.tools_json ? { tools: JSON.parse(row.tools_json) } : {}),
     values: JSON.parse(row.values_json),
     note: row.note,
     photos: (
@@ -94,6 +95,10 @@ export function accountData(userId: string, name: string): AccountData {
       onboardingCompleted: Boolean(p?.onboarding_completed),
       name,
       height: p?.height ?? null,
+      heightDate: p?.height_date ?? null,
+      ...(p?.tool_profile_json
+        ? { toolProfile: JSON.parse(p.tool_profile_json) }
+        : {}),
       timezone: p?.timezone ?? "Europe/Paris",
       visible: p ? JSON.parse(p.visible) : DEFAULT_VISIBLE,
     },

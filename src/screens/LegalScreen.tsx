@@ -19,6 +19,13 @@ export function LegalScreen() {
           consentement explicite pour votre suivi personnel.
         </p>
         <p>
+          Pour les outils, vous pouvez aussi renseigner votre date de naissance,
+          l’équation choisie, la situation à la date d’une séance et les
+          protocoles de mesure. Ces informations restent facultatives, privées
+          et incluses dans vos exports ; les calculs sont effectués dans votre
+          navigateur.
+        </p>
+        <p>
           Les canaux de rappel sont facultatifs. Vos données ne sont ni
           publiques, ni utilisées pour la publicité ou une analyse par IA. Elles
           sont accessibles à votre compte et aux prestataires techniques

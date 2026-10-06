@@ -1,3 +1,4 @@
+import { ToolsSection } from "../components/ToolsSection";
 import { useState } from "react";
 import { Edit3, History, Plus, Trash2 } from "lucide-react";
 import { useApp } from "../context";
@@ -88,6 +89,7 @@ export function HistoryScreen() {
             >
               Modifier la mesure <Icon as={Edit3} />
             </Button>
+            <ToolsSection entries={data.entries} fixedEntry={entry} />
             <div className="destructive-actions">
               <button
                 className="text-button"

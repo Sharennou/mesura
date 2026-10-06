@@ -6,7 +6,7 @@ import {
   Ruler,
 } from "lucide-react";
 import { ComparisonChart } from "../components/ComparisonChart";
-import { BmiZone } from "../components/BmiZone";
+import { ToolsSection } from "../components/ToolsSection";
 import { useApp } from "../context";
 import { useViewState } from "../useViewState";
 import {
@@ -27,7 +27,6 @@ import {
   number,
   periodBounds,
   periodStats,
-  indicatorObservations,
   goalProgress,
   projection,
 } from "../../shared/calculations";
@@ -63,11 +62,6 @@ export function AnalysisScreen() {
   const periodEntries = data.entries.filter(
     (e) => e.date >= bounds.start && e.date <= bounds.end,
   );
-  const sources = {
-    bmi: indicatorObservations(periodEntries, "bmi").at(-1),
-    waistHeight: indicatorObservations(periodEntries, "waistHeight").at(-1),
-    waistHips: indicatorObservations(periodEntries, "waistHips").at(-1),
-  };
   const goal = data.goal;
   const goalLast = goal
     ? latest(
@@ -286,66 +280,10 @@ export function AnalysisScreen() {
               </>
             )}
           </section>
-          <section
-            className="analysis-indicators"
-            aria-labelledby="analysis-indicators-title"
-          >
-            <div className="section-heading">
-              <h2 id="analysis-indicators-title">IMC et ratios</h2>
-            </div>
-            <div className="indicator-card">
-              {(
-                [
-                  [
-                    "IMC",
-                    sources.bmi,
-                    "Ajoutez un poids et une hauteur dans la même entrée.",
-                    1,
-                    "Situe votre poids par rapport à votre hauteur, sans distinguer muscle et graisse.",
-                  ],
-                  [
-                    "Tour de taille / hauteur",
-                    sources.waistHeight,
-                    "Ajoutez un tour de taille et une hauteur dans la même entrée.",
-                    2,
-                    "Compare votre tour de taille à votre hauteur corporelle.",
-                  ],
-                  [
-                    "Tour de taille / tour de hanches",
-                    sources.waistHips,
-                    "Ajoutez un tour de taille et un tour de hanches dans la même entrée.",
-                    2,
-                    "Compare votre tour de taille à vos hanches pour décrire vos proportions.",
-                  ],
-                ] as const
-              ).map(([label, source, missing, decimals, explanation]) => (
-                <div className="indicator-detail" key={label}>
-                  <span>{label}</span>
-                  {source ? (
-                    <>
-                      <strong>
-                        {number(source.value, decimals)}
-                        {label === "IMC" ? " kg/m²" : ""}
-                      </strong>
-                      {label === "IMC" && <BmiZone value={source.value} />}
-                      <small>
-                        <DateLabel date={source.date} />
-                      </small>
-                    </>
-                  ) : (
-                    <p className="small muted">
-                      {missing} Aucune valeur calculable sur cette période.
-                    </p>
-                  )}
-                  <p className="small muted indicator-explanation">
-                    {explanation}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </section>
+          <ToolsSection entries={periodEntries} />
         </>
       )}
+      {!data.entries.length && <ToolsSection entries={[]} />}
       <div className="section-heading">
         <h2>Comprendre et comparer</h2>
       </div>

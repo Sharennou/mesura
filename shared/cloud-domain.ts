@@ -1,3 +1,9 @@
+import {
+  toolProfileSchema,
+  toolContextSchema,
+  toolDateSchema,
+  toolDateIssue,
+} from "./tool-schemas.ts";
 import { avatarSchema } from "./avatar.ts";
 import { z } from "zod";
 import { DateTime } from "luxon";
@@ -52,7 +58,16 @@ export function emptyCloudAccount(
     reminderRevision: "",
   };
 }
-export function publicCloudAccount(a: CloudAccount): AccountData {
+export function upgradeCloudAccount(a: CloudAccount): CloudAccount {
+  const next = structuredClone(a);
+  for (const measure of STANDARD_MEASURES) {
+    if (!next.measures.some((m) => m.id === measure.id))
+      next.measures.push(structuredClone(measure));
+  }
+  return next;
+}
+export function publicCloudAccount(input: CloudAccount): AccountData {
+  const a = upgradeCloudAccount(input);
   const { profile, entries, measures, goal, consents, reminder } = a;
   return {
     profile: {
@@ -96,7 +111,7 @@ export function mutateCloudAccount(
   caps: Capabilities,
   now: DateTime = DateTime.now(),
 ) {
-  const a = structuredClone(input);
+  const a = upgradeCloudAccount(input);
   a.profile.onboardingCompleted ??= Boolean(
     a.profile.height || a.entries.length,
   );
@@ -123,6 +138,7 @@ export function mutateCloudAccount(
       });
     }
     a.profile.height = setup.height;
+    a.profile.heightDate = null;
     a.profile.onboardingCompleted = true;
     a.goal = setup.goal
       ? {
@@ -135,13 +151,24 @@ export function mutateCloudAccount(
     const p = z
       .object({
         avatar: avatarSchema,
+        toolProfile: toolProfileSchema.optional(),
+        heightDate: toolDateSchema.nullable().optional(),
         name: z.string().trim().min(1).max(100),
         height: z.number().positive().max(300).nullable(),
         timezone: zone,
         visible: z.array(z.string()).max(40),
       })
       .parse(raw);
-    if (p.height !== null) bodyRequired();
+    if (p.height !== null || p.toolProfile || p.heightDate) bodyRequired();
+    const today = now.setZone(p.timezone).toISODate()!;
+    if (
+      (p.heightDate && p.heightDate > today) ||
+      (p.toolProfile?.birthDate && p.toolProfile.birthDate > today)
+    )
+      cloudFail("Une date du profil est dans le futur. Vérifiez-la.");
+    if (p.heightDate === undefined)
+      p.heightDate =
+        p.height === a.profile.height ? (a.profile.heightDate ?? null) : null;
     if (
       new Set(p.visible).size !== p.visible.length ||
       p.visible.some(
@@ -186,6 +213,8 @@ export function mutateCloudAccount(
         a.entries = [];
         a.goal = null;
         a.profile.height = null;
+        a.profile.heightDate = null;
+        delete a.profile.toolProfile;
         a.subscriptions = [];
         a.requestIds = {};
         for (const p of ["photos", "push", "email"] as const)
@@ -207,7 +236,7 @@ export function mutateCloudAccount(
         unit: z.string().trim().min(1).max(12),
       })
       .parse(raw);
-    if (a.measures.length >= 45)
+    if (a.measures.filter((m) => m.custom).length >= 30)
       cloudFail("Vous pouvez créer jusqu’à 30 mesures personnalisées.");
     result = { ...m, id: crypto.randomUUID(), custom: true };
     a.measures.push(result as any);
@@ -244,10 +273,16 @@ export function mutateCloudAccount(
         note: z.string().max(2000).default(""),
         height: z.number().positive().max(300).nullable(),
         requestId: z.uuid(),
+        tools: toolContextSchema.optional(),
       })
       .parse(raw);
     if (e.date > now.setZone(a.profile.timezone).toISODate()!)
       cloudFail("La date ne peut pas être dans le futur.");
+    const dateIssue = toolDateIssue(
+      e.tools ?? (id ? a.entries.find((x) => x.id === id)?.tools : undefined),
+      e.date,
+    );
+    if (dateIssue) cloudFail(dateIssue);
     const old = id ? a.entries.find((e) => e.id === id) : undefined;
     if (id && !old) cloudFail("Entrée introuvable.", 404);
     if (
@@ -269,6 +304,7 @@ export function mutateCloudAccount(
       values: e.values,
       note: e.note,
       height: e.height,
+      ...((e.tools ?? old?.tools) ? { tools: e.tools ?? old?.tools } : {}),
       createdAt: old?.createdAt || now.toISO()!,
       photos: old?.photos ?? [],
     };

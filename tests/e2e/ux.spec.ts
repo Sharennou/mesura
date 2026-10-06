@@ -906,17 +906,13 @@ test("analyse : plusieurs courbes, indicateurs visibles et périodes à partir d
           el.previousElementSibling?.classList.contains("graph-card"),
       ),
   ).toBe(true);
-  await expect(page.locator(".indicator-detail")).toHaveCount(3);
+  await expect(page.locator(".indicator-detail")).toHaveCount(5);
   await expect(page.locator(".indicator-detail").first()).toContainText(
     "25,5 kg/m²",
   );
-  await expect(page.locator(".bmi-zone-label")).toHaveText(
-    "25 à < 30",
-  );
-  await expect(page.locator(".bmi-zone-scale .is-current")).toHaveClass(
-    /bmi-tone-high/,
-  );
-  await expect(page.locator(".indicator-explanation")).toHaveCount(3);
+  // Old sessions do not establish adult age or clinical context.
+  await expect(page.locator(".bmi-zone-label")).toHaveCount(0);
+  await expect(page.locator(".indicator-explanation")).toHaveCount(5);
   await expect(
     page.getByText("Derniers indicateurs de la période sélectionnée."),
   ).toHaveCount(0);

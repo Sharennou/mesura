@@ -16,8 +16,9 @@ Mesura est une application web de suivi corporel conçue pour le téléphone, en
 - Application : https://sharennou.github.io/mesura/ ; dépôt : `Sharennou/mesura`, branche `main`.
 - Production : GitHub Pages + Supabase Free. Version locale : Fastify + SQLite + Better Auth.
 - Deux destinations principales : Mesures (saisie et historique) et Analyse (évolution et comparaison).
-- Analyse : sélection de plusieurs mesures, comparaison en pourcentage avec valeurs exactes par date, IMC et ratios directement sous le graphique. Périodes 3M, 6M, 1A, MAX ; menus « Les autres mesures » et indicateurs retirés.
-- Indicateurs : une phrase courte sous chaque valeur ; IMC avec couleurs et plages numériques uniquement (< 18,5 ; 18,5 à < 25 ; 25 à < 30 ; ≥ 30), sans libellés de corpulence. Zone déterminée avant arrondi. Textes introductifs sur la période et la hauteur retirés.
+- Analyse : sélection de plusieurs mesures, comparaison en pourcentage avec valeurs exactes par date, rubrique Outils directement sous le graphique (IMC, adiposité abdominale, taille/hanches, RFM et DER). Périodes 3M, 6M, 1A, MAX ; menus « Les autres mesures » et indicateurs retirés.
+- Outils : [dossier scientifique et données](docs/outils-scientifiques.md), contexte daté par séance, protocoles NICE/RFM distincts, équation explicite, migration additive. Évolution implémentée localement, non publiée.
+- Indicateurs : une phrase courte sous chaque valeur ; IMC adulte éligible avec couleurs et plages numériques uniquement (< 18,5 ; 18,5 à < 25 ; 25 à < 30 ; ≥ 30), sans libellés de corpulence. Zone déterminée avant arrondi. Textes introductifs sur la période et la hauteur retirés.
 - Refonte UX en développement : [diagnostic et validation](docs/ux-parcours.md), états d’analyse selon les données, détail distinct de l’édition, retours et brouillons conservés en mémoire. Cette session n’est pas publiée.
 - Compte obligatoire, aucune donnée fictive dans les comptes ordinaires, aucune confirmation d’email à l’inscription.
 - Compte de développement dédié autorisé par le propriétaire : « Développement · données fictives », 30 entrées et 383 valeurs injectées par `scripts/seed-development-account.ts`. Identifiants privés dans `.runtime`, jamais dans la documentation.

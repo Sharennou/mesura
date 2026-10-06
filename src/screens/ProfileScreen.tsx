@@ -1,3 +1,6 @@
+import { EquationFields } from "../components/ToolFields";
+import { EMPTY_TOOL_PROFILE } from "../../shared/body-tools";
+import { localDate } from "../../shared/calculations";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   Check,
@@ -13,7 +16,7 @@ import { useApp } from "../context";
 import { Button, ErrorMessage, Icon, LinkCard, PageTitle } from "../components";
 import { api, authClient } from "../api";
 import type { AccountData } from "../../shared/types";
-import { number, parseDecimal } from "../../shared/calculations";
+import { inputDecimal, parseDecimal } from "../../shared/calculations";
 import { CLOUD } from "../deployment";
 
 export function ProfileScreen({
@@ -25,8 +28,12 @@ export function ProfileScreen({
   const { data: session } = authClient.useSession();
   const [name, setName] = useState(data.profile.name);
   const [height, setHeight] = useState(
-    data.profile.height ? number(data.profile.height) : "",
+    data.profile.height ? inputDecimal(data.profile.height) : "",
   );
+  const [toolProfile, setToolProfile] = useState(
+    data.profile.toolProfile ?? { ...EMPTY_TOOL_PROFILE },
+  );
+  const [heightDate, setHeightDate] = useState(data.profile.heightDate ?? "");
   const [avatar, setAvatar] = useState(data.profile.avatar ?? null);
   const photoInput = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -54,6 +61,9 @@ export function ProfileScreen({
             name,
             height: parsed,
             avatar,
+            ...(data.consents.body
+              ? { toolProfile, heightDate: heightDate || null }
+              : {}),
           }),
         }),
       );
@@ -251,13 +261,40 @@ export function ProfileScreen({
             placeholder="Ex. 175,0"
             value={height}
             disabled={!data.consents.body}
-            onChange={(e) => setHeight(e.target.value)}
+            onChange={(e) => {
+              setHeight(e.target.value);
+              setHeightDate("");
+            }}
           />
           <small>
             Votre hauteur corporelle, distincte du tour de taille. Une
-            modification s’applique aux futures entrées.
+            modification s’applique aux futures entrées. Après un changement,
+            précisez sa date de mesure dans les réglages des outils ci-dessous.
           </small>
         </label>
+        {data.consents.body && (
+          <details className="optional-panel">
+            <summary>Préparer les outils des prochaines séances</summary>
+            <label className="field-label">
+              Date de mesure de la hauteur du profil
+              <input
+                type="date"
+                max={localDate(data.profile.timezone)}
+                value={heightDate}
+                onChange={(e) => setHeightDate(e.target.value)}
+              />
+            </label>
+            <EquationFields
+              value={toolProfile}
+              onChange={setToolProfile}
+              maxDate={localDate(data.profile.timezone)}
+            />
+            <p className="small">
+              Ces réglages seront proposés aux nouvelles séances. Les entrées
+              déjà enregistrées restent inchangées.
+            </p>
+          </details>
+        )}
         <button className="secondary" disabled={busy}>
           {busy ? "Enregistrement…" : "Enregistrer mon profil"}
           <Icon as={Check} />

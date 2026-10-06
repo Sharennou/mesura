@@ -1,3 +1,4 @@
+import { accountCsv, EXPORT_SCHEMA_VERSION } from "../../../shared/export.ts";
 import { createClient, type User } from "@supabase/supabase-js";
 import { z } from "zod";
 import { DateTime } from "luxon";
@@ -207,34 +208,7 @@ async function erase(userId: string) {
   if (result.error && result.error.status !== 404)
     cloudFail("La suppression est en cours. Réessayez dans un instant.", 503);
 }
-const csv = (a: CloudAccount) =>
-  "\uFEFF" +
-  [
-    ["date", "fuseau", "mesure", "valeur", "unité", "stature_cm", "note"],
-    ...a.entries.flatMap((e) =>
-      Object.keys(e.values).length
-        ? Object.entries(e.values).map(([id, v]) => [
-            e.date,
-            a.profile.timezone,
-            a.measures.find((m) => m.id === id)?.name || id,
-            v,
-            a.measures.find((m) => m.id === id)?.unit,
-            e.height,
-            e.note,
-          ])
-        : [[e.date, a.profile.timezone, "", "", "", e.height, e.note]],
-    ),
-  ]
-    .map((row) =>
-      row
-        .map((v) => {
-          let s = String(v ?? "");
-          if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
-          return `"${s.replaceAll('"', '""')}"`;
-        })
-        .join(";"),
-    )
-    .join("\r\n");
+const csv = (a: CloudAccount) => accountCsv(publicCloudAccount(a));
 async function exportData(req: Request, a: CloudAccount, headers: Headers) {
   const opts = z
     .object({
@@ -243,6 +217,7 @@ async function exportData(req: Request, a: CloudAccount, headers: Headers) {
     .parse(await req.json());
   const json = JSON.stringify(
     {
+      schemaVersion: EXPORT_SCHEMA_VERSION,
       exportedAt: new Date().toISOString(),
       ...publicCloudAccount(a),
       consentHistory: a.audit,

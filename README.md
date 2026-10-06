@@ -107,3 +107,7 @@ La photo de profil est conservée : ajout, remplacement et retrait dans « Profi
 `npm run seed:dev` crée un compte explicitement nommé « Développement · données fictives » sur le serveur local (`http://127.0.0.1:5173`). Pour l’application en ligne, utiliser explicitement `npm run seed:dev -- --target cloud`. Le script utilise uniquement les API publiques authentifiées, sans clé d’administration.
 
 Le jeu contient 30 entrées et 383 valeurs sur plus d’un an : 15 types de mesures, séances partielles, notes, note seule, deux mesures du même jour et objectif de poids. `--dry-run` affiche uniquement le résumé sans créer de compte. Les identifiants générés sont conservés dans un fichier privé ignoré par Git, `.runtime/development-account-local.json` ou `.runtime/development-account-cloud.json` ; les relances reprennent le même compte et complètent seulement les entrées manquantes. Les comptes ordinaires restent vides à leur création.
+
+### Outils corporels
+
+IMC, adiposité abdominale selon NICE, taille/hanches, RFM et dépense au repos Mifflin–St Jeor : [formules, sources, éligibilité et migration](docs/outils-scientifiques.md). Les résultats sont calculés localement à partir d’une séance traçable ; les données anciennes sans protocole restent conservées.

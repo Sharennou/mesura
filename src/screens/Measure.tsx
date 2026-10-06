@@ -1,3 +1,6 @@
+import { SessionToolFields } from "../components/ToolFields";
+import { newToolContext, type ToolContext } from "../../shared/body-tools";
+import { toolDateIssue } from "../../shared/tool-schemas";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   Check,
@@ -27,6 +30,7 @@ import {
   latest,
   localDate,
   parseDecimal,
+  inputDecimal,
   number,
   goalProgress,
   streak,
@@ -52,7 +56,10 @@ export function MeasureScreen() {
     currentDraft?.values ??
     (editing
       ? Object.fromEntries(
-          Object.entries(editing.values).map(([id, v]) => [id, number(v)]),
+          Object.entries(editing.values).map(([id, v]) => [
+            id,
+            inputDecimal(v),
+          ]),
         )
       : {});
   const [values, setValues] = useState<Record<string, string>>(initial);
@@ -63,14 +70,35 @@ export function MeasureScreen() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [historicalHeight, setHistoricalHeight] = useState(
-    editingDraft?.height ?? (editing?.height ? number(editing.height) : ""),
+    currentDraft?.height ??
+      ((editing ? editing.height : data.profile.height) != null
+        ? inputDecimal((editing ? editing.height : data.profile.height)!)
+        : ""),
+  );
+  const [tools, setTools] = useState<ToolContext>(
+    currentDraft?.tools ??
+      editing?.tools ??
+      (editing
+        ? newToolContext()
+        : {
+            ...newToolContext(data.profile.toolProfile),
+            heightDate: data.profile.heightDate ?? null,
+            heightOrigin: "profile",
+          }),
   );
   const requestId = useRef(currentDraft?.requestId ?? crypto.randomUUID());
   const submitting = useRef(false);
   const completed = useRef(false);
   useEffect(() => {
     if (completed.current) return;
-    const next = { values, date, note, requestId: requestId.current };
+    const next = {
+      values,
+      date,
+      note,
+      tools,
+      height: historicalHeight,
+      requestId: requestId.current,
+    };
     if (editing)
       setEditingDrafts((drafts) => ({
         ...drafts,
@@ -82,6 +110,7 @@ export function MeasureScreen() {
     date,
     note,
     historicalHeight,
+    tools,
     editing,
     setDraft,
     setEditingDrafts,
@@ -115,6 +144,7 @@ export function MeasureScreen() {
     .filter(
       (m) =>
         m.id !== "weight" &&
+        m.id !== "waist-rfm" &&
         (data.profile.visible.includes(m.id) || Object.hasOwn(values, m.id)),
     )
     .sort(
@@ -151,10 +181,6 @@ export function MeasureScreen() {
               value={values[m.id] || ""}
               placeholder="—"
               onChange={(e) => update(m.id, e.target.value)}
-              onBlur={() => {
-                if (val !== null && Number.isFinite(val))
-                  update(m.id, number(val));
-              }}
             />
             <span>{m.unit}</span>
           </div>
@@ -213,12 +239,15 @@ export function MeasureScreen() {
       setError("Choisissez une date de mesure valide, jusqu’à aujourd’hui.");
       return;
     }
+    const dateIssue = toolDateIssue(tools, date);
+    if (dateIssue) {
+      setError(dateIssue);
+      return;
+    }
     submitting.current = true;
     setBusy(true);
     setError("");
-    const height = editing
-      ? parseDecimal(historicalHeight)
-      : data.profile.height;
+    const height = parseDecimal(historicalHeight);
     if (height !== null && !Number.isFinite(height)) {
       setError(
         "La hauteur historique doit être strictement positive ou laissée vide.",
@@ -230,6 +259,7 @@ export function MeasureScreen() {
     const payload = {
       date,
       values: parsed,
+      tools,
       note,
       height,
       requestId: requestId.current,
@@ -327,10 +357,6 @@ export function MeasureScreen() {
               value={values.weight || ""}
               placeholder="Saisir"
               onChange={(e) => update("weight", e.target.value)}
-              onBlur={() => {
-                if (weight !== null && Number.isFinite(weight))
-                  update("weight", number(weight));
-              }}
               maxLength={8}
             />
             <span className="hero-unit">kg</span>
@@ -430,22 +456,26 @@ export function MeasureScreen() {
             <span className="counter">{note.length} / 2 000</span>
           </div>
         </details>
-        {editing && (
-          <section className="plain-card">
-            <label className="field-label">
-              Hauteur de cette entrée, en cm
-              <input
-                inputMode="decimal"
-                value={historicalHeight}
-                onChange={(e) => setHistoricalHeight(e.target.value)}
-              />
-              <small>
-                Valeur conservée pour les calculs historiques. Corrigez-la ici
-                uniquement si elle était erronée.
-              </small>
-            </label>
-          </section>
-        )}
+        <details className="optional-panel">
+          <summary>Ajouter une mesure spécifique au RFM</summary>
+          <p className="small">
+            Tour de taille au bord supérieur de la crête iliaque droite,
+            distinct du tour de taille NICE. Confirmez son protocole dans «
+            Données pour les outils ».
+          </p>
+          <div className="measurement-grid">
+            {measurementFields(
+              data.measures.filter((m) => m.id === "waist-rfm"),
+            )}
+          </div>
+        </details>
+        <SessionToolFields
+          value={tools}
+          onChange={setTools}
+          date={date}
+          height={historicalHeight}
+          setHeight={setHistoricalHeight}
+        />
         <p className="privacy-caption">
           <Icon as={LockKeyhole} size={14} />
           Vos mesures et notes restent privées.

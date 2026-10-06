@@ -4,6 +4,8 @@ Les sources conservent leur précision. L’arrondi intervient à l’affichage 
 
 La limite technique des mesures est 100 000 unités, celle de la stature 300 cm. Ces limites n’ont pas de signification médicale. La virgule, le signe moins U+2212 et les espaces insécables sont communs aux écrans.
 
+Voir aussi le [dossier scientifique Outils](outils-scientifiques.md) pour les protocoles, formules, domaines d’application et sources vérifiées.
+
 ## Indicateurs
 
 | Indicateur       | Formule                        | Affichage         |
@@ -11,10 +13,12 @@ La limite technique des mesures est 100 000 unités, celle de la stature 300 cm.
 | IMC              | poids kg / (stature cm / 100)² | 1 décimale, kg/m² |
 | Taille / stature | tour de taille cm / stature cm | 2 décimales       |
 | Taille / hanches | tour de taille cm / hanches cm | 2 décimales       |
+| RFM | 64 (masculine) ou 76 (féminine) − 20 × hauteur / tour spécifique | 1 décimale, % |
+| DER Mifflin–St Jeor | 10 × poids kg + 6,25 × hauteur cm − 5 × âge + 5 (masculine) ou −161 (féminine) | entier, kcal/jour |
 
 La stature est conservée dans chaque entrée. Modifier le profil ne change pas les résultats passés. Une correction historique est explicite dans le formulaire d’édition. Les ratios utilisent les valeurs d’une même entrée. Une valeur absente ou un dénominateur nul produit un état indisponible.
 
-Aucun diagnostic ni score de santé n’est attribué. Références : [OMS, IMC](https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/body-mass-index) et [NICE, adiposité centrale](https://www.nice.org.uk/guidance/ng246/chapter/Identifying-and-assessing-overweight-obesity-and-central-adiposity).
+La classification abdominale NICE exige un contexte adulte compatible, IMC < 35 et protocole confirmé. Aucun diagnostic ni score global de santé n’est attribué. Références : [OMS, IMC](https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/body-mass-index) et [NICE, adiposité centrale](https://www.nice.org.uk/guidance/ng246/chapter/Identifying-and-assessing-overweight-obesity-and-central-adiposity).
 
 ## Périodes et graphiques
 

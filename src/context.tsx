@@ -1,3 +1,4 @@
+import type { ToolContext } from "../shared/body-tools";
 import {
   createContext,
   useContext,
@@ -23,6 +24,8 @@ export type Screen =
   | "favorites"
   | "legal";
 export interface MeasurementDraft {
+  tools?: ToolContext;
+  height?: string;
   values: Record<string, string>;
   date: string;
   note: string;

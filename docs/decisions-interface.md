@@ -46,3 +46,7 @@ Les nouvelles instructions du propriétaire précisent les noms « Historique de
 Les écrans de consultation et de modification d’une entrée sont distincts. Les retours et les deux types de brouillons conservent le contexte en mémoire de session. Aucun accueil intermédiaire, nouveau canal ou changement de technologie n’est introduit. Voir [le compte rendu UX](ux-parcours.md).
 
 Demandes suivantes pour Mesures : retirer « Ajouter d’autres mensurations » en conservant « Personnaliser » ; ajouter juste sous les favorites un [guide illustré précis pour chaque mensuration](guide-mensurations.md). Le guide s’ouvre à la demande et garde le choix de mensuration pendant la navigation. Aucun repère anatomique n’est inventé pour les mesures personnalisées.
+
+## Outils — évolution du 6 octobre 2026
+
+La nouvelle demande remplace « IMC et ratios » par « Outils » et réintroduit explicitement des accès « Comprendre le calcul » et « Sources et limites » dans chaque carte. Les repères IMC adultes ne sont plus attribués lorsque l’âge ou la situation est inconnu. Les liens `#analysis` restent compatibles.

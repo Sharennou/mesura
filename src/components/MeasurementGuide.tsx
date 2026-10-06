@@ -70,6 +70,7 @@ function Diagram({
     shoulders: 84,
     chest: 111,
     waist: 155,
+    "waist-rfm": 178,
     abdomen: 175,
     hips: 208,
   };
@@ -217,6 +218,12 @@ function Diagram({
               <path d="M 75 48 L 73 65 Q 52 65 35 79 Q 19 100 21 129 L 15 188 Q 14 197 23 198 L 33 188 L 40 117 L 47 108 Q 47 136 53 153 Q 56 169 45 191 Q 35 215 43 247 M 105 48 L 107 65 Q 128 65 145 79 Q 161 100 159 129 L 165 188 Q 166 197 157 198 L 147 188 L 140 117 L 133 108 Q 133 136 127 153 Q 124 169 135 191 Q 145 215 137 247 M 43 247 L 73 250 L 82 229 Q 90 224 98 229 L 107 250 L 137 247" />
               <path d="M 68 81 Q 90 90 112 81 M 48 110 Q 66 120 83 108 M 97 108 Q 114 120 132 110 M 48 210 Q 90 230 132 210" />
               <circle cx={90} cy={175} r={2.5} />
+              {region === "waist-rfm" && (
+                <path
+                  className="guide-reference"
+                  d="M 51 182 Q 58 172 66 176"
+                />
+              )}
               {region === "waist" && (
                 <>
                   <path
@@ -260,19 +267,25 @@ function Diagram({
                 x={182}
                 y={torsoY[region as keyof typeof torsoY] + 3}
                 startX={
-                  region === "neck"
-                    ? 107
-                    : region === "shoulders"
-                      ? 154
-                      : region === "hips"
-                        ? 141
-                        : 133
+                  region === "waist-rfm"
+                    ? 51
+                    : region === "neck"
+                      ? 107
+                      : region === "shoulders"
+                        ? 154
+                        : region === "hips"
+                          ? 141
+                          : 133
                 }
                 startY={torsoY[region as keyof typeof torsoY]}
                 target
                 lines={
                   {
                     waist: ["Ruban au milieu"],
+                    "waist-rfm": [
+                      "Bord supérieur de la",
+                      "crête iliaque droite",
+                    ],
                     hips: ["Tour maximal", "des fesses"],
                     chest: ["Partie la plus", "volumineuse"],
                     neck: ["Sous le larynx"],
@@ -434,6 +447,13 @@ export function MeasurementGuide({
             la lecture en fin d’expiration normale. Plusieurs protocoles
             existent : gardez toujours le même.
           </p>
+          <a
+            href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6054651/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Woolcott et Bergman · tour spécifique au RFM
+          </a>
           <a
             href="https://www.phenxtoolkit.org/protocols/view/021602"
             target="_blank"

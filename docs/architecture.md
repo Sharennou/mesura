@@ -43,7 +43,7 @@ erDiagram
 - Tables Better Auth : `user`, `account`, `session`, `verification`, `rateLimit`.
 - `profiles` : taille facultative, démarrage terminé, fuseau, ordre des favoris et dernière activité.
 - `consents` : événements avec finalité, texte, version, statut et date UTC. Le dernier événement fait autorité.
-- `measures` : personnalisations, unité et archive. Les quinze mesures standard, poids inclus, viennent du catalogue partagé.
+- `measures` : personnalisations, unité et archive. Les seize mesures standard, poids inclus, viennent du catalogue partagé.
 - `entries` : jour local ISO, stature historique, valeurs présentes en JSON, note, dates techniques et clé d’idempotence.
 - `photos` : stockage historique conservé pour compatibilité, sans nouvel envoi ni affichage.
 - `profiles.avatar` : photo de profil privée, ajout et retrait disponibles, affichage rond dans le profil et dans l’en-tête.
@@ -80,3 +80,7 @@ Le service worker conserve seulement le shell et les ressources publiques. API, 
 Le planificateur tourne toutes les 30 secondes. Chaque livraison est revendiquée en base avant l’envoi ; la contrainte unique évite un doublon même si une tâche est répétée. L’autorisation est recontrôlée avant chaque appareil. Les abonnements 404 / 410 sont supprimés.
 
 Cette convention est « au plus une tentative » : une erreur après revendication n’est pas automatiquement rejouée, afin de ne pas dupliquer une livraison dont la réception est incertaine. Surveiller les échecs. Les occurrences de plus d’une heure sont sautées. Un message déjà confié au fournisseur ne peut pas être rappelé ; tous les futurs traitements sont bloqués au retrait.
+
+## Contexte des outils
+
+Les séances conservent `tools` et les profils peuvent préparer `toolProfile` et `heightDate`. La migration SQLite 006 est additive ; les comptes JSON cloud sont adaptés sans attribuer de protocole aux anciennes mesures. Formules, règles, exports et versionnement : [dossier Outils](outils-scientifiques.md).

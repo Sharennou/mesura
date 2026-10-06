@@ -1,4 +1,4 @@
-import type { Entry, Goal } from "./types";
+import type { Entry, Goal } from "./types.ts";
 export const number = (value: number, decimals = 1) =>
   new Intl.NumberFormat("fr-FR", {
     useGrouping: false,
@@ -13,6 +13,13 @@ export const delta = (value: number | null, decimals = 1) =>
     : Math.abs(value) < 0.5 * 10 ** -decimals
       ? "= 0"
       : `${value > 0 ? "+" : "−"}${number(Math.abs(value), decimals)}`;
+// Editable decimal text must round-trip, even for tiny stored numbers rendered by
+// String(number) in scientific notation (which the input parser rejects).
+export const inputDecimal = (value: number) =>
+  new Intl.NumberFormat("fr-FR", {
+    useGrouping: false,
+    maximumSignificantDigits: 21,
+  }).format(value);
 export function parseDecimal(value: string): number | null {
   if (!value.trim()) return null;
   const normalized = value.trim().replace(",", ".");
@@ -23,15 +30,35 @@ export function parseDecimal(value: string): number | null {
     : NaN;
 }
 export const bmi = (weight?: number | null, height?: number | null) =>
-  weight && height && weight > 0 && height > 0
+  weight &&
+  height &&
+  Number.isFinite(weight) &&
+  Number.isFinite(height) &&
+  weight > 0 &&
+  height > 0 &&
+  Number.isFinite(weight / (height / 100) ** 2) &&
+  weight / (height / 100) ** 2 > 0
     ? weight / (height / 100) ** 2
     : null;
 export const ratio = (a?: number | null, b?: number | null) =>
-  a && b && a > 0 && b > 0 ? a / b : null;
+  a &&
+  b &&
+  Number.isFinite(a) &&
+  Number.isFinite(b) &&
+  a > 0 &&
+  b > 0 &&
+  Number.isFinite(a / b) &&
+  a / b > 0
+    ? a / b
+    : null;
 export function indicators(entry?: Entry) {
+  const height =
+    entry?.tools?.heightDate && entry.tools.heightDate > entry.date
+      ? null
+      : entry?.height;
   return {
-    bmi: bmi(entry?.values.weight, entry?.height),
-    waistHeight: ratio(entry?.values.waist, entry?.height),
+    bmi: bmi(entry?.values.weight, height),
+    waistHeight: ratio(entry?.values.waist, height),
     waistHips: ratio(entry?.values.waist, entry?.values.hips),
   };
 }

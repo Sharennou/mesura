@@ -4,7 +4,7 @@
 
 Les jeux de données des tests sont fictifs ; l’application ne contient aucune donnée de démonstration. Les tests d’API utilisent une base temporaire supprimée à la fin. Chaque format mobile démarre son propre serveur sur les ports 5181 / 3011, avec une base isolée dans `.runtime/e2e-*` et sans email externe. Ils créent puis suppriment leur compte de test. Ils ne réutilisent pas le serveur ni les données personnelles de développement.
 
-Validation : compilation locale et GitHub Pages, **83 tests de calculs / API / Postgres cloud** et **4 parcours Playwright**, avec contrôles axe sur les écrans parcourus à 390 et 360 px.
+Validation : compilation locale et GitHub Pages, **148 tests de calculs / API / Postgres cloud** et **24 exécutions Playwright (12 parcours sur deux formats)**, avec contrôles axe sur les écrans parcourus à 390 et 360 px.
 
 - Point / virgule, valeurs manquantes ou invalides, précision et affichage.
 - IMC, ratios d’une même entrée, stature historique et divisions par zéro.
@@ -49,3 +49,14 @@ Captures et traces sont dans `test-results/`, ignoré par Git. Les contrôles ax
 | Infrastructure              | Chiffrement réel, stockage privé, sauvegarde cohérente et restauration avec ledger |
 
 Docker, email externe et réception Web Push sur téléphone ne sont pas déclarés vérifiés dans cette livraison. Les envois de tests sont simulés.
+
+## Outils — vérification du 6 octobre 2026
+
+- `npm run check` : compilation TypeScript/Vite et 148 tests réussis (7 fichiers).
+- `npm run test:e2e` : 12 parcours à 390 px et 12 à 360 px, incluant saisie masculine/féminine, protocole distinct, correction sans perte de précision, restauration, grossesse et contrôle axe WCAG 2.1 AA.
+- `npm run check:cloud` et `npm run bundle:cloud` : fonction Edge typée et bundle autonome généré.
+- Compilation `VITE_BASE_PATH=/mesura/ VITE_DEPLOYMENT=supabase` et `npm run test:pages` : chemins, authentification et callbacks vérifiés à 360/390 px.
+- Liens scientifiques : pages officielles et miroirs primaires consultés ; OMS et PubMed peuvent opposer un contrôle anti-robot aux requêtes automatisées. Les liens et DOI restent ceux des publications. Voir [le dossier scientifique](outils-scientifiques.md).
+- Avertissement Vite : bundle principal dépassant 500 ko, sans erreur de compilation. Aucun déploiement effectué. Essai sur téléphone physique/lecteur d’écran et validation clinique non réalisés.
+
+Un premier passage mobile a révélé les libellés de formulaire à raccourcir et le schéma RFM à ajouter au guide existant ; ils ont été corrigés. Le passage complet final utilise des sources stables, sans modification ni recompilation simultanée du serveur de test.

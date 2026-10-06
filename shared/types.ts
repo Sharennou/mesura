@@ -1,3 +1,4 @@
+import type { ToolContext, ToolProfile } from "./body-tools.ts";
 export type ConsentPurpose = "body" | "photos" | "push" | "email";
 export interface Measure {
   id: string;
@@ -13,6 +14,7 @@ export interface Photo {
   orientation: "face" | "profil" | "dos";
 }
 export interface Entry {
+  tools?: ToolContext;
   id: string;
   date: string;
   createdAt: string;
@@ -39,6 +41,8 @@ export interface Reminder {
   nextAt?: string | null;
 }
 export interface Profile {
+  toolProfile?: ToolProfile;
+  heightDate?: string | null;
   avatar?: string | null;
   onboardingCompleted?: boolean;
   name: string;

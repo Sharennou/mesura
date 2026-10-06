@@ -1,3 +1,10 @@
+import { accountCsv, EXPORT_SCHEMA_VERSION } from "../shared/export";
+import {
+  toolProfileSchema,
+  toolContextSchema,
+  toolDateSchema,
+  toolDateIssue,
+} from "../shared/tool-schemas";
 import { avatarSchema } from "../shared/avatar";
 import Fastify, { type FastifyRequest } from "fastify";
 import helmet from "@fastify/helmet";
@@ -220,14 +227,25 @@ export async function buildApp() {
     const p = z
       .object({
         avatar: avatarSchema,
+        toolProfile: toolProfileSchema.optional(),
+        heightDate: toolDateSchema.nullable().optional(),
         name: z.string().trim().min(1).max(100),
         height: z.number().positive().max(300).nullable(),
         timezone: zoneSchema,
         visible: z.array(z.string()).max(40),
       })
       .parse(req.body);
-    if (p.height !== null && !consent(s.user.id, "body"))
+    if (
+      (p.height !== null || p.toolProfile || p.heightDate) &&
+      !consent(s.user.id, "body")
+    )
       fail("Activez le suivi corporel avant de renseigner votre stature.", 403);
+    if (
+      (p.heightDate && p.heightDate > localDate(p.timezone)) ||
+      (p.toolProfile?.birthDate &&
+        p.toolProfile.birthDate > localDate(p.timezone))
+    )
+      fail("Une date du profil est dans le futur. Vérifiez-la.");
     const ids = getMeasures(s.user.id)
       .filter((m) => !m.archived && m.id !== "weight")
       .map((m) => m.id);
@@ -236,6 +254,7 @@ export async function buildApp() {
       new Set(p.visible).size !== p.visible.length
     )
       fail("Sélection de mesures invalide.");
+    const oldHeight = accountData(s.user.id, s.user.name).profile.height;
     db.transaction(() => {
       db.prepare("UPDATE user SET name = ?, updatedAt = ? WHERE id = ?").run(
         p.name,
@@ -245,6 +264,20 @@ export async function buildApp() {
       db.prepare(
         "INSERT INTO profiles (user_id,height,timezone,visible) VALUES (?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET height = excluded.height, timezone = excluded.timezone, visible = excluded.visible",
       ).run(s.user.id, p.height, p.timezone, JSON.stringify(p.visible));
+      if (p.toolProfile !== undefined)
+        db.prepare(
+          "UPDATE profiles SET tool_profile_json = ? WHERE user_id = ?",
+        ).run(JSON.stringify(p.toolProfile), s.user.id);
+      if (p.heightDate === undefined && oldHeight !== p.height)
+        db.prepare(
+          "UPDATE profiles SET height_date = NULL WHERE user_id = ?",
+        ).run(s.user.id);
+      if (p.heightDate !== undefined)
+        db.prepare("UPDATE profiles SET height_date = ? WHERE user_id = ?").run(
+          p.heightDate,
+          s.user.id,
+        );
+
       if (p.avatar !== undefined)
         db.prepare("UPDATE profiles SET avatar = ? WHERE user_id = ?").run(
           p.avatar,
@@ -275,8 +308,8 @@ export async function buildApp() {
           new Date().toISOString(),
         );
       db.prepare(
-        "UPDATE profiles SET height = ?, onboarding_completed = 1 WHERE user_id = ?",
-      ).run(setup.height, s.user.id);
+        "UPDATE profiles SET height = ?, height_date = ?, onboarding_completed = 1 WHERE user_id = ?",
+      ).run(setup.height, null, s.user.id);
       if (setup.goal)
         db.prepare(
           "INSERT INTO goals VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET measure_id=excluded.measure_id, start=excluded.start, target=excluded.target, start_date=excluded.start_date",
@@ -329,9 +362,9 @@ export async function buildApp() {
         db.transaction(() => {
           db.prepare("DELETE FROM entries WHERE user_id = ?").run(s.user.id);
           db.prepare("DELETE FROM goals WHERE user_id = ?").run(s.user.id);
-          db.prepare("UPDATE profiles SET height = NULL WHERE user_id = ?").run(
-            s.user.id,
-          );
+          db.prepare(
+            "UPDATE profiles SET height = NULL, height_date = NULL, tool_profile_json = NULL WHERE user_id = ?",
+          ).run(s.user.id);
         })();
         for (const purpose of ["photos", "push", "email"] as ConsentPurpose[])
           if (consent(s.user.id, purpose))
@@ -420,6 +453,7 @@ export async function buildApp() {
         note: z.string().max(2000).default(""),
         height: z.number().positive().max(300).nullable(),
         requestId: z.uuid(),
+        tools: toolContextSchema.optional(),
       })
       .parse(req.body);
     const tz =
@@ -429,6 +463,14 @@ export async function buildApp() {
           .get(userId) as any
       )?.timezone || "Europe/Paris";
     if (e.date > localDate(tz)) fail("La date ne peut pas être dans le futur.");
+    const dateIssue = toolDateIssue(
+      e.tools ??
+        (entryId
+          ? getEntries(userId).find((x) => x.id === entryId)?.tools
+          : undefined),
+      e.date,
+    );
+    if (dateIssue) fail(dateIssue);
     const allowed = getMeasures(userId)
       .filter(
         (m) =>
@@ -467,7 +509,7 @@ export async function buildApp() {
         );
       else
         db.prepare(
-          "INSERT INTO entries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO entries (id,user_id,date,height,values_json,note,created_at,updated_at,request_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         ).run(
           id,
           userId,
@@ -479,6 +521,10 @@ export async function buildApp() {
           now,
           e.requestId,
         );
+      if (e.tools !== undefined)
+        db.prepare(
+          "UPDATE entries SET tools_json = ? WHERE id = ? AND user_id = ?",
+        ).run(JSON.stringify(e.tools), id, userId);
     })();
     return getEntries(userId).find((x) => x.id === id);
   };
@@ -676,36 +722,13 @@ export async function buildApp() {
         .all(s.user.id);
       const exported = {
         application: APP_NAME,
+        schemaVersion: EXPORT_SCHEMA_VERSION,
         exportedAt: new Date().toISOString(),
         account: { id: s.user.id, email: s.user.email },
         ...data,
         consentHistory: audit,
       };
-      const quote = (value: unknown) => {
-        let text = String(value ?? "");
-        if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
-        return '"' + text.replaceAll('"', '""') + '"';
-      };
-      const csv =
-        "\uFEFF" +
-        [
-          ["date", "fuseau", "mesure", "valeur", "unité", "stature_cm", "note"],
-          ...data.entries.flatMap((e) =>
-            Object.keys(e.values).length
-              ? Object.entries(e.values).map(([id, value]) => [
-                  e.date,
-                  data.profile.timezone,
-                  data.measures.find((m) => m.id === id)?.name ?? id,
-                  value,
-                  data.measures.find((m) => m.id === id)?.unit,
-                  e.height,
-                  e.note,
-                ])
-              : [[e.date, data.profile.timezone, "", "", "", e.height, e.note]],
-          ),
-        ]
-          .map((row) => row.map(quote).join(";"))
-          .join("\r\n");
+      const csv = accountCsv(data);
       reply.header(
         "Content-Disposition",
         `attachment; filename="${APP_SLUG}-${localDate()}.${opts.format}"`,

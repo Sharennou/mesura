@@ -41,7 +41,7 @@ Les paramètres publics sont dans `shared/cloud-config.ts`. Ne pas ajouter de se
 ## Migrations
 
 - Supabase : les quatre fichiers de `supabase/migrations/`, dans l’ordre numérique ; le dernier retire la condition de confirmation d’email des contrôles SQL de session.
-- Local : migrations Better Auth, puis les cinq fichiers de `server/migrations/`. `004_avatar.sql` garde la colonne de photo de profil privée ; `005_reminder_days.sql` ajoute les jours multiples.
+- Local : migrations Better Auth, puis les six fichiers de `server/migrations/`. `004_avatar.sql` garde la colonne de photo de profil privée ; `005_reminder_days.sql` ajoute les jours multiples.
 - L’avatar cloud et les jours multiples sont dans le JSON privé du compte ; aucune colonne Postgres supplémentaire n’était nécessaire.
 - Préserver les données réelles et les journaux de suppression. Ne jamais réinitialiser le projet de production pour tester.
 
@@ -92,6 +92,12 @@ Les callbacks Auth cloud sont aussi testés avec des réponses simulées. Un vé
 
 Les parcours mobiles sont corrigés sans changement de technologie, de modèle de données ou de backend. Voir [le diagnostic et le détail par écran](ux-parcours.md). Les nouvelles routes internes `entry`, `edit` et `profile` séparent consultation, modification et menu du compte. `src/useViewState.ts` conserve les choix d’écran en mémoire ; les brouillons de nouvelle mesure et d’édition restent indépendants et conservent leurs fichiers pendant les changements d’écran.
 
-Validation : compilations locale et cloud, 83 tests unitaires/API/cloud/SQL, 16 parcours mobiles à 390 × 844 et 360 × 800, axe et cibles tactiles, checks des chemins GitHub Pages et callbacks Auth simulés. Les tests de notifications utilisent un appareil simulé. L’essai sur vrais téléphones et la réception effective restent nécessaires.
+Validation de cette refonte, avant l’ajout des Outils : compilations locale et cloud, 83 tests unitaires/API/cloud/SQL, 16 parcours mobiles à 390 × 844 et 360 × 800, axe et cibles tactiles, checks des chemins GitHub Pages et callbacks Auth simulés. Les tests de notifications utilisent un appareil simulé. L’essai sur vrais téléphones et la réception effective restent nécessaires.
 
 Prévisualisation locale séparée : `http://127.0.0.1:5182`, base `.runtime/ux-preview/`. Le script `scripts/ux-preview.ts` prépare des comptes fictifs uniquement sur un hôte local en développement. Aucun déploiement n’a été effectué pendant cette session. Les tests Playwright attendent maintenant que `/api/config` soit prêt, pour ne pas confondre une API encore au démarrage avec une régression du parcours.
+
+## Outils — implémentation non publiée
+
+« Outils » remplace « IMC et ratios » dans Analyse. Les séances conservent l’âge calculable, l’équation choisie, la situation, les deux protocoles de tour de taille et la provenance de la hauteur. La migration locale `006_body_tools.sql` est additive ; le compte JSON cloud reçoit le nouveau catalogue sans modifier les anciennes mesures.
+
+Formules, restrictions et références : [dossier scientifique](outils-scientifiques.md). Bilan : 148 tests unitaires/API/cloud/SQL, 24 exécutions de parcours mobiles, contrôles cloud et Pages réussis ; voir [vérifications](verification.md). Publier l’API avant le frontend. Aucune publication ni migration des données de production effectuée pendant cette évolution.

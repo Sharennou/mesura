@@ -2666,3 +2666,97 @@ select {
 .comparison-point-label > div strong {
   color: var(--white);
 }
+
+/* Outils: native disclosure controls remain keyboard and screen-reader accessible. */
+.tools-grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+.tool-card.indicator-detail {
+  display: block;
+  padding: 20px;
+  border: 2px solid var(--ink);
+  min-width: 0;
+}
+.tool-card h3 {
+  font-size: 19px;
+  line-height: 1.35;
+  margin: 0 0 14px;
+}
+.tool-card .tool-value {
+  margin: 0 0 12px;
+  overflow-wrap: anywhere;
+}
+.tool-card .tool-value strong {
+  font-size: 30px;
+  line-height: 1.2;
+}
+.tool-card .tool-value span {
+  font-size: 15px;
+}
+.tool-details {
+  margin-top: 12px;
+  font-size: 14px;
+}
+.tool-details summary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-weight: 650;
+}
+.tool-details p,
+.tool-sources {
+  line-height: 1.6;
+}
+.tool-sources {
+  padding-left: 20px;
+  overflow-wrap: anywhere;
+}
+.tool-sources li + li {
+  margin-top: 16px;
+}
+.tool-trace {
+  margin: 4px 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.tool-trace > div {
+  margin-bottom: 12px;
+}
+.tool-trace dt {
+  font-weight: 650;
+}
+.tool-trace dd {
+  margin: 2px 0;
+}
+.tool-state,
+.tool-class {
+  padding: 12px;
+  background: #f1f1e9;
+  font-size: 14px;
+  line-height: 1.5;
+  border-left: 3px solid currentColor;
+}
+.tool-class-reference {
+  background: #edf6d2;
+}
+.tool-class-increased,
+.tool-class-high {
+  background: #fff0d9;
+}
+.tool-fields .field-label {
+  margin: 18px 0;
+}
+.tools-section select,
+.tool-fields select {
+  width: 100%;
+  min-width: 0;
+}
+.tool-card .text-button {
+  text-align: left;
+  min-height: 44px;
+}
+.tool-card summary:focus-visible {
+  outline: 3px solid var(--cobalt);
+  outline-offset: 3px;
+}

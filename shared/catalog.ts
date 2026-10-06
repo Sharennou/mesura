@@ -2,6 +2,7 @@ import type { Measure } from "./types.ts";
 export const STANDARD_MEASURES: Measure[] = [
   { id: "weight", name: "Poids", unit: "kg" },
   { id: "waist", name: "Tour de taille", unit: "cm" },
+  { id: "waist-rfm", name: "Tour de taille — RFM", unit: "cm" },
   { id: "hips", name: "Hanches", unit: "cm" },
   { id: "chest", name: "Poitrine", unit: "cm" },
   { id: "thigh-left", name: "Cuisse gauche", unit: "cm" },
