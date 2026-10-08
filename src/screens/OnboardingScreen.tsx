@@ -1,5 +1,5 @@
-import { SessionToolFields } from "../components/ToolFields";
-import { newToolContext } from "../../shared/body-tools";
+import { EquationFields } from "../components/ToolFields";
+import { EMPTY_TOOL_PROFILE } from "../../shared/body-tools";
 import { onboardingSchema } from "../../shared/onboarding";
 import { useState, type FormEvent } from "react";
 import { ArrowRight, LogOut } from "lucide-react";
@@ -15,10 +15,9 @@ export function OnboardingScreen() {
   const [height, setHeight] = useState(
     data.profile.height ? number(data.profile.height) : "",
   );
-  const [tools, setTools] = useState({
-    ...newToolContext(data.profile.toolProfile),
-    heightDate: data.profile.heightDate ?? null,
-  });
+  const [toolProfile, setToolProfile] = useState(
+    data.profile.toolProfile ?? { ...EMPTY_TOOL_PROFILE },
+  );
   const today = localDate(data.profile.timezone);
   const [choice, setChoice] = useState(data.goal ? "target" : "");
   const [measureId, setMeasureId] = useState(data.goal?.measureId || "weight");
@@ -61,26 +60,18 @@ export function OnboardingScreen() {
     }
     const payload = {
       height: h,
-      heightDate: tools.heightDate,
-      toolProfile: {
-        birthDate: tools.birthDate,
-        equation: tools.equation,
-        situation: tools.situation,
-        waistProtocol: tools.waistProtocol,
-        rfmWaistProtocol: tools.rfmWaistProtocol,
-      },
+      toolProfile,
       consent,
       version: CONSENT_VERSION,
       goal: choice === "target" ? { measureId, start: a, target: b } : null,
     };
-    if (
-      !onboardingSchema.safeParse(payload).success ||
-      tools.birthDate! > today ||
-      tools.heightDate! > today
-    ) {
-      setError(
-        "Complétez les données pour les outils avec des dates valides, jusqu’à aujourd’hui.",
-      );
+    const setup = onboardingSchema.safeParse(payload);
+    if (!setup.success) {
+      setError("Vérifiez les informations saisies.");
+      return;
+    }
+    if (setup.data.toolProfile.birthDate > today) {
+      setError("La date de naissance ne peut pas être dans le futur.");
       return;
     }
     setBusy(true);
@@ -100,15 +91,7 @@ export function OnboardingScreen() {
   }
   return (
     <>
-      <PageTitle
-        title="Votre point de départ."
-        eyebrow="Bienvenue dans votre espace"
-        back={false}
-      />
-      <p className="lead">
-        Votre hauteur, votre âge, le sexe utilisé pour les calculs et votre cap.
-        Ces repères restent modifiables dans votre profil.
-      </p>
+      <PageTitle title="Votre point de départ." back={false} />
       <form onSubmit={submit} className="stack">
         <label className="field-label">
           Votre hauteur en cm
@@ -120,18 +103,14 @@ export function OnboardingScreen() {
             value={height}
             onChange={(e) => setHeight(e.target.value)}
           />
-          <small>
-            Votre hauteur, pour calculer l’IMC. Ce n’est pas votre tour de
-            taille.
-          </small>
         </label>
-        <SessionToolFields
-          onboarding
-          value={tools}
-          onChange={setTools}
-          date={today}
-          height={height}
-          setHeight={setHeight}
+        <EquationFields
+          profile
+          required
+          compact
+          value={toolProfile}
+          onChange={setToolProfile}
+          maxDate={today}
         />
         <label className="field-label">
           Votre objectif
@@ -190,10 +169,6 @@ export function OnboardingScreen() {
                 />
               </label>
             </div>
-            <p className="small muted">
-              Pour maintenir votre mesure, indiquez la même valeur au départ et
-              à la cible.
-            </p>
           </>
         )}
         <label className="check-label">
@@ -204,10 +179,6 @@ export function OnboardingScreen() {
           />
           <span>{CONSENT_TEXTS.body}</span>
         </label>
-        <p className="small muted">
-          Les rappels sont facultatifs. Vous pourrez les activer quand vous en
-          aurez besoin.
-        </p>
         <ErrorMessage>{error}</ErrorMessage>
         <button type="submit" className="primary" disabled={busy}>
           {busy ? "Enregistrement…" : "Commencer mon suivi"}

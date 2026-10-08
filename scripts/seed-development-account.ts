@@ -124,7 +124,6 @@ for (const index of [26, 27]) {
     note: "[Données fictives] Séance complète pour les outils : adulte fictif, équation masculine, protocoles NICE et RFM distincts.",
     tools: {
       ...newToolContext(toolProfile),
-      situation: "none",
       waistProtocol: "nice-midpoint",
       rfmWaistProtocol: "iliac-crest",
       heightDate: sample.date,
@@ -255,7 +254,6 @@ try {
       heightDate: entries[0].date,
       toolProfile: {
         ...toolProfile,
-        situation: "none",
         waistProtocol: "nice-midpoint",
         rfmWaistProtocol: "iliac-crest",
       },

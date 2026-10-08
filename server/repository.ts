@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { rmSync } from "node:fs";
 import { resolve } from "node:path";
 import { DEFAULT_VISIBLE, STANDARD_MEASURES } from "../shared/catalog";
+import { toolContextSchema, toolProfileSchema } from "../shared/tool-schemas";
 import type {
   AccountData,
   ConsentPurpose,
@@ -32,7 +33,9 @@ export function getEntries(userId: string): Entry[] {
     date: row.date,
     createdAt: row.created_at,
     height: row.height,
-    ...(row.tools_json ? { tools: JSON.parse(row.tools_json) } : {}),
+    ...(row.tools_json
+      ? { tools: toolContextSchema.parse(JSON.parse(row.tools_json)) }
+      : {}),
     values: JSON.parse(row.values_json),
     note: row.note,
     photos: (
@@ -97,7 +100,11 @@ export function accountData(userId: string, name: string): AccountData {
       height: p?.height ?? null,
       heightDate: p?.height_date ?? null,
       ...(p?.tool_profile_json
-        ? { toolProfile: JSON.parse(p.tool_profile_json) }
+        ? {
+            toolProfile: toolProfileSchema.parse(
+              JSON.parse(p.tool_profile_json),
+            ),
+          }
         : {}),
       timezone: p?.timezone ?? "Europe/Paris",
       visible: p ? JSON.parse(p.visible) : DEFAULT_VISIBLE,

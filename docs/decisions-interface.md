@@ -1,6 +1,6 @@
 # Décisions d’interface validées
 
-État au 6 octobre 2026. Ces décisions résultent des demandes du propriétaire. Elles servent à éviter de réintroduire des éléments retirés.
+État au 8 octobre 2026. Ces décisions résultent des demandes du propriétaire. Elles servent à éviter de réintroduire des éléments retirés.
 
 ## Identité visuelle
 
@@ -49,10 +49,20 @@ Demandes suivantes pour Mesures : retirer « Ajouter d’autres mensurations » 
 
 ## Outils — évolution du 6 octobre 2026
 
-La nouvelle demande remplace « IMC et ratios » par « Outils » et réintroduit explicitement des accès « Comprendre le calcul » et « Sources et limites » dans chaque carte. Les repères IMC adultes ne sont plus attribués lorsque l’âge ou la situation est inconnu. Les liens `#analysis` restent compatibles.
+Décision initiale, remplacée par la simplification du 8 octobre ci-dessous : « Outils » remplaçait « IMC et ratios » avec « Comprendre le calcul » et « Sources et limites ». Les liens `#analysis` restent compatibles.
 
 ## Inscription et Mesures — évolution du 8 octobre 2026
 
-Les données des outils sont obligatoires au démarrage du compte : hauteur datée, naissance, choix explicite d’équation, situation et protocoles. Les réponses inconnues et le refus d’utiliser les équations restent possibles après un choix explicite. Ces réglages sont repris dans les nouvelles séances et modifiables dans le profil. Les comptes existants et leurs séances ne sont pas modifiés.
+L’inscription demande obligatoirement la hauteur, la naissance et le choix du sexe utilisé pour les calculs, puis l’objectif et le consentement. Après simplification demandée, retirer le titre « Données pour les outils », les textes d’aide et d’introduction, l’âge affiché, la situation actuelle, la date de mesure de la hauteur et les protocoles de l’inscription. Garder uniquement les libellés des questions, les champs et l’autorisation de suivi. Les renseignements complémentaires de hauteur et de protocole restent dans le profil ; aucune date de mesure n’est présumée.
 
-Les nouveaux comptes affichent uniquement poids, tour de taille et hanches. Toute autre mesure, y compris celle spécifique au RFM, s’ajoute dans « Personnaliser » les favoris. Le guide déroulant est conservé ; un lien « Guide » à droite de chaque nom ouvre directement la fiche correspondante, sans perdre le brouillon.
+Les nouveaux comptes affichent uniquement poids, tour de taille et hanches. Toute autre mesure, y compris celle spécifique au RFM, s’ajoute dans « Personnaliser » les favoris. Le guide déroulant est conservé ; un lien « Guide » à droite de chaque mensuration ouvre directement la fiche correspondante, sans perdre le brouillon. Le poids ne possède ni lien ni fiche dans le guide.
+
+## Analyse approfondie — simplification du 8 octobre 2026
+
+Remplacer « Outils » par « Analyse approfondie ». Le sélecteur de séance affiche uniquement le jour, le mois en toutes lettres et l’année ; retirer le texte juste en dessous. Dans chaque carte, conserver « Comprendre le calcul » et supprimer « Sources et limites », « Données utilisées » et « Compléter ou corriger cette séance ». La correction reste disponible par l’historique.
+
+Retirer le bloc « Données pour les outils » de Mesures. Les nouvelles séances reprennent la hauteur, la naissance et l’équation du profil ; les repères de mesure suivent les guides du catalogue sauf préférence explicite existante. Retirer toute situation déclarée du profil, des séances, des exports et des conditions des calculs. Ne pas attribuer rétroactivement de protocole aux anciennes séances.
+
+## Tour de taille / hauteur — ajustement du 8 octobre 2026
+
+La carte porte seulement « Tour de taille / hauteur ». Retirer sa phrase introductive sur l’adiposité et l’alerte « Mesurez le tour de taille […] Le protocole actuel est différent ou inconnu ». Le rapport utilise le tour de taille normal ; aucune mesure RFM n’est nécessaire. Les protocoles historiques restent conservés et les règles d’affichage des classifications sont inchangées.

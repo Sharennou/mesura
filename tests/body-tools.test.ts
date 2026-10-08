@@ -6,6 +6,8 @@ import { DateTime } from "luxon";
 import {
   ABDOMINAL_LABELS,
   TOOL_VERSION,
+  LEGACY_TOOL_VERSION,
+  newMeasurementToolContext,
   ageAt,
   classifyAbdominal,
   entryTools,
@@ -45,7 +47,6 @@ const session = (patch: Partial<Entry> = {}): Entry => ({
   photos: [],
   tools: {
     ...newToolContext({ birthDate: "1996-10-06", equation: "male" }),
-    situation: "none",
     heightDate: "2026-09-01",
     heightOrigin: "profile",
     waistProtocol: "nice-midpoint",
@@ -170,17 +171,29 @@ describe("Âge historique et éligibilité", () => {
       expect(entryTools(e).bmiReason).toBeTruthy();
     }
   });
-  it.each(["unknown", "pregnancy", "breastfeeding", "altered"] as const)(
-    "suspend en situation %s",
-    (situation) => {
-      const e = session();
-      e.tools!.situation = situation;
-      expect(entryTools(e).rfm.value).toBeNull();
-      expect(entryTools(e).energy.value).toBeNull();
-      expect(entryTools(e).abdominal.category).toBeNull();
-      expect(entryTools(e).abdominal.value).toBe(0.5);
-    },
-  );
+  it("lit les anciens contextes sans demander de déclaration supplémentaire", () => {
+    const e = session();
+    e.tools!.version = LEGACY_TOOL_VERSION;
+    const legacy = { ...e.tools, situation: "pregnancy" };
+    e.tools = toolContextSchema.parse(legacy);
+    expect(e.tools).not.toHaveProperty("situation");
+    expect(entryTools(e).rfm.value).toBe(24);
+    expect(entryTools(e).energy.value).toBe(1780);
+    expect(entryTools(e).abdominal.category).toBe("increased");
+  });
+  it("calcule une nouvelle séance depuis le profil et les champs du catalogue", () => {
+    const e = session({
+      tools: newMeasurementToolContext({
+        birthDate: "1996-10-06",
+        equation: "male",
+      }),
+    });
+    expect(e.tools!.heightDate).toBeNull();
+    expect(entryTools(e).rfm.value).toBe(24);
+    expect(entryTools(e).energy.value).toBe(1780);
+    expect(entryTools(e).abdominal.category).toBe("increased");
+    expect(e.tools!.version).toBe(TOOL_VERSION);
+  });
   it("équation non renseignée : aucun résultat fictif", () => {
     const e = session();
     e.tools!.equation = "unspecified";
@@ -207,8 +220,20 @@ describe("Protocoles, dates et absence de mélange des séances", () => {
       e.tools!.waistProtocol = protocol;
       expect(entryTools(e).abdominal.category).toBeNull();
       expect(entryTools(e).abdominal.value).toBe(0.5);
+      expect(entryTools(e).abdominal.reason).toBeNull();
     },
   );
+  it("le rapport tour de taille / hauteur utilise le tour normal sans mesure RFM", () => {
+    const e = session({ values: { weight: 80, waist: 90 } });
+    e.tools!.waistProtocol = "unknown";
+    const original = structuredClone(e);
+    const result = entryTools(e);
+    expect(result.abdominal.value).toBe(0.5);
+    expect(result.abdominal.reason).toBeNull();
+    expect(result.abdominal.category).toBeNull();
+    expect(result.rfm.value).toBeNull();
+    expect(e).toEqual(original);
+  });
   it("le RFM exige sa propre valeur et un protocole explicite", () => {
     const e = session();
     delete e.values["waist-rfm"];
@@ -253,7 +278,7 @@ describe("Protocoles, dates et absence de mélange des séances", () => {
     const e = session();
     expect(entryTools(e).rfm.value).toBe(24);
     e.tools!.heightDate = null;
-    expect(entryTools(e).rfm.reason).toContain("inconnue");
+    expect(entryTools(e).rfm.value).toBe(24);
     expect(entryTools(e).bmi).toBeCloseTo(24.691358);
   });
   it("préserve les anciens ratios sans attribuer de protocole", () => {

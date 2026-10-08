@@ -4,7 +4,7 @@ Les sources conservent leur précision. L’arrondi intervient à l’affichage 
 
 La limite technique des mesures est 100 000 unités, celle de la stature 300 cm. Ces limites n’ont pas de signification médicale. La virgule, le signe moins U+2212 et les espaces insécables sont communs aux écrans.
 
-Voir aussi le [dossier scientifique Outils](outils-scientifiques.md) pour les protocoles, formules, domaines d’application et sources vérifiées.
+Voir aussi le [dossier scientifique Analyse approfondie](outils-scientifiques.md) pour les protocoles, formules, domaines d’application et sources vérifiées.
 
 ## Indicateurs
 

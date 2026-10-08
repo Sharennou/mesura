@@ -52,7 +52,7 @@ afterAll(async () => {
 });
 
 describe("Outils : persistance locale et compatibilité", () => {
-  it("impose et enregistre les données des outils au démarrage, atomiquement", async () => {
+  it("demande seulement naissance et équation au démarrage, en conservant les réglages facultatifs existants", async () => {
     const { cookie } = await account("onboarding-tools@example.test");
     const payload = {
       ...onboardingTools,
@@ -64,9 +64,9 @@ describe("Outils : persistance locale et compatibilité", () => {
     for (const toolProfile of [
       undefined,
       { ...onboardingTools.toolProfile, birthDate: null },
-      { ...onboardingTools.toolProfile, situation: undefined },
-      { ...onboardingTools.toolProfile, waistProtocol: undefined },
-      { ...onboardingTools.toolProfile, rfmWaistProtocol: undefined },
+      { ...onboardingTools.toolProfile, equation: undefined },
+      { ...onboardingTools.toolProfile, waistProtocol: "invalid" },
+      { ...onboardingTools.toolProfile, rfmWaistProtocol: "nice-midpoint" },
       {
         ...onboardingTools.toolProfile,
         birthDate: "9999-01-01",
@@ -99,7 +99,7 @@ describe("Outils : persistance locale et compatibilité", () => {
       expect(unchanged.profile.onboardingCompleted).toBe(false);
       expect(unchanged.entries).toEqual([]);
     }
-    for (const heightDate of [undefined, null, "2000-02-30", "9999-01-01"]) {
+    for (const heightDate of ["2000-02-30", "9999-01-01"]) {
       expect(
         (
           await call(
@@ -115,13 +115,13 @@ describe("Outils : persistance locale et compatibilité", () => {
       ...onboardingTools.toolProfile,
       birthDate: "1996-10-05",
       equation: "male",
-      situation: "none",
       waistProtocol: "nice-midpoint",
+      rfmWaistProtocol: "iliac-crest",
     };
     const saved = await call(
       "POST",
       "/api/onboarding",
-      { ...payload, toolProfile },
+      { ...payload, toolProfile, heightDate: "2000-01-01" },
       cookie,
     );
     expect(saved.statusCode).toBe(200);
@@ -131,7 +131,7 @@ describe("Outils : persistance locale et compatibilité", () => {
     expect(reloaded.profile.toolProfile).toEqual(toolProfile);
     expect(reloaded.profile.onboardingCompleted).toBe(true);
     expect(reloaded.consents.body).toBe(true);
-    expect(reloaded.profile.heightDate).toBe(payload.heightDate);
+    expect(reloaded.profile.heightDate).toBe("2000-01-01");
     expect(newToolContext(reloaded.profile.toolProfile)).toMatchObject(
       toolProfile,
     );
@@ -143,7 +143,11 @@ describe("Outils : persistance locale et compatibilité", () => {
       cookie,
     );
     expect(cleared.statusCode).toBe(200);
-    expect(cleared.json().profile.toolProfile).toEqual(unspecified);
+    expect(cleared.json().profile.toolProfile).toEqual({
+      ...toolProfile,
+      ...unspecified,
+    });
+    expect(cleared.json().profile.heightDate).toBe("2000-01-01");
   });
   it("enregistre, recharge, exporte et conserve les métadonnées lors d’une correction ancienne", async () => {
     const user = await account("body-tools@example.test");
@@ -162,7 +166,6 @@ describe("Outils : persistance locale et compatibilité", () => {
     const { newToolContext } = await import("../shared/body-tools");
     const tools = {
       ...newToolContext({ birthDate: "1996-10-06", equation: "female" }),
-      situation: "none",
       waistProtocol: "nice-midpoint",
       rfmWaistProtocol: "iliac-crest",
       heightDate: "2026-09-01",
@@ -226,7 +229,7 @@ describe("Outils : persistance locale et compatibilité", () => {
     const json = (
       await call("POST", "/api/export", { format: "json" }, user.cookie)
     ).json();
-    expect(json.schemaVersion).toBe(2);
+    expect(json.schemaVersion).toBe(3);
     expect(json.entries.find((e: any) => e.id === id).tools).toEqual(tools);
     const csv = await call(
       "POST",

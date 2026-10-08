@@ -1,5 +1,8 @@
-import { SessionToolFields } from "../components/ToolFields";
-import { EMPTY_TOOL_PROFILE, newToolContext } from "../../shared/body-tools";
+import { ProfileToolFields } from "../components/ToolFields";
+import {
+  EMPTY_TOOL_PROFILE,
+  newMeasurementToolContext,
+} from "../../shared/body-tools";
 import { localDate } from "../../shared/calculations";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
@@ -274,31 +277,26 @@ export function ProfileScreen({
         </label>
         {data.consents.body && (
           <>
-            <SessionToolFields
-              profile
+            <ProfileToolFields
               value={{
-                ...newToolContext(toolProfile),
+                ...newMeasurementToolContext(toolProfile),
                 heightDate: heightDate || null,
               }}
               onChange={(value) => {
                 setToolProfile({
                   birthDate: value.birthDate,
                   equation: value.equation,
-                  situation: value.situation,
                   waistProtocol: value.waistProtocol,
                   rfmWaistProtocol: value.rfmWaistProtocol,
                 });
                 setHeightDate(value.heightDate ?? "");
               }}
               date={localDate(data.profile.timezone)}
-              height={height}
-              setHeight={setHeight}
             />
             <p className="small">
               Ces réglages seront proposés aux nouvelles séances. Les entrées
               déjà enregistrées restent inchangées. Une séance en cours garde
-              les informations déjà saisies ; vous pouvez les compléter dans ses
-              données pour les outils.
+              les informations déjà saisies.
             </p>
           </>
         )}

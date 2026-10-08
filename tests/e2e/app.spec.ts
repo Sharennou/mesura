@@ -126,9 +126,21 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
   await expect(page.getByLabel("Sexe utilisé pour les calculs")).toHaveValue(
     "",
   );
-  await expect(page.getByRole("status")).toContainText(
-    "Âge actuel : Non renseigné",
-  );
+  await expect(page.getByRole("status")).toHaveCount(0);
+  await expect(
+    page.getByText("Données pour les outils", { exact: true }),
+  ).toHaveCount(0);
+  await expect(page.getByLabel("Votre situation actuelle")).toHaveCount(0);
+  await expect(
+    page.getByLabel("Date de mesure de la hauteur", { exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByLabel("Protocole du tour de taille", { exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByLabel("Protocole de la mesure spécifique RFM"),
+  ).toHaveCount(0);
+  await expect(page.locator("form small")).toHaveCount(0);
   await page.getByLabel("Votre objectif").selectOption("observe");
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Commencer mon suivi" }).click();
@@ -140,18 +152,7 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
       .onboardingCompleted,
   ).toBe(false);
   await page.getByLabel("Date de naissance").fill(birthDate);
-  await expect(page.getByRole("status")).toContainText("Âge actuel : 30 ans");
   await page.getByLabel("Sexe utilisé pour les calculs").selectOption("female");
-  await page.getByLabel("Votre situation actuelle").selectOption("none");
-  await page
-    .getByLabel("Date de mesure de la hauteur", { exact: true })
-    .fill("2000-01-01");
-  await page
-    .getByLabel("Protocole du tour de taille", { exact: true })
-    .selectOption("nice-midpoint");
-  await page
-    .getByLabel("Protocole de la mesure spécifique RFM")
-    .selectOption("unknown");
   await page.getByLabel("Votre objectif").selectOption("observe");
   await page.getByRole("checkbox").check();
   await page.route("**/api/onboarding", (route) => route.abort());
@@ -207,20 +208,12 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
     push: false,
     email: false,
   });
-  await page.getByText("Données pour les outils", { exact: true }).click();
-  await expect(page.getByLabel("Date de naissance")).toHaveValue(birthDate);
   await expect(
-    page.getByLabel("Équation pour le RFM et la dépense au repos"),
-  ).toHaveValue("female");
-  await expect(page.getByLabel("Situation à la date de la séance")).toHaveValue(
-    "none",
-  );
+    page.getByText("Données pour les outils", { exact: true }),
+  ).toHaveCount(0);
   await expect(
-    page.getByLabel("Protocole du tour de taille", { exact: true }),
-  ).toHaveValue("nice-midpoint");
-  await expect(
-    page.getByLabel("Date de mesure de la hauteur", { exact: true }),
-  ).toHaveValue("2000-01-01");
+    page.getByRole("button", { name: "Guide : Poids", exact: true }),
+  ).toHaveCount(0);
   await page.goto("/#reminder");
   await page.getByRole("button", { name: "Mercredi", exact: true }).click();
   await page.getByRole("button", { name: "Vendredi", exact: true }).click();
@@ -253,13 +246,9 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
   ).toBeVisible();
   await page.getByLabel("Sexe utilisé pour les calculs").focus();
   await page.keyboard.press("Tab");
-  await expect(page.getByLabel("Votre situation actuelle")).toBeFocused();
-  await page.keyboard.press("Tab");
   await expect(
     page.getByLabel("Date de mesure de la hauteur du profil"),
   ).toBeFocused();
-  await page.keyboard.press("Shift+Tab");
-  await expect(page.getByLabel("Votre situation actuelle")).toBeFocused();
   await page.keyboard.press("Shift+Tab");
   await expect(page.getByLabel("Sexe utilisé pour les calculs")).toBeFocused();
   await page.getByLabel("Sexe utilisé pour les calculs").selectOption("male");
@@ -341,14 +330,9 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
       .locator("img"),
   ).toHaveCount(0);
   await page.goto("/#measure");
-  await page.getByText("Données pour les outils", { exact: true }).click();
-  await expect(page.getByLabel("Date de naissance")).toHaveValue(
-    correctedBirthDate,
-  );
   await expect(
-    page.getByLabel("Équation pour le RFM et la dépense au repos"),
-  ).toHaveValue("male");
-  await page.getByText("Données pour les outils", { exact: true }).click();
+    page.getByText("Données pour les outils", { exact: true }),
+  ).toHaveCount(0);
   await expect(page.getByLabel("Poids", { exact: true })).toHaveValue("");
   await expect(page.getByLabel("Tour de taille en cm")).toHaveValue("");
   await expect(page.getByLabel("Note de cette entrée")).toHaveValue("");

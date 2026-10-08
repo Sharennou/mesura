@@ -83,4 +83,4 @@ Cette convention est « au plus une tentative » : une erreur après revendicati
 
 ## Contexte des outils
 
-Les séances conservent `tools` et les profils peuvent préparer `toolProfile` et `heightDate`. La migration SQLite 006 est additive ; les comptes JSON cloud sont adaptés sans attribuer de protocole aux anciennes mesures. Formules, règles, exports et versionnement : [dossier Outils](outils-scientifiques.md).
+Les séances conservent `tools` et les profils peuvent préparer `toolProfile` et `heightDate`. Les nouvelles saisies reprennent ces informations automatiquement avec les repères du catalogue, sans formulaire complémentaire dans Mesures. Les schémas acceptent les contextes v1/v2 et retirent le champ de situation obsolète lors de la lecture locale/cloud. La migration SQLite 006 reste suffisante ; les anciennes valeurs et les protocoles inconnus sont conservés. Les exports utilisent le schéma 3. Formules et règles : [dossier Analyse approfondie](outils-scientifiques.md).

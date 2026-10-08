@@ -60,6 +60,13 @@ export function emptyCloudAccount(
 }
 export function upgradeCloudAccount(a: CloudAccount): CloudAccount {
   const next = structuredClone(a);
+  if (next.profile.toolProfile)
+    next.profile.toolProfile = toolProfileSchema.parse(
+      next.profile.toolProfile,
+    );
+  for (const entry of next.entries) {
+    if (entry.tools) entry.tools = toolContextSchema.parse(entry.tools);
+  }
   for (const measure of STANDARD_MEASURES) {
     if (!next.measures.some((m) => m.id === measure.id))
       next.measures.push(structuredClone(measure));
@@ -123,7 +130,10 @@ export function mutateCloudAccount(
   if (resource === "onboarding" && method === "POST") {
     const setup = onboardingSchema.parse(raw);
     const today = now.setZone(a.profile.timezone).toISODate()!;
-    if (setup.toolProfile.birthDate > today || setup.heightDate > today)
+    if (
+      setup.toolProfile.birthDate > today ||
+      (setup.heightDate && setup.heightDate > today)
+    )
       cloudFail("Une date du profil est dans le futur. Vérifiez-la.");
     if (
       setup.goal &&
@@ -140,9 +150,9 @@ export function mutateCloudAccount(
         date: now.toISO()!,
       });
     }
-    a.profile.toolProfile = setup.toolProfile;
+    a.profile.toolProfile = { ...a.profile.toolProfile, ...setup.toolProfile };
     a.profile.height = setup.height;
-    a.profile.heightDate = setup.heightDate;
+    if (setup.heightDate !== undefined) a.profile.heightDate = setup.heightDate;
     a.profile.onboardingCompleted = true;
     a.goal = setup.goal
       ? {

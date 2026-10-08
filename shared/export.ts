@@ -1,6 +1,6 @@
 import type { AccountData } from "./types.ts";
 import { TOOL_VERSION } from "./body-tools.ts";
-/** Append-only CSV columns preserve the seven original columns for old consumers. */
+/** The first seven CSV columns remain compatible; later metadata is versioned. */
 export function accountCsv(a: AccountData) {
   const rows: unknown[][] = [
     [
@@ -18,7 +18,6 @@ export function accountCsv(a: AccountData) {
       "hauteur_origine",
       "naissance",
       "equation",
-      "situation",
       "version_contexte",
       "version_calcul",
     ],
@@ -42,7 +41,6 @@ export function accountCsv(a: AccountData) {
         e.tools?.heightOrigin ?? "legacy",
         e.tools?.birthDate ?? "",
         e.tools?.equation ?? "unspecified",
-        e.tools?.situation ?? "unknown",
         e.tools?.version ?? "",
         TOOL_VERSION,
       ]);
@@ -63,4 +61,4 @@ export function accountCsv(a: AccountData) {
       .join("\r\n")
   );
 }
-export const EXPORT_SCHEMA_VERSION = 2;
+export const EXPORT_SCHEMA_VERSION = 3;

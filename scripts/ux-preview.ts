@@ -39,7 +39,6 @@ for (const [name, count] of [
         toolProfile: {
           birthDate: "1996-01-01",
           equation: "unspecified",
-          situation: "unknown",
           waistProtocol: "unknown",
           rfmWaistProtocol: "unknown",
         },

@@ -1,22 +1,19 @@
 import type { Entry } from "./types.ts";
 import { bmi, ratio, number } from "./calculations.ts";
 
-/** Immutable algorithm identifier: add a new implementation before changing rules. */
-export const TOOL_VERSION = "mesura-tools-v1" as const;
+/** Current calculation rules; legacy context identifiers remain readable. */
+export const TOOL_VERSION = "mesura-tools-v2" as const;
+export const LEGACY_TOOL_VERSION = "mesura-tools-v1" as const;
 export type Equation = "unspecified" | "male" | "female";
-export type Situation =
-  "unknown" | "none" | "pregnancy" | "breastfeeding" | "altered";
 export type WaistProtocol = "unknown" | "nice-midpoint" | "iliac-crest";
 export interface ToolProfile {
   birthDate: string | null;
   equation: Equation;
-  situation?: Situation;
   waistProtocol?: WaistProtocol;
   rfmWaistProtocol?: "unknown" | "iliac-crest";
 }
 export interface ToolContext extends ToolProfile {
-  version: typeof TOOL_VERSION;
-  situation: Situation;
+  version: typeof TOOL_VERSION | typeof LEGACY_TOOL_VERSION;
   waistProtocol: WaistProtocol;
   rfmWaistProtocol: "unknown" | "iliac-crest";
   heightDate: string | null;
@@ -31,7 +28,6 @@ export const newToolContext = (
 ): ToolContext => ({
   ...profile,
   version: TOOL_VERSION,
-  situation: profile.situation ?? "unknown",
   waistProtocol: profile.waistProtocol ?? "unknown",
   rfmWaistProtocol: profile.rfmWaistProtocol ?? "unknown",
   heightDate: null,
@@ -42,13 +38,20 @@ export const PROTOCOL_LABELS: Record<WaistProtocol, string> = {
   "nice-midpoint": "Mi-distance côte–crête iliaque (NICE)",
   "iliac-crest": "Bord supérieur de la crête iliaque droite (RFM)",
 };
-export const SITUATION_LABELS: Record<Situation, string> = {
-  unknown: "Non renseignée",
-  none: "Aucune de ces situations",
-  pregnancy: "Grossesse",
-  breastfeeding: "Allaitement",
-  altered: "Condition modifiant fortement la composition corporelle",
-};
+// The standard entry fields follow their catalogue guides. Saved sessions keep
+// their original context, including unknown legacy protocols.
+export function newMeasurementToolContext(
+  profile?: ToolProfile,
+  heightDate: string | null = null,
+): ToolContext {
+  return {
+    ...newToolContext(profile),
+    waistProtocol: profile?.waistProtocol ?? "nice-midpoint",
+    rfmWaistProtocol: profile?.rfmWaistProtocol ?? "iliac-crest",
+    heightDate,
+    heightOrigin: "profile",
+  };
+}
 export const EQUATION_LABELS: Record<Equation, string> = {
   unspecified: "Non renseigné",
   male: "Équation masculine",
@@ -167,8 +170,11 @@ export function adultEligibility(
   min = 18,
   max?: number,
 ): string | null {
-  if (!context || context.version !== TOOL_VERSION)
-    return "Contexte de cette séance non renseigné. Complétez les données pour activer cet outil.";
+  if (
+    !context ||
+    ![TOOL_VERSION, LEGACY_TOOL_VERSION].includes(context.version)
+  )
+    return "La naissance et le sexe utilisés pour les calculs ne sont pas connus pour cette séance.";
   const age = ageAt(context.birthDate, date);
   if (age === null)
     return "Date de naissance manquante ou incompatible avec la date de la séance.";
@@ -176,19 +182,13 @@ export function adultEligibility(
     return max === undefined
       ? "Les repères adultes ne sont pas appliqués avant 18 ans."
       : `Calcul automatique réservé à ${min}–${max} ans dans cette version de Mesura (âge à la séance : ${age} ans).`;
-  if (context.situation === "unknown")
-    return "Renseignez la situation à la date de cette séance.";
-  if (context.situation !== "none")
-    return "Estimation et classification suspendues pour cette situation (grossesse, allaitement ou composition corporelle particulière). Un avis professionnel adapté est nécessaire.";
   return null;
 }
 function heightEligibility(entry: Entry): string | null {
   if (!positive(entry.height))
     return "Hauteur corporelle manquante ou invalide.";
   const date = entry.tools?.heightDate;
-  if (!validDate(date))
-    return "Date de mesure de la hauteur inconnue. Vérifiez sa provenance avant le calcul.";
-  if (date > entry.date)
+  if (validDate(date) && date > entry.date)
     return "La hauteur provient d’une date ultérieure à cette séance. Renseignez une hauteur mesurée à cette date ou avant.";
   return null;
 }
@@ -213,9 +213,6 @@ export function entryTools(entry: Entry) {
           : null,
       adultReason,
       heightEligibility(entry),
-      c?.waistProtocol !== "nice-midpoint"
-        ? "Mesurez le tour de taille à mi-distance côte–crête iliaque selon NICE. Le protocole actuel est différent ou inconnu."
-        : null,
       rth === null ? "Ajoutez un tour de taille valide à cette séance." : null,
     ]
       .filter(Boolean)
@@ -257,7 +254,10 @@ export function entryTools(entry: Entry) {
     abdominal: {
       value: rth,
       reason: abdominalReason,
-      category: abdominalReason ? null : classifyAbdominal(rth, b),
+      category:
+        !abdominalReason && c?.waistProtocol === "nice-midpoint"
+          ? classifyAbdominal(rth, b)
+          : null,
     },
     rfm: {
       value: rfmValue,

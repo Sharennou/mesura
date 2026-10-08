@@ -1,31 +1,19 @@
 import { z } from "zod";
-import { validDate, TOOL_VERSION } from "./body-tools.ts";
+import { validDate, TOOL_VERSION, LEGACY_TOOL_VERSION } from "./body-tools.ts";
 export const toolDateSchema = z.string().refine(validDate, "Date invalide.");
-const situationSchema = z.enum([
-  "unknown",
-  "none",
-  "pregnancy",
-  "breastfeeding",
-  "altered",
-]);
 const waistProtocolSchema = z.enum(["unknown", "nice-midpoint", "iliac-crest"]);
 const rfmWaistProtocolSchema = z.enum(["unknown", "iliac-crest"]);
 export const toolProfileSchema = z.object({
   birthDate: toolDateSchema.nullable(),
   equation: z.enum(["unspecified", "male", "female"]),
-  situation: situationSchema.optional(),
   waistProtocol: waistProtocolSchema.optional(),
   rfmWaistProtocol: rfmWaistProtocolSchema.optional(),
 });
 export const onboardingToolProfileSchema = toolProfileSchema.extend({
   birthDate: toolDateSchema,
-  situation: situationSchema,
-  waistProtocol: waistProtocolSchema,
-  rfmWaistProtocol: rfmWaistProtocolSchema,
 });
 export const toolContextSchema = toolProfileSchema.extend({
-  version: z.literal(TOOL_VERSION),
-  situation: situationSchema,
+  version: z.enum([TOOL_VERSION, LEGACY_TOOL_VERSION]),
   waistProtocol: waistProtocolSchema,
   rfmWaistProtocol: rfmWaistProtocolSchema,
   heightDate: toolDateSchema.nullable(),

@@ -1,5 +1,5 @@
 import { useId, type Ref } from "react";
-import { ChevronDown, Ruler, Scale } from "lucide-react";
+import { ChevronDown, Ruler } from "lucide-react";
 import { Icon } from "../components";
 import { useViewState } from "../useViewState";
 import {
@@ -319,7 +319,7 @@ export function MeasurementGuide({
   favorites: string[];
   ref?: Ref<HTMLDetailsElement>;
 }) {
-  const available = measures.filter((m) => !m.archived);
+  const available = measures.filter((m) => m.id !== "weight" && !m.archived);
   const preferred = favorites.flatMap((id) =>
     available.filter((m) => m.id === id),
   );
@@ -328,7 +328,9 @@ export function MeasurementGuide({
     preferred[0]?.id ?? available[0]?.id ?? "waist",
   );
   const [open, setOpen] = useViewState("measure.guide.open", false);
-  const selectable = measures.filter((m) => !m.archived || m.id === selectedId);
+  const selectable = measures.filter(
+    (m) => m.id !== "weight" && (!m.archived || m.id === selectedId),
+  );
   const others = selectable.filter(
     (m) => !preferred.some((p) => p.id === m.id),
   );
@@ -414,25 +416,7 @@ export function MeasurementGuide({
                 de votre corps. Gardez ce côté à chaque séance.
               </p>
             )}
-            {selected.id === "weight" ? (
-              <>
-                <div className="guide-custom-illustration" aria-hidden="true">
-                  <Icon as={Scale} size={48} />
-                  <span>La même balance, au même endroit</span>
-                </div>
-                <ol className="guide-steps">
-                  <li>Posez la balance sur un sol dur, plat et stable.</li>
-                  <li>
-                    Pesez-vous dans des conditions similaires, à la même heure
-                    et avec une tenue comparable.
-                  </li>
-                  <li>
-                    Restez immobile au centre de la balance. Attendez que la
-                    valeur se stabilise et notez-la en kg.
-                  </li>
-                </ol>
-              </>
-            ) : guide ? (
+            {guide ? (
               <>
                 <p className="guide-landmark">{guide.landmark}</p>
                 <Diagram

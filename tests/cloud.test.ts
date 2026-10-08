@@ -37,7 +37,7 @@ const consent = (
   change(a, "POST", "/consents", { purpose, granted, version: CONSENT_VERSION })
     .account;
 describe("Sauvegarde distante", () => {
-  it("impose les données des outils au démarrage et les conserve sans toucher au compte lors d’un rejet", () => {
+  it("demande seulement naissance et équation au démarrage, en conservant les réglages facultatifs existants", () => {
     const before = emptyCloudAccount("Alice", "Europe/Paris");
     const payload = {
       ...onboardingTools,
@@ -49,9 +49,9 @@ describe("Sauvegarde distante", () => {
     for (const toolProfile of [
       undefined,
       { ...onboardingTools.toolProfile, birthDate: null },
-      { ...onboardingTools.toolProfile, situation: undefined },
-      { ...onboardingTools.toolProfile, waistProtocol: undefined },
-      { ...onboardingTools.toolProfile, rfmWaistProtocol: undefined },
+      { ...onboardingTools.toolProfile, equation: undefined },
+      { ...onboardingTools.toolProfile, waistProtocol: "invalid" },
+      { ...onboardingTools.toolProfile, rfmWaistProtocol: "nice-midpoint" },
       {
         ...onboardingTools.toolProfile,
         birthDate: "2026-10-06",
@@ -77,7 +77,7 @@ describe("Sauvegarde distante", () => {
       expect(before.profile.onboardingCompleted).toBe(false);
       expect(before.audit).toEqual([]);
     }
-    for (const heightDate of [undefined, null, "2000-02-30", "2026-10-06"]) {
+    for (const heightDate of ["2000-02-30", "2026-10-06"]) {
       expect(() =>
         change(before, "POST", "/onboarding", { ...payload, heightDate }),
       ).toThrow();
@@ -86,21 +86,25 @@ describe("Sauvegarde distante", () => {
       ...onboardingTools.toolProfile,
       birthDate: "1996-10-05",
       equation: "female",
-      situation: "none",
       waistProtocol: "nice-midpoint",
+      rfmWaistProtocol: "iliac-crest",
     };
     const saved = change(before, "POST", "/onboarding", {
       ...payload,
       toolProfile,
+      heightDate: "2000-01-01",
     }).account;
     expect(publicCloudAccount(saved).profile.toolProfile).toEqual(toolProfile);
-    expect(saved.profile.heightDate).toBe(payload.heightDate);
+    expect(saved.profile.heightDate).toBe("2000-01-01");
     expect(newToolContext(saved.profile.toolProfile)).toMatchObject(
       toolProfile,
     );
-    expect(
-      change(saved, "POST", "/onboarding", payload).account.profile.toolProfile,
-    ).toEqual(payload.toolProfile);
+    const simplified = change(saved, "POST", "/onboarding", payload).account;
+    expect(simplified.profile.toolProfile).toEqual({
+      ...toolProfile,
+      ...payload.toolProfile,
+    });
+    expect(simplified.profile.heightDate).toBe("2000-01-01");
     expect(before.profile.toolProfile).toBeUndefined();
   });
   it("enregistre le démarrage en un seul changement sans activer les options", () => {
@@ -135,6 +139,8 @@ describe("Sauvegarde distante", () => {
     });
     expect(after.goal).toEqual({ ...payload.goal, startDate: "2026-10-05" });
     expect(after.entries).toEqual([]);
+    expect(after.profile.toolProfile).toEqual(payload.toolProfile);
+    expect(after.profile.heightDate ?? null).toBeNull();
     expect(after.audit).toHaveLength(1);
     const updated = change(after, "PATCH", "/profile", {
       ...after.profile,

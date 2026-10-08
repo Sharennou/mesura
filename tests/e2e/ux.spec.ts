@@ -224,12 +224,12 @@ test("guide illustré : repères, côtés, mesure personnalisée et brouillon co
     .press("Enter");
   await expect(choose).toHaveValue("hips");
   await expect(waist).toHaveValue("82,4");
-  await summary.click();
-  await page
-    .getByRole("button", { name: "Guide : Poids", exact: true })
-    .click();
-  await expect(choose).toHaveValue("weight");
-  await expect(guide.locator(".guide-steps li")).toHaveCount(3);
+  await expect(
+    page.getByRole("button", { name: "Guide : Poids", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    choose.getByRole("option", { name: "Poids", exact: true }),
+  ).toHaveCount(0);
   await choose.selectOption("waist");
   await guide.evaluate((el) => el.scrollIntoView({ block: "start" }));
   await screenshot(page, "guide-taille", info.project.name, false);
@@ -940,7 +940,7 @@ test("analyse : plusieurs courbes, indicateurs visibles et périodes à partir d
   );
   // Old sessions do not establish adult age or clinical context.
   await expect(page.locator(".bmi-zone-label")).toHaveCount(0);
-  await expect(page.locator(".indicator-explanation")).toHaveCount(5);
+  await expect(page.locator(".indicator-explanation")).toHaveCount(4);
   await expect(
     page.getByText("Derniers indicateurs de la période sélectionnée."),
   ).toHaveCount(0);

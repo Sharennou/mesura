@@ -24,7 +24,7 @@ Le service SMTP Auth Brevo ne configure pas automatiquement les rappels email de
 | ------------------------------------------------ | ------------------------------------------------------ |
 | `src/App.tsx`                                    | Session, accès aux écrans, démarrage et navigation     |
 | `src/screens/Account.tsx`                        | Inscription, connexion et récupération                 |
-| `src/screens/OnboardingScreen.tsx`               | Données obligatoires des outils et objectif après inscription |
+| `src/screens/OnboardingScreen.tsx`               | Hauteur, naissance, sexe des calculs et objectif après inscription |
 | `src/screens/Measure.tsx`, `Analysis.tsx`        | Mesures et analyse                                     |
 | `src/screens/ProfileScreen.tsx`                  | Pseudo, données des outils et photo de profil |
 | `src/screens/Reminder.tsx`                       | Jours hebdomadaires, heure et canal                    |
@@ -96,15 +96,15 @@ Validation de cette refonte, avant l’ajout des Outils : compilations locale et
 
 Prévisualisation locale séparée : `http://127.0.0.1:5182`, base `.runtime/ux-preview/`. Le script `scripts/ux-preview.ts` prépare des comptes fictifs uniquement sur un hôte local en développement. Aucun déploiement n’a été effectué pendant cette session. Les tests Playwright attendent maintenant que `/api/config` soit prêt, pour ne pas confondre une API encore au démarrage avec une régression du parcours.
 
-## Outils — implémentation non publiée
+## Analyse approfondie — implémentation non publiée
 
-« Outils » remplace « IMC et ratios » dans Analyse. Les séances conservent l’âge calculable, l’équation choisie, la situation, les deux protocoles de tour de taille et la provenance de la hauteur. La migration locale `006_body_tools.sql` est additive ; le compte JSON cloud reçoit le nouveau catalogue sans modifier les anciennes mesures.
+« Analyse approfondie » remplace « Outils » dans Analyse. Les séances conservent l’âge calculable, l’équation choisie, les deux protocoles de tour de taille et la provenance de la hauteur. La situation déclarée est retirée de l’interface et des règles de calcul. La migration locale `006_body_tools.sql` est additive ; le compte JSON cloud reçoit le nouveau catalogue sans modifier les anciennes mesures.
 
-Formules, restrictions et références : [dossier scientifique](outils-scientifiques.md). L’inscription et le profil exposent directement la naissance (âge calculé) et le sexe utilisé pour les équations, sans nouveau champ de stockage ni modification rétroactive des séances. Bilan : 150 tests unitaires/API/cloud/SQL, 24 exécutions de parcours mobiles, contrôles cloud et Pages réussis ; voir [vérifications](verification.md). Publier l’API avant le frontend. Aucune publication ni migration des données de production effectuée pendant cette évolution.
+Formules, restrictions et références : [dossier scientifique](outils-scientifiques.md). L’inscription et le profil exposent directement la naissance (âge calculé) et le sexe utilisé pour les équations, sans nouveau champ de stockage ni modification rétroactive des séances. Voir les résultats actualisés dans [vérifications](verification.md). Publier l’API avant le frontend. Aucune publication ni migration des données de production effectuée pendant cette évolution.
 
 
 ## Inscription et Mesures — 8 octobre 2026, non publié
 
-Le démarrage impose désormais les données des outils, dont la hauteur datée, la naissance, l’équation et les réponses de situation/protocole. La validation partagée est stricte sur `/onboarding`, mais les profils existants gardent leur compatibilité. Les nouveaux comptes utilisent uniquement `waist` et `hips` comme favoris, en plus de la carte de poids. La mesure RFM s’ajoute par les favoris ; les anciennes valeurs non favorites restent éditables. Chaque nom de mesure possède un accès direct à sa fiche du guide.
+Le démarrage impose hauteur, naissance et choix du sexe utilisé pour les calculs. Le formulaire a été simplifié à la demande : aucun titre de bloc ou texte d’aide, situation, date de hauteur ni protocole. La validation partagée est stricte sur `/onboarding`, mais les profils existants gardent leur compatibilité. Les nouveaux comptes utilisent uniquement `waist` et `hips` comme favoris, en plus de la carte de poids. La mesure RFM s’ajoute par les favoris ; les anciennes valeurs non favorites restent éditables. Chaque mensuration possède un accès direct à sa fiche du guide ; le poids est exclu.
 
-Les préférences supplémentaires sont facultatives dans le JSON du profil et requises seulement au démarrage ; aucune migration SQL supplémentaire n’est nécessaire. Les nouvelles séances reprennent ces préférences, les séances anciennes et les brouillons conservent leur contexte. Les scripts de comptes fictifs et les vérifications des callbacks cloud ont été adaptés au contrat obligatoire. Voir [les vérifications du 8 octobre](verification.md).
+Les préférences supplémentaires sont facultatives dans le JSON du profil et dans le contrat de démarrage ; aucune migration SQL supplémentaire n’est nécessaire. Les nouvelles séances reprennent le profil et les repères des guides du catalogue ; le formulaire « Données pour les outils » est retiré de Mesures. Les séances anciennes et les brouillons conservent leur contexte, dont les protocoles inconnus, hors situation désormais ignorée. Les règles v2 lisent aussi les contextes v1. Les réponses des API et les exports au schéma 3 ne renvoient plus le champ de situation. Aucune nouvelle migration SQL ni purge des comptes réels n’a été exécutée. Les cartes d’analyse conservent uniquement « Comprendre le calcul » et le sélecteur affiche la date en toutes lettres, sans identifiant ni texte dessous. Les scripts de comptes fictifs et les vérifications des callbacks cloud ont été adaptés au contrat obligatoire. Voir [les vérifications du 8 octobre](verification.md).

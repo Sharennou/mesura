@@ -5,7 +5,7 @@ import { CONSENT_VERSION } from "./config.ts";
 // Une seule validation pour la transaction locale et le compte cloud.
 export const onboardingSchema = z.object({
   height: z.number().finite().positive().max(300),
-  heightDate: toolDateSchema,
+  heightDate: toolDateSchema.nullable().optional(),
   toolProfile: onboardingToolProfileSchema,
   consent: z.literal(true),
   version: z.literal(CONSENT_VERSION),

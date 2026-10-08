@@ -295,10 +295,12 @@ export async function buildApp() {
   app.post("/api/onboarding", async (req) => {
     const s = await owner(req);
     const setup = onboardingSchema.parse(req.body);
-    const today = localDate(
-      accountData(s.user.id, s.user.name).profile.timezone,
-    );
-    if (setup.toolProfile.birthDate > today || setup.heightDate > today)
+    const profile = accountData(s.user.id, s.user.name).profile;
+    const today = localDate(profile.timezone);
+    if (
+      setup.toolProfile.birthDate > today ||
+      (setup.heightDate && setup.heightDate > today)
+    )
       fail("Une date du profil est dans le futur. Vérifiez-la.");
     if (
       setup.goal &&
@@ -320,10 +322,19 @@ export async function buildApp() {
         );
       db.prepare(
         "UPDATE profiles SET height = ?, height_date = ?, onboarding_completed = 1 WHERE user_id = ?",
-      ).run(setup.height, setup.heightDate, s.user.id);
+      ).run(
+        setup.height,
+        setup.heightDate !== undefined
+          ? setup.heightDate
+          : (profile.heightDate ?? null),
+        s.user.id,
+      );
       db.prepare(
         "UPDATE profiles SET tool_profile_json = ? WHERE user_id = ?",
-      ).run(JSON.stringify(setup.toolProfile), s.user.id);
+      ).run(
+        JSON.stringify({ ...profile.toolProfile, ...setup.toolProfile }),
+        s.user.id,
+      );
       if (setup.goal)
         db.prepare(
           "INSERT INTO goals VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET measure_id=excluded.measure_id, start=excluded.start, target=excluded.target, start_date=excluded.start_date",

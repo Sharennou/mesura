@@ -4,7 +4,7 @@
 
 Les jeux de données des tests sont fictifs ; l’application ne contient aucune donnée de démonstration. Les tests d’API utilisent une base temporaire supprimée à la fin. Chaque format mobile démarre son propre serveur sur les ports 5181 / 3011, avec une base isolée dans `.runtime/e2e-*` et sans email externe. Ils créent puis suppriment leur compte de test. Ils ne réutilisent pas le serveur ni les données personnelles de développement.
 
-Validation : compilation locale et GitHub Pages, **150 tests de calculs / API / Postgres cloud** et **24 exécutions Playwright (12 parcours sur deux formats)**, avec contrôles axe sur les écrans parcourus à 390 et 360 px.
+Validation : compilation locale et GitHub Pages, **149 tests de calculs / API / Postgres cloud** et **24 exécutions Playwright (12 parcours sur deux formats)**, avec contrôles axe sur les écrans parcourus à 390 et 360 px.
 
 - Point / virgule, valeurs manquantes ou invalides, précision et affichage.
 - IMC, ratios d’une même entrée, stature historique et divisions par zéro.
@@ -20,8 +20,8 @@ Validation : compilation locale et GitHub Pages, **150 tests de calculs / API / 
 - Playwright à 390 × 844 et 360 × 800 : navigation, débordements, axe WCAG, compte / connexion immédiate, saisie, sauvegarde, rechargement, correction, note comme texte, export et suppression.
 - Connexion obligatoire au premier affichage, aucun accès aux écrans de suivi pendant la vérification de session, liens directs protégés, confirmation email supprimée, compte initial vide et retour au formulaire après déconnexion ou suppression.
 - Compilation cloud sous `/mesura/` : formulaire de compte, bascule vers la connexion, rechargement, protection des liens directs et portée du service worker.
-- Démarrage après inscription : hauteur et date de mesure obligatoires, naissance obligatoire, âge affiché, choix explicites d’équation, de situation et de protocoles, cible ou suivi sans cible, une autorisation de suivi, conservation des champs après échec, transaction sans activation partielle et reprise sans afficher le démarrage une deuxième fois.
-- Profil : naissance et sexe/équation visibles sans panneau à ouvrir, âge recalculé, parcours du clavier, contrôles axe, modification persistante après rechargement et reprise dans les nouvelles séances. API locale et cloud : rejet atomique des dates impossibles/futures et équations inconnues ; réponse explicitement inconnue ou sans équation acceptée ; omission au démarrage refusée sans activation partielle. Les profils et séances existants restent compatibles.
+- Démarrage après inscription : hauteur et naissance obligatoires, choix explicite d’équation, questions sans texte d’aide ni champs de situation/date de hauteur/protocole, cible ou suivi sans cible, une autorisation de suivi, conservation des champs après échec, transaction sans activation partielle et reprise sans afficher le démarrage une deuxième fois.
+- Profil : naissance et sexe/équation visibles sans panneau à ouvrir, âge recalculé, parcours du clavier, contrôles axe, modification persistante après rechargement et reprise dans les nouvelles séances. API locale et cloud : rejet atomique des dates impossibles/futures et équations inconnues ; réponse explicitement inconnue ou sans équation acceptée ; naissance et équation obligatoires ; renseignements complémentaires omis acceptés sans effacement des préférences existantes. Les profils et séances existants restent compatibles.
 - Compatibilité des anciens callbacks du bundle cloud : confirmation email dans un navigateur neuf sans vérificateur PKCE, validation de session auprès d’Auth, nettoyage des jetons dans l’URL, objectif enregistré, lien expiré et séparation du parcours de récupération. Ces réponses Auth sont simulées ; elles ne constituent pas un test d’envoi d’email externe.
 - Session révoquée : une réponse API 401 ferme la session courante et rend le formulaire accessible, y compris après rechargement. Une erreur 403 ou réseau conserve la session et permet de réessayer ou de revenir explicitement à la connexion. Ces trois cas sont vérifiés dans le bundle cloud à 390 et 360 px ; la fermeture Auth est limitée à `scope: local` pour préserver les autres appareils. Le script de données fictives ferme également uniquement sa propre session.
 
@@ -71,3 +71,25 @@ Un premier passage mobile a révélé les libellés de formulaire à raccourcir 
 - Les liens « Guide » ouvrent la bonne fiche à la souris et au clavier, placent le focus sur son titre et conservent le brouillon ; le menu déroulant reste utilisable. Captures mobiles, contrôles axe et vérification du débordement réussis.
 - Réglages des outils accessibles dans le profil ; nouveaux champs intégrés dans le parcours au clavier. Les données et favoris existants restent compatibles.
 - `npm run test:pages` : chemins GitHub Pages et démarrage cloud complet vérifiés à 390/360 px, avec Auth simulé. Aucune publication effectuée.
+
+
+### Inscription simplifiée — ajustement du 8 octobre 2026
+
+Le formulaire conserve uniquement hauteur, naissance, sexe utilisé pour les calculs, objectif et consentement. Le titre du bloc, les textes explicatifs, l’âge affiché et les champs de situation, date de hauteur et protocole sont retirés. Les contrôles du formulaire vérifient leur absence, puis une vraie sauvegarde avec ce seul jeu de renseignements. Les API locale et cloud acceptent cette omission et préservent les préférences complémentaires existantes. Cet ajustement initial est complété par la simplification de Mesures et Analyse approfondie décrite ci-dessous.
+
+Validation de cet ajustement : compilations locale et cloud, 150 tests unitaires/API/cloud/SQL, quatre parcours ciblés (compte et outils à 390/360 px), contrôle de la fonction Edge et scripts Pages/callbacks Auth réussis. Le parcours de compte vérifie l’absence des champs retirés et des textes d’aide, le refus d’un formulaire incomplet, la sauvegarde réelle, le rechargement et l’accessibilité. Aucune publication effectuée.
+
+### Mesures et Analyse approfondie — simplification du 8 octobre 2026
+
+- Compilations locale et cloud et contrôle TypeScript de la fonction Edge réussis ; 148 tests unitaires/API/cloud/SQL passent.
+- Les 12 parcours mobiles passent à 390 et 360 px : aucun guide du poids (lien ou option), aucun formulaire de données des outils dans Mesures, dates françaises lisibles et seules rubriques « Comprendre le calcul » dans les cinq cartes. Sources, données utilisées, raccourcis de correction et situation déclarée sont absents.
+- Calculs à partir du profil minimal d’inscription, équations masculine/féminine, snapshots conservés après modification du profil, correction par l’historique sans perte de précision et rechargement vérifiés. Les contextes v1 restent lisibles et le champ obsolète de situation est ignoré ; la hauteur sans date connue est utilisable, les dates futures connues restent exclues.
+- Contrôles axe WCAG, débordement et inspection des captures mobiles réussis. `npm run test:pages` valide les chemins `/mesura/` et les callbacks Auth simulés à 390/360 px.
+- Aucune publication ni mutation de données de production effectuée.
+
+### Tour de taille / hauteur — ajustement du 8 octobre 2026
+
+- Compilation locale et contrôle TypeScript de la fonction Edge réussis ; 149 tests unitaires/API/cloud/SQL passent.
+- Quatre parcours ciblés réussis (analyse approfondie et courbes, à 390/360 px), avec contrôle axe et débordement. La carte porte uniquement « Tour de taille / hauteur », sans phrase introductive.
+- Une séance avec `waist: 90` et une hauteur de 180 cm affiche bien 0,50 sans mesure RFM et sans alerte de protocole, même lorsque ses anciennes métadonnées indiquent « inconnu ». Ces métadonnées restent intactes ; les conditions de classification sont conservées. Le RFM reste indépendant.
+- Aucune publication effectuée.

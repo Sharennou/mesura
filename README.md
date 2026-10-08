@@ -39,7 +39,7 @@ npm run dev
 1. L’accueil impose la création d’un compte ou la connexion. Aucun écran de suivi n’est accessible sans connexion, y compris par lien direct.
 2. Créer un compte : la session s’ouvre immédiatement, sans email de confirmation. Ou se connecter à son compte existant.
 3. Le SMTP reste utilisé pour la récupération du mot de passe et les rappels facultatifs.
-4. Après l’inscription, renseigner les données obligatoires pour les outils (hauteur datée, naissance, équation, situation et protocoles), choisir une cible ou le suivi sans cible et cocher une seule autorisation sur l’écran de démarrage. Le tout est sauvegardé ensemble ; cet écran ne revient pas après sa validation.
+4. Après l’inscription, renseigner sa hauteur, sa date de naissance et le sexe utilisé pour les calculs, choisir une cible ou le suivi sans cible et cocher une seule autorisation sur l’écran de démarrage. Le tout est sauvegardé ensemble ; cet écran ne revient pas après sa validation.
 5. Enregistrer une mesure ou une note, puis consulter l’analyse.
 
 Les nouveaux comptes commencent sans mesure ni note. Leur taille et leur éventuel objectif viennent du formulaire de démarrage. Les rappels sont autorisés au moment de leur activation ; les choix restent indépendants et modifiables en une action dans « Données et confidentialité ». Le mode découverte et ses données fictives ont été supprimés. Une ancienne valeur personnelle est affichée séparément comme repère ; les champs de nouvelle mesure restent vides. Le serveur bloque toute collecte sans consentement et n’annonce la réussite qu’après une sauvegarde réelle.
@@ -49,7 +49,7 @@ Les nouveaux comptes commencent sans mesure ni note. Leur taille et leur éventu
 - Comptes Better Auth : inscription avec session immédiate, connexion, récupération, déconnexion et révocation des autres sessions.
 - Poids, 14 mensurations standard, mesures personnalisées, favoris ordonnés par glisser-déposer et archivage avec historique.
 - Nouveaux comptes : poids, tour de taille et hanches à la saisie ; autres mesures via les favoris.
-- Notes privées ; guide illustré avec trois étapes courtes et sources, accessible aussi à côté de chaque mesure.
+- Notes privées ; guide illustré avec trois étapes courtes et sources, accessible aussi à côté de chaque mensuration ; aucun guide du poids.
 - Historique, modification, correction explicite de la stature historique et suppression.
 - Courbes réelles, sélection de plusieurs mesures, quatre périodes à partir de trois mois et moyennes journalières. IMC et ratios visibles sous le graphique.
 - IMC, ratios, objectifs dans les deux directions ou de maintien et projection conditionnelle.
@@ -107,8 +107,8 @@ La photo de profil est conservée : ajout, remplacement et retrait dans « Profi
 
 `npm run seed:dev` crée un compte explicitement nommé « Développement · données fictives » sur le serveur local (`http://127.0.0.1:5173`). Pour l’application en ligne, utiliser explicitement `npm run seed:dev -- --target cloud`. Le script utilise uniquement les API publiques authentifiées, sans clé d’administration.
 
-Le jeu contient 32 entrées et 415 valeurs sur plus d’un an : 16 types de mesures, séances partielles, notes, note seule, plusieurs mesures du même jour et objectif de poids. Deux séances fictives complètes permettent de consulter tous les outils et leur évolution : naissance fictive, équation masculine explicitement choisie pour ce scénario, situation, hauteur datée et tours de taille distincts pour NICE et RFM. Les 30 entrées du jeu initial restent intactes, sans attribution rétroactive de protocole. `--dry-run` affiche uniquement le résumé sans créer de compte. Les identifiants générés sont conservés dans un fichier privé ignoré par Git, `.runtime/development-account-local.json` ou `.runtime/development-account-cloud.json` ; les relances reprennent le même compte et complètent seulement les entrées manquantes. Le script relit les données sauvegardées et vérifie la disponibilité des cinq outils sur les deux séances complètes. Les comptes ordinaires restent vides à leur création.
+Le jeu contient 32 entrées et 415 valeurs sur plus d’un an : 16 types de mesures, séances partielles, notes, note seule, plusieurs mesures du même jour et objectif de poids. Deux séances fictives complètes permettent de consulter tous les outils et leur évolution : naissance fictive, équation masculine explicitement choisie pour ce scénario, hauteur datée et tours de taille distincts pour NICE et RFM. Les 30 entrées du jeu initial restent intactes, sans attribution rétroactive de protocole. `--dry-run` affiche uniquement le résumé sans créer de compte. Les identifiants générés sont conservés dans un fichier privé ignoré par Git, `.runtime/development-account-local.json` ou `.runtime/development-account-cloud.json` ; les relances reprennent le même compte et complètent seulement les entrées manquantes. Le script relit les données sauvegardées et vérifie la disponibilité des cinq outils sur les deux séances complètes. Les comptes ordinaires restent vides à leur création.
 
-### Outils corporels
+### Analyse approfondie
 
-IMC, adiposité abdominale selon NICE, taille/hanches, RFM et dépense au repos Mifflin–St Jeor : [formules, sources, éligibilité et migration](docs/outils-scientifiques.md). Les résultats sont calculés localement à partir d’une séance traçable ; les données anciennes sans protocole restent conservées.
+IMC, adiposité abdominale selon NICE, taille/hanches, RFM et dépense au repos Mifflin–St Jeor : [formules, sources, éligibilité et migration](docs/outils-scientifiques.md). Les résultats sont calculés localement à partir d’une séance choisie par sa date (jour, mois, année). Chaque carte conserve seulement « Comprendre le calcul ». Les nouvelles séances reprennent le profil et les repères du guide ; les données anciennes sans protocole restent conservées.

@@ -1,5 +1,8 @@
-import { SessionToolFields } from "../components/ToolFields";
-import { newToolContext, type ToolContext } from "../../shared/body-tools";
+import {
+  newToolContext,
+  newMeasurementToolContext,
+  type ToolContext,
+} from "../../shared/body-tools";
 import { toolDateIssue } from "../../shared/tool-schemas";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
@@ -70,22 +73,21 @@ export function MeasureScreen() {
   const [note, setNote] = useState(currentDraft?.note ?? editing?.note ?? "");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [historicalHeight, setHistoricalHeight] = useState(
+  const [historicalHeight] = useState(
     currentDraft?.height ??
       ((editing ? editing.height : data.profile.height) != null
         ? inputDecimal((editing ? editing.height : data.profile.height)!)
         : ""),
   );
-  const [tools, setTools] = useState<ToolContext>(
+  const [tools] = useState<ToolContext>(
     currentDraft?.tools ??
       editing?.tools ??
       (editing
         ? newToolContext()
-        : {
-            ...newToolContext(data.profile.toolProfile),
-            heightDate: data.profile.heightDate ?? null,
-            heightOrigin: "profile",
-          }),
+        : newMeasurementToolContext(
+            data.profile.toolProfile,
+            data.profile.heightDate ?? null,
+          )),
   );
   const requestId = useRef(currentDraft?.requestId ?? crypto.randomUUID());
   const submitting = useRef(false);
@@ -367,7 +369,6 @@ export function MeasureScreen() {
               <label className="eyebrow" htmlFor="weight">
                 Poids
               </label>
-              {guideButton("weight", "Poids")}
             </div>
             <Badge value={variation} unit="kg" inverse />
           </div>
@@ -490,13 +491,6 @@ export function MeasureScreen() {
             <span className="counter">{note.length} / 2 000</span>
           </div>
         </details>
-        <SessionToolFields
-          value={tools}
-          onChange={setTools}
-          date={date}
-          height={historicalHeight}
-          setHeight={setHistoricalHeight}
-        />
         <p className="privacy-caption">
           <Icon as={LockKeyhole} size={14} />
           Vos mesures et notes restent privées.
