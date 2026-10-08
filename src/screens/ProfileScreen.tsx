@@ -1,5 +1,5 @@
-import { EquationFields } from "../components/ToolFields";
-import { EMPTY_TOOL_PROFILE } from "../../shared/body-tools";
+import { SessionToolFields } from "../components/ToolFields";
+import { EMPTY_TOOL_PROFILE, newToolContext } from "../../shared/body-tools";
 import { localDate } from "../../shared/calculations";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
@@ -273,35 +273,34 @@ export function ProfileScreen({
           </small>
         </label>
         {data.consents.body && (
-          <section
-            className="stack"
-            aria-labelledby="profile-calculations-title"
-          >
-            <h2 id="profile-calculations-title">
-              Âge et sexe pour les calculs
-            </h2>
-            <EquationFields
+          <>
+            <SessionToolFields
               profile
-              value={toolProfile}
-              onChange={setToolProfile}
-              maxDate={localDate(data.profile.timezone)}
+              value={{
+                ...newToolContext(toolProfile),
+                heightDate: heightDate || null,
+              }}
+              onChange={(value) => {
+                setToolProfile({
+                  birthDate: value.birthDate,
+                  equation: value.equation,
+                  situation: value.situation,
+                  waistProtocol: value.waistProtocol,
+                  rfmWaistProtocol: value.rfmWaistProtocol,
+                });
+                setHeightDate(value.heightDate ?? "");
+              }}
+              date={localDate(data.profile.timezone)}
+              height={height}
+              setHeight={setHeight}
             />
-            <label className="field-label">
-              Date de mesure de la hauteur du profil
-              <input
-                type="date"
-                max={localDate(data.profile.timezone)}
-                value={heightDate}
-                onChange={(e) => setHeightDate(e.target.value)}
-              />
-            </label>
             <p className="small">
               Ces réglages seront proposés aux nouvelles séances. Les entrées
               déjà enregistrées restent inchangées. Une séance en cours garde
               les informations déjà saisies ; vous pouvez les compléter dans ses
               données pour les outils.
             </p>
-          </section>
+          </>
         )}
         <button className="secondary" disabled={busy}>
           {busy ? "Enregistrement…" : "Enregistrer mon profil"}

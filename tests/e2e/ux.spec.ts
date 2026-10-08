@@ -4,6 +4,7 @@ import { mkdir } from "node:fs/promises";
 import { emptyAccountData } from "../../src/account-data";
 import { CONSENT_VERSION } from "../../shared/config";
 import { localDate, shiftDate } from "../../shared/calculations";
+import { onboardingTools } from "../onboarding-fixture";
 
 async function setup(page: Page) {
   const origin = "http://127.0.0.1:5181";
@@ -19,7 +20,13 @@ async function setup(page: Page) {
   expect(signup.ok()).toBe(true);
   const onboard = await page.request.post("/api/onboarding", {
     headers,
-    data: { height: 175, consent: true, version: CONSENT_VERSION, goal: null },
+    data: {
+      ...onboardingTools,
+      height: 175,
+      consent: true,
+      version: CONSENT_VERSION,
+      goal: null,
+    },
   });
   expect(onboard.ok()).toBe(true);
   return headers;
@@ -197,7 +204,13 @@ test("guide illustré : repères, côtés, mesure personnalisée et brouillon co
   const grid = await page.locator(".measurement-grid").first().boundingBox();
   const box = await guide.boundingBox();
   expect(box!.y).toBeGreaterThanOrEqual(grid!.y + grid!.height);
-  await summary.click();
+  await page
+    .getByRole("button", { name: "Guide : Tour de taille", exact: true })
+    .click();
+  await expect(guide).toHaveAttribute("open", "");
+  await expect(
+    guide.getByRole("heading", { name: "Tour de taille", exact: true }),
+  ).toBeFocused();
   const choose = page.getByLabel("Quelle mensuration ?");
   await expect(choose).toHaveValue("waist");
   await expect(page.locator(".guide-landmark")).toContainText("dernière côte");
@@ -205,6 +218,19 @@ test("guide illustré : repères, côtés, mesure personnalisée et brouillon co
     "label",
     "Vos favorites",
   );
+  await summary.click();
+  await page
+    .getByRole("button", { name: "Guide : Hanches", exact: true })
+    .press("Enter");
+  await expect(choose).toHaveValue("hips");
+  await expect(waist).toHaveValue("82,4");
+  await summary.click();
+  await page
+    .getByRole("button", { name: "Guide : Poids", exact: true })
+    .click();
+  await expect(choose).toHaveValue("weight");
+  await expect(guide.locator(".guide-steps li")).toHaveCount(3);
+  await choose.selectOption("waist");
   await guide.evaluate((el) => el.scrollIntoView({ block: "start" }));
   await screenshot(page, "guide-taille", info.project.name, false);
   for (const measure of account.measures.filter(
@@ -743,6 +769,8 @@ test("favoris : glisser-déposer à la souris, au doigt et au clavier, ordre sau
 }, info) => {
   await setup(page);
   await page.goto("/#favorites");
+  await page.getByRole("checkbox", { name: "Poitrine" }).check();
+  await page.getByRole("checkbox", { name: "Cuisse gauche" }).check();
   const rows = page
     .getByRole("list", { name: "Ordre des mesures favorites" })
     .getByRole("listitem");

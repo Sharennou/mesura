@@ -48,6 +48,7 @@ export function MeasureScreen() {
     setDraft,
     editingDrafts,
     setEditingDrafts,
+    setViewState,
   } = useApp();
   const today = localDate(data.profile.timezone);
   const editingDraft = editing ? editingDrafts[editing.id] : null;
@@ -116,6 +117,33 @@ export function MeasureScreen() {
     setEditingDrafts,
   ]);
   const formRef = useRef<HTMLFormElement>(null);
+  const guideRef = useRef<HTMLDetailsElement>(null);
+  function openGuide(id: string) {
+    setViewState((state) => ({
+      ...state,
+      "measure.guide.selected": id,
+      "measure.guide.open": true,
+    }));
+    requestAnimationFrame(() => {
+      guideRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+      guideRef.current
+        ?.querySelector<HTMLElement>(".guide-measure-heading h3")
+        ?.focus({ preventScroll: true });
+    });
+  }
+  function guideButton(id: string, name: string) {
+    return (
+      <button
+        type="button"
+        className="measure-guide-link"
+        aria-label={`Guide : ${name}`}
+        aria-controls="measurement-guide"
+        onClick={() => openGuide(id)}
+      >
+        Guide
+      </button>
+    );
+  }
   useEffect(() => {
     if (error)
       formRef.current
@@ -144,7 +172,6 @@ export function MeasureScreen() {
     .filter(
       (m) =>
         m.id !== "weight" &&
-        m.id !== "waist-rfm" &&
         (data.profile.visible.includes(m.id) || Object.hasOwn(values, m.id)),
     )
     .sort(
@@ -166,9 +193,12 @@ export function MeasureScreen() {
           : null;
       return (
         <div className="measure-tile" key={m.id}>
-          <label htmlFor={`input-${m.id}`} className="eyebrow">
-            {m.name}
-          </label>
+          <div className="measure-label-row">
+            <label htmlFor={`input-${m.id}`} className="eyebrow">
+              {m.name}
+            </label>
+            {guideButton(m.id, m.name)}
+          </div>
           <div className="tile-input-row">
             <input
               id={`input-${m.id}`}
@@ -333,9 +363,12 @@ export function MeasureScreen() {
           className={`weight-card ${values.weight ? "" : "weight-empty"}`}
         >
           <div className="card-top">
-            <label className="eyebrow" htmlFor="weight">
-              Poids
-            </label>
+            <div className="measure-label-row">
+              <label className="eyebrow" htmlFor="weight">
+                Poids
+              </label>
+              {guideButton("weight", "Poids")}
+            </div>
             <Badge value={variation} unit="kg" inverse />
           </div>
           <div className="hero-input-row">
@@ -421,6 +454,7 @@ export function MeasureScreen() {
           )}
         </div>
         <MeasurementGuide
+          ref={guideRef}
           measures={data.measures}
           favorites={data.profile.visible}
         />
@@ -454,19 +488,6 @@ export function MeasureScreen() {
               rows={3}
             />
             <span className="counter">{note.length} / 2 000</span>
-          </div>
-        </details>
-        <details className="optional-panel">
-          <summary>Ajouter une mesure spécifique au RFM</summary>
-          <p className="small">
-            Tour de taille au bord supérieur de la crête iliaque droite,
-            distinct du tour de taille NICE. Confirmez son protocole dans «
-            Données pour les outils ».
-          </p>
-          <div className="measurement-grid">
-            {measurementFields(
-              data.measures.filter((m) => m.id === "waist-rfm"),
-            )}
           </div>
         </details>
         <SessionToolFields

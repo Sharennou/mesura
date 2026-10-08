@@ -1,6 +1,6 @@
 # État technique et reprise du travail
 
-État au 6 octobre 2026 ; dernière évolution fonctionnelle publiée : `860762e`, rappels hebdomadaires fixes.
+État au 8 octobre 2026 ; dernière évolution fonctionnelle publiée : `860762e`, rappels hebdomadaires fixes.
 
 ## Déploiement actuel
 
@@ -24,9 +24,9 @@ Le service SMTP Auth Brevo ne configure pas automatiquement les rappels email de
 | ------------------------------------------------ | ------------------------------------------------------ |
 | `src/App.tsx`                                    | Session, accès aux écrans, démarrage et navigation     |
 | `src/screens/Account.tsx`                        | Inscription, connexion et récupération                 |
-| `src/screens/OnboardingScreen.tsx`               | Hauteur, âge, sexe des équations et objectif après inscription |
+| `src/screens/OnboardingScreen.tsx`               | Données obligatoires des outils et objectif après inscription |
 | `src/screens/Measure.tsx`, `Analysis.tsx`        | Mesures et analyse                                     |
-| `src/screens/ProfileScreen.tsx`                  | Pseudo, hauteur, âge, sexe des équations et photo de profil |
+| `src/screens/ProfileScreen.tsx`                  | Pseudo, données des outils et photo de profil |
 | `src/screens/Reminder.tsx`                       | Jours hebdomadaires, heure et canal                    |
 | `src/api.ts`, `src/cloud-auth.ts`                | Adaptation entre API locale et cloud                   |
 | `shared/config.ts`, `shared/types.ts`            | Nom, consentements, constantes et contrats             |
@@ -101,3 +101,10 @@ Prévisualisation locale séparée : `http://127.0.0.1:5182`, base `.runtime/ux-
 « Outils » remplace « IMC et ratios » dans Analyse. Les séances conservent l’âge calculable, l’équation choisie, la situation, les deux protocoles de tour de taille et la provenance de la hauteur. La migration locale `006_body_tools.sql` est additive ; le compte JSON cloud reçoit le nouveau catalogue sans modifier les anciennes mesures.
 
 Formules, restrictions et références : [dossier scientifique](outils-scientifiques.md). L’inscription et le profil exposent directement la naissance (âge calculé) et le sexe utilisé pour les équations, sans nouveau champ de stockage ni modification rétroactive des séances. Bilan : 150 tests unitaires/API/cloud/SQL, 24 exécutions de parcours mobiles, contrôles cloud et Pages réussis ; voir [vérifications](verification.md). Publier l’API avant le frontend. Aucune publication ni migration des données de production effectuée pendant cette évolution.
+
+
+## Inscription et Mesures — 8 octobre 2026, non publié
+
+Le démarrage impose désormais les données des outils, dont la hauteur datée, la naissance, l’équation et les réponses de situation/protocole. La validation partagée est stricte sur `/onboarding`, mais les profils existants gardent leur compatibilité. Les nouveaux comptes utilisent uniquement `waist` et `hips` comme favoris, en plus de la carte de poids. La mesure RFM s’ajoute par les favoris ; les anciennes valeurs non favorites restent éditables. Chaque nom de mesure possède un accès direct à sa fiche du guide.
+
+Les préférences supplémentaires sont facultatives dans le JSON du profil et requises seulement au démarrage ; aucune migration SQL supplémentaire n’est nécessaire. Les nouvelles séances reprennent ces préférences, les séances anciennes et les brouillons conservent leur contexte. Les scripts de comptes fictifs et les vérifications des callbacks cloud ont été adaptés au contrat obligatoire. Voir [les vérifications du 8 octobre](verification.md).

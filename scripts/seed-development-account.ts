@@ -252,7 +252,13 @@ try {
   if (freshAccount) {
     account = await api<AccountData>("/onboarding", "POST", {
       height: 175,
-      toolProfile,
+      heightDate: entries[0].date,
+      toolProfile: {
+        ...toolProfile,
+        situation: "none",
+        waistProtocol: "nice-midpoint",
+        rfmWaistProtocol: "iliac-crest",
+      },
       consent: true,
       version: CONSENT_VERSION,
       goal: { measureId: "weight", start: 83.6, target: 74 },

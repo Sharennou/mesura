@@ -44,6 +44,7 @@ import {
 } from "../shared/recurrence";
 import { localDate } from "../shared/calculations";
 import { onboardingSchema } from "../shared/onboarding";
+import { DEFAULT_VISIBLE } from "../shared/catalog";
 import {
   APP_NAME,
   APP_SLUG,
@@ -199,8 +200,13 @@ export async function buildApp() {
       ? browserZone
       : "UTC";
     db.prepare(
-      "INSERT INTO profiles (user_id, timezone, last_active) VALUES (?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET last_active = excluded.last_active",
-    ).run(session!.user.id, timezone, new Date().toISOString());
+      "INSERT INTO profiles (user_id, timezone, visible, last_active) VALUES (?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET last_active = excluded.last_active",
+    ).run(
+      session!.user.id,
+      timezone,
+      JSON.stringify(DEFAULT_VISIBLE),
+      new Date().toISOString(),
+    );
     return session!;
   };
   app.get("/api/account", async (req) => {
@@ -289,12 +295,11 @@ export async function buildApp() {
   app.post("/api/onboarding", async (req) => {
     const s = await owner(req);
     const setup = onboardingSchema.parse(req.body);
-    if (
-      setup.toolProfile?.birthDate &&
-      setup.toolProfile.birthDate >
-        localDate(accountData(s.user.id, s.user.name).profile.timezone)
-    )
-      fail("La date de naissance ne peut pas être dans le futur.");
+    const today = localDate(
+      accountData(s.user.id, s.user.name).profile.timezone,
+    );
+    if (setup.toolProfile.birthDate > today || setup.heightDate > today)
+      fail("Une date du profil est dans le futur. Vérifiez-la.");
     if (
       setup.goal &&
       !getMeasures(s.user.id).some(
@@ -315,11 +320,10 @@ export async function buildApp() {
         );
       db.prepare(
         "UPDATE profiles SET height = ?, height_date = ?, onboarding_completed = 1 WHERE user_id = ?",
-      ).run(setup.height, null, s.user.id);
-      if (setup.toolProfile !== undefined)
-        db.prepare(
-          "UPDATE profiles SET tool_profile_json = ? WHERE user_id = ?",
-        ).run(JSON.stringify(setup.toolProfile), s.user.id);
+      ).run(setup.height, setup.heightDate, s.user.id);
+      db.prepare(
+        "UPDATE profiles SET tool_profile_json = ? WHERE user_id = ?",
+      ).run(JSON.stringify(setup.toolProfile), s.user.id);
       if (setup.goal)
         db.prepare(
           "INSERT INTO goals VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET measure_id=excluded.measure_id, start=excluded.start, target=excluded.target, start_date=excluded.start_date",

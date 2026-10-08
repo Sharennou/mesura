@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import type { FastifyInstance } from "fastify";
 import { CONSENT_VERSION } from "../shared/config";
+import { onboardingTools } from "./onboarding-fixture";
+import { newToolContext } from "../shared/body-tools";
 let app: FastifyInstance;
 let db: any;
 let dir: string;
@@ -50,19 +52,37 @@ afterAll(async () => {
 });
 
 describe("Outils : persistance locale et compatibilité", () => {
-  it("enregistre les données de calcul dès l’inscription, atomiquement et sans les imposer aux anciens clients", async () => {
+  it("impose et enregistre les données des outils au démarrage, atomiquement", async () => {
     const { cookie } = await account("onboarding-tools@example.test");
     const payload = {
+      ...onboardingTools,
       height: 180,
       consent: true,
       version: CONSENT_VERSION,
       goal: null,
     };
     for (const toolProfile of [
-      { birthDate: "9999-01-01", equation: "male" },
-      { birthDate: "2000-02-30", equation: "male" },
-      { birthDate: "", equation: "male" },
-      { birthDate: "1996-10-05", equation: "inferred" },
+      undefined,
+      { ...onboardingTools.toolProfile, birthDate: null },
+      { ...onboardingTools.toolProfile, situation: undefined },
+      { ...onboardingTools.toolProfile, waistProtocol: undefined },
+      { ...onboardingTools.toolProfile, rfmWaistProtocol: undefined },
+      {
+        ...onboardingTools.toolProfile,
+        birthDate: "9999-01-01",
+        equation: "male",
+      },
+      {
+        ...onboardingTools.toolProfile,
+        birthDate: "2000-02-30",
+        equation: "male",
+      },
+      { ...onboardingTools.toolProfile, birthDate: "", equation: "male" },
+      {
+        ...onboardingTools.toolProfile,
+        birthDate: "1996-10-05",
+        equation: "inferred",
+      },
     ]) {
       const rejected = await call(
         "POST",
@@ -79,7 +99,25 @@ describe("Outils : persistance locale et compatibilité", () => {
       expect(unchanged.profile.onboardingCompleted).toBe(false);
       expect(unchanged.entries).toEqual([]);
     }
-    const toolProfile = { birthDate: "1996-10-05", equation: "male" };
+    for (const heightDate of [undefined, null, "2000-02-30", "9999-01-01"]) {
+      expect(
+        (
+          await call(
+            "POST",
+            "/api/onboarding",
+            { ...payload, heightDate },
+            cookie,
+          )
+        ).statusCode,
+      ).toBe(400);
+    }
+    const toolProfile = {
+      ...onboardingTools.toolProfile,
+      birthDate: "1996-10-05",
+      equation: "male",
+      situation: "none",
+      waistProtocol: "nice-midpoint",
+    };
     const saved = await call(
       "POST",
       "/api/onboarding",
@@ -93,10 +131,11 @@ describe("Outils : persistance locale et compatibilité", () => {
     expect(reloaded.profile.toolProfile).toEqual(toolProfile);
     expect(reloaded.profile.onboardingCompleted).toBe(true);
     expect(reloaded.consents.body).toBe(true);
-    const legacy = await call("POST", "/api/onboarding", payload, cookie);
-    expect(legacy.statusCode).toBe(200);
-    expect(legacy.json().profile.toolProfile).toEqual(toolProfile);
-    const unspecified = { birthDate: null, equation: "unspecified" };
+    expect(reloaded.profile.heightDate).toBe(payload.heightDate);
+    expect(newToolContext(reloaded.profile.toolProfile)).toMatchObject(
+      toolProfile,
+    );
+    const unspecified = { ...onboardingTools.toolProfile };
     const cleared = await call(
       "POST",
       "/api/onboarding",
@@ -111,7 +150,13 @@ describe("Outils : persistance locale et compatibilité", () => {
     await call(
       "POST",
       "/api/onboarding",
-      { height: 180, consent: true, version: CONSENT_VERSION, goal: null },
+      {
+        ...onboardingTools,
+        height: 180,
+        consent: true,
+        version: CONSENT_VERSION,
+        goal: null,
+      },
       user.cookie,
     );
     const { newToolContext } = await import("../shared/body-tools");

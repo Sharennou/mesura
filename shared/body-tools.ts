@@ -10,6 +10,9 @@ export type WaistProtocol = "unknown" | "nice-midpoint" | "iliac-crest";
 export interface ToolProfile {
   birthDate: string | null;
   equation: Equation;
+  situation?: Situation;
+  waistProtocol?: WaistProtocol;
+  rfmWaistProtocol?: "unknown" | "iliac-crest";
 }
 export interface ToolContext extends ToolProfile {
   version: typeof TOOL_VERSION;
@@ -28,9 +31,9 @@ export const newToolContext = (
 ): ToolContext => ({
   ...profile,
   version: TOOL_VERSION,
-  situation: "unknown",
-  waistProtocol: "unknown",
-  rfmWaistProtocol: "unknown",
+  situation: profile.situation ?? "unknown",
+  waistProtocol: profile.waistProtocol ?? "unknown",
+  rfmWaistProtocol: profile.rfmWaistProtocol ?? "unknown",
   heightDate: null,
   heightOrigin: "legacy",
 });

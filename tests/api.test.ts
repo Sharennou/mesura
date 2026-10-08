@@ -7,6 +7,7 @@ import { unzipSync } from "fflate";
 import { DateTime } from "luxon";
 import type { FastifyInstance } from "fastify";
 import { CONSENT_VERSION } from "../shared/config";
+import { onboardingTools } from "./onboarding-fixture";
 let app: FastifyInstance;
 let db: any;
 let dir: string;
@@ -126,6 +127,7 @@ describe("Comptes et contrôle d’accès", () => {
   it("commence sans consentement ni données", async () => {
     const data = (await call("GET", "/api/account")).json();
     expect(data.entries).toEqual([]);
+    expect(data.profile.visible).toEqual(["waist", "hips"]);
     expect(Object.values(data.consents)).toEqual([false, false, false, false]);
     expect(
       (
@@ -141,6 +143,7 @@ describe("Comptes et contrôle d’accès", () => {
   });
   it("valide tout le démarrage avant d’autoriser et sauvegarde le choix sans cible", async () => {
     const setup = {
+      ...onboardingTools,
       height: 175.5,
       consent: true,
       version: CONSENT_VERSION,

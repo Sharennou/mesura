@@ -1,5 +1,5 @@
-import { useId } from "react";
-import { ChevronDown, Ruler } from "lucide-react";
+import { useId, type Ref } from "react";
+import { ChevronDown, Ruler, Scale } from "lucide-react";
 import { Icon } from "../components";
 import { useViewState } from "../useViewState";
 import {
@@ -313,22 +313,27 @@ function Diagram({
 export function MeasurementGuide({
   measures,
   favorites,
+  ref,
 }: {
   measures: Measure[];
   favorites: string[];
+  ref?: Ref<HTMLDetailsElement>;
 }) {
-  const available = measures.filter((m) => m.id !== "weight" && !m.archived);
+  const available = measures.filter((m) => !m.archived);
   const preferred = favorites.flatMap((id) =>
     available.filter((m) => m.id === id),
   );
-  const others = available.filter((m) => !favorites.includes(m.id));
   const [selectedId, setSelectedId] = useViewState(
     "measure.guide.selected",
     preferred[0]?.id ?? available[0]?.id ?? "waist",
   );
   const [open, setOpen] = useViewState("measure.guide.open", false);
+  const selectable = measures.filter((m) => !m.archived || m.id === selectedId);
+  const others = selectable.filter(
+    (m) => !preferred.some((p) => p.id === m.id),
+  );
   const selected =
-    available.find((m) => m.id === selectedId) ?? preferred[0] ?? available[0];
+    selectable.find((m) => m.id === selectedId) ?? preferred[0] ?? available[0];
   const guide =
     selected && !selected.custom
       ? measurementInstructions(selected.id)
@@ -341,6 +346,8 @@ export function MeasurementGuide({
   const selectId = useId();
   return (
     <details
+      id="measurement-guide"
+      ref={ref}
       className="measurement-guide"
       open={open}
       onToggle={(e) => {
@@ -394,7 +401,9 @@ export function MeasurementGuide({
             aria-labelledby="guide-measure-title"
           >
             <div className="guide-measure-heading">
-              <h3 id="guide-measure-title">{selected.name}</h3>
+              <h3 id="guide-measure-title" tabIndex={-1}>
+                {selected.name}
+              </h3>
               <span>{selected.unit}</span>
             </div>
             {side && (
@@ -405,7 +414,25 @@ export function MeasurementGuide({
                 de votre corps. Gardez ce côté à chaque séance.
               </p>
             )}
-            {guide ? (
+            {selected.id === "weight" ? (
+              <>
+                <div className="guide-custom-illustration" aria-hidden="true">
+                  <Icon as={Scale} size={48} />
+                  <span>La même balance, au même endroit</span>
+                </div>
+                <ol className="guide-steps">
+                  <li>Posez la balance sur un sol dur, plat et stable.</li>
+                  <li>
+                    Pesez-vous dans des conditions similaires, à la même heure
+                    et avec une tenue comparable.
+                  </li>
+                  <li>
+                    Restez immobile au centre de la balance. Attendez que la
+                    valeur se stabilise et notez-la en kg.
+                  </li>
+                </ol>
+              </>
+            ) : guide ? (
               <>
                 <p className="guide-landmark">{guide.landmark}</p>
                 <Diagram

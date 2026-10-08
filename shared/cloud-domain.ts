@@ -122,11 +122,9 @@ export function mutateCloudAccount(
   };
   if (resource === "onboarding" && method === "POST") {
     const setup = onboardingSchema.parse(raw);
-    if (
-      setup.toolProfile?.birthDate &&
-      setup.toolProfile.birthDate > now.setZone(a.profile.timezone).toISODate()!
-    )
-      cloudFail("La date de naissance ne peut pas être dans le futur.");
+    const today = now.setZone(a.profile.timezone).toISODate()!;
+    if (setup.toolProfile.birthDate > today || setup.heightDate > today)
+      cloudFail("Une date du profil est dans le futur. Vérifiez-la.");
     if (
       setup.goal &&
       !a.measures.some((m) => m.id === setup.goal!.measureId && !m.archived)
@@ -142,10 +140,9 @@ export function mutateCloudAccount(
         date: now.toISO()!,
       });
     }
-    if (setup.toolProfile !== undefined)
-      a.profile.toolProfile = setup.toolProfile;
+    a.profile.toolProfile = setup.toolProfile;
     a.profile.height = setup.height;
-    a.profile.heightDate = null;
+    a.profile.heightDate = setup.heightDate;
     a.profile.onboardingCompleted = true;
     a.goal = setup.goal
       ? {

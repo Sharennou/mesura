@@ -1,6 +1,6 @@
 # Contexte de Mesura
 
-Dernière mise à jour : 6 octobre 2026.
+Dernière mise à jour : 8 octobre 2026.
 
 Mesura est une application web de suivi corporel conçue pour le téléphone, entièrement en français. Le projet existe déjà et est publié : les prochaines modifications doivent prolonger cette application et ses données réelles.
 
@@ -22,8 +22,9 @@ Mesura est une application web de suivi corporel conçue pour le téléphone, en
 - Refonte UX en développement : [diagnostic et validation](docs/ux-parcours.md), états d’analyse selon les données, détail distinct de l’édition, retours et brouillons conservés en mémoire. Cette session n’est pas publiée.
 - Compte obligatoire, aucune donnée fictive dans les comptes ordinaires, aucune confirmation d’email à l’inscription.
 - Compte de développement dédié autorisé par le propriétaire : « Développement · données fictives », 32 entrées et 415 valeurs injectées par `scripts/seed-development-account.ts`, dont deux séances complètes pour les cinq outils. Identifiants privés dans `.runtime`, jamais dans la documentation.
-- Après inscription : connexion immédiate, puis hauteur, date de naissance facultative (âge calculé), sexe utilisé pour les équations et objectifs avant le suivi.
-- Historique en bas de Mesures ; guide en trois étapes courtes, sans « À éviter » ni « Bien mesurer à chaque séance », avec sources.
+- Après inscription : connexion immédiate, puis données des outils obligatoires (hauteur et date de mesure, naissance, choix d’équation, situation et protocoles) et objectif avant le suivi. Chaque choix est explicite ; refuser les équations ou déclarer un protocole inconnu reste possible. Les renseignements sont repris dans les nouvelles séances.
+- Nouveaux comptes : poids, tour de taille et hanches seulement à la saisie. Les autres mesures, dont le tour spécifique RFM, s’ajoutent dans « Personnaliser » les favoris. Les favoris des comptes existants sont conservés.
+- Historique en bas de Mesures ; guide en trois étapes courtes, sans « À éviter » ni « Bien mesurer à chaque séance », avec sources. Un lien « Guide » à droite de chaque nom ouvre la fiche correspondante, y compris pour le poids ; le menu déroulant est conservé.
 - Favoris ordonnés par glisser-déposer, à la souris ou au doigt, avec commande au clavier.
 - Fonction photo retirée, à l’exception de la photo de profil, avec retrait des options d’export d’images. Nouveaux envois de photos de mesures refusés ; anciennes données conservées privées jusqu’au nettoyage habituel.
 - Les rappels proposés sont hebdomadaires, avec plusieurs jours possibles et une heure commune.

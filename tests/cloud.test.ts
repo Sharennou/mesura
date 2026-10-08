@@ -7,6 +7,8 @@ import {
   publicCloudAccount,
 } from "../shared/cloud-domain";
 import { CONSENT_VERSION } from "../shared/config";
+import { onboardingTools } from "./onboarding-fixture";
+import { newToolContext } from "../shared/body-tools";
 const caps = {
   pushConfigured: true,
   emailConfigured: false,
@@ -35,19 +37,37 @@ const consent = (
   change(a, "POST", "/consents", { purpose, granted, version: CONSENT_VERSION })
     .account;
 describe("Sauvegarde distante", () => {
-  it("conserve l’âge et le choix d’équation du démarrage sans accepter de date invalide ni altérer les anciens clients", () => {
+  it("impose les données des outils au démarrage et les conserve sans toucher au compte lors d’un rejet", () => {
     const before = emptyCloudAccount("Alice", "Europe/Paris");
     const payload = {
+      ...onboardingTools,
       height: 180,
       consent: true,
       version: CONSENT_VERSION,
       goal: null,
     };
     for (const toolProfile of [
-      { birthDate: "2026-10-06", equation: "female" },
-      { birthDate: "2000-02-30", equation: "female" },
-      { birthDate: "", equation: "female" },
-      { birthDate: "1996-10-05", equation: "inferred" },
+      undefined,
+      { ...onboardingTools.toolProfile, birthDate: null },
+      { ...onboardingTools.toolProfile, situation: undefined },
+      { ...onboardingTools.toolProfile, waistProtocol: undefined },
+      { ...onboardingTools.toolProfile, rfmWaistProtocol: undefined },
+      {
+        ...onboardingTools.toolProfile,
+        birthDate: "2026-10-06",
+        equation: "female",
+      },
+      {
+        ...onboardingTools.toolProfile,
+        birthDate: "2000-02-30",
+        equation: "female",
+      },
+      { ...onboardingTools.toolProfile, birthDate: "", equation: "female" },
+      {
+        ...onboardingTools.toolProfile,
+        birthDate: "1996-10-05",
+        equation: "inferred",
+      },
     ]) {
       expect(() =>
         change(before, "POST", "/onboarding", { ...payload, toolProfile }),
@@ -57,26 +77,36 @@ describe("Sauvegarde distante", () => {
       expect(before.profile.onboardingCompleted).toBe(false);
       expect(before.audit).toEqual([]);
     }
-    const toolProfile = { birthDate: "1996-10-05", equation: "female" };
+    for (const heightDate of [undefined, null, "2000-02-30", "2026-10-06"]) {
+      expect(() =>
+        change(before, "POST", "/onboarding", { ...payload, heightDate }),
+      ).toThrow();
+    }
+    const toolProfile = {
+      ...onboardingTools.toolProfile,
+      birthDate: "1996-10-05",
+      equation: "female",
+      situation: "none",
+      waistProtocol: "nice-midpoint",
+    };
     const saved = change(before, "POST", "/onboarding", {
       ...payload,
       toolProfile,
     }).account;
     expect(publicCloudAccount(saved).profile.toolProfile).toEqual(toolProfile);
-    const legacy = change(saved, "POST", "/onboarding", payload).account;
-    expect(legacy.profile.toolProfile).toEqual(toolProfile);
-    const unspecified = { birthDate: null, equation: "unspecified" };
+    expect(saved.profile.heightDate).toBe(payload.heightDate);
+    expect(newToolContext(saved.profile.toolProfile)).toMatchObject(
+      toolProfile,
+    );
     expect(
-      change(legacy, "POST", "/onboarding", {
-        ...payload,
-        toolProfile: unspecified,
-      }).account.profile.toolProfile,
-    ).toEqual(unspecified);
+      change(saved, "POST", "/onboarding", payload).account.profile.toolProfile,
+    ).toEqual(payload.toolProfile);
     expect(before.profile.toolProfile).toBeUndefined();
   });
   it("enregistre le démarrage en un seul changement sans activer les options", () => {
     const before = emptyCloudAccount("Alice", "Europe/Paris");
     const payload = {
+      ...onboardingTools,
       height: 175.5,
       consent: true,
       version: CONSENT_VERSION,
@@ -140,6 +170,7 @@ describe("Sauvegarde distante", () => {
   it("commence vide sans reprendre les exemples", () => {
     const a = emptyCloudAccount("Alice");
     expect(a.entries).toEqual([]);
+    expect(a.profile.visible).toEqual(["waist", "hips"]);
     expect(Object.values(a.consents)).toEqual([false, false, false, false]);
     expect(publicCloudAccount(a)).not.toHaveProperty("subscriptions");
   });

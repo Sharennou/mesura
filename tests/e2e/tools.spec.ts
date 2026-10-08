@@ -2,6 +2,7 @@ import { test, expect } from "./fixtures";
 import AxeBuilder from "@axe-core/playwright";
 import { CONSENT_VERSION } from "../../shared/config";
 import { localDate } from "../../shared/calculations";
+import { onboardingTools } from "../onboarding-fixture";
 
 test("outils : calculs, protocoles, précision, dates, clavier et conservation", async ({
   page,
@@ -24,6 +25,7 @@ test("outils : calculs, protocoles, précision, dates, clavier et conservation",
       await page.request.post("/api/onboarding", {
         headers,
         data: {
+          ...onboardingTools,
           height: 180,
           consent: true,
           version: CONSENT_VERSION,
@@ -43,8 +45,10 @@ test("outils : calculs, protocoles, précision, dates, clavier et conservation",
   await page.getByLabel("Poids", { exact: true }).fill("80");
   await page.getByLabel("Tour de taille en cm", { exact: true }).fill("90");
   await page
-    .getByText("Ajouter une mesure spécifique au RFM", { exact: true })
+    .getByRole("button", { name: "Personnaliser", exact: true })
     .click();
+  await page.getByRole("checkbox", { name: "Tour de taille — RFM" }).check();
+  await page.getByRole("button", { name: "Enregistrer mes favoris" }).click();
   await page
     .getByLabel("Tour de taille — RFM en cm", { exact: true })
     .fill("90");

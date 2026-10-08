@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, useState, type ReactNode } from "react";
 import {
   EQUATION_LABELS,
   ageAt,
@@ -9,16 +9,55 @@ import {
 } from "../../shared/body-tools";
 import { TOOL_SOURCES } from "../../shared/tool-sources";
 
+function ToolSelect({
+  value,
+  unknown,
+  required = false,
+  children,
+  onChange,
+  ...props
+}: {
+  value: string;
+  unknown: string;
+  required?: boolean;
+  children: ReactNode;
+  onChange: (value: string) => void;
+  "aria-label": string;
+  "aria-describedby"?: string;
+}) {
+  const [answered, setAnswered] = useState(value !== unknown);
+  return (
+    <select
+      {...props}
+      required={required}
+      value={required && !answered ? "" : value}
+      onChange={(e) => {
+        setAnswered(true);
+        onChange(e.target.value);
+      }}
+    >
+      {required && (
+        <option value="" disabled>
+          Choisir une réponse
+        </option>
+      )}
+      {children}
+    </select>
+  );
+}
+
 export function EquationFields({
   value,
   onChange,
   maxDate,
   profile = false,
+  required = false,
 }: {
   value: ToolProfile;
   onChange: (value: ToolProfile) => void;
   maxDate: string;
   profile?: boolean;
+  required?: boolean;
 }) {
   const id = useId();
   const age = ageAt(value.birthDate, maxDate);
@@ -28,11 +67,13 @@ export function EquationFields({
   return (
     <div className="stack">
       <label className="field-label">
-        Date de naissance <span className="optional">Facultative</span>
+        Date de naissance{" "}
+        {!required && <span className="optional">Facultative</span>}
         <input
           aria-label="Date de naissance"
           aria-describedby={`${id}-birth-help`}
           type="date"
+          required={required}
           autoComplete={profile ? "bday" : "off"}
           max={maxDate}
           value={value.birthDate ?? ""}
@@ -54,14 +95,16 @@ export function EquationFields({
       )}
       <label className="field-label">
         {equationLabel}
-        <select
+        <ToolSelect
+          required={required}
+          unknown="unspecified"
           aria-label={equationLabel}
           aria-describedby={`${id}-equation-help`}
           value={value.equation}
-          onChange={(e) =>
+          onChange={(equation) =>
             onChange({
               ...value,
-              equation: e.target.value as ToolProfile["equation"],
+              equation: equation as ToolProfile["equation"],
             })
           }
         >
@@ -69,15 +112,18 @@ export function EquationFields({
             <option key={id} value={id}>
               {profile && id !== "unspecified"
                 ? `${id === "male" ? "Masculin" : "Féminin"} — ${label.toLocaleLowerCase("fr")}`
-                : label}
+                : required && id === "unspecified"
+                  ? "Ne pas utiliser ces équations"
+                  : label}
             </option>
           ))}
-        </select>
+        </ToolSelect>
         <small id={`${id}-equation-help`}>
           Ces deux versions viennent des groupes féminins et masculins des
           études originales. Ce choix de calcul ne décrit pas votre identité de
           genre et n’est jamais déduit de votre profil. Si ces modèles ne
-          conviennent pas à votre situation, laissez « Non renseigné » et
+          conviennent pas à votre situation, choisissez «{" "}
+          {required ? "Ne pas utiliser ces équations" : "Non renseigné"} » et
           demandez un avis adapté.
         </small>
       </label>
@@ -126,46 +172,69 @@ export function SessionToolFields({
   date,
   height,
   setHeight,
+  onboarding = false,
+  profile = false,
 }: {
   value: ToolContext;
   onChange: (v: ToolContext) => void;
   date: string;
   height: string;
   setHeight: (v: string) => void;
+  onboarding?: boolean;
+  profile?: boolean;
 }) {
   const id = useId();
-  return (
-    <details className="optional-panel tool-fields">
-      <summary>Données pour les outils</summary>
+  const defaults = onboarding || profile;
+  const heightDateLabel = profile
+    ? "Date de mesure de la hauteur du profil"
+    : "Date de mesure de la hauteur";
+  const fields = (
+    <>
       <p className="small">
-        Ces informations concernent cette séance. Une correction ici reste
-        propre à cette entrée. Les anciens protocoles ne sont pas présumés
-        conformes.
+        {defaults ? (
+          `${onboarding ? "Renseignez chaque champ. " : ""}Ces repères seront repris dans vos nouvelles séances et pourront être corrigés pour chaque mesure.`
+        ) : (
+          <>
+            Ces informations concernent cette séance. Une correction ici reste
+            propre à cette entrée. Les anciens protocoles ne sont pas présumés
+            conformes.
+          </>
+        )}
       </p>
       <EquationFields
+        profile={defaults}
+        required={onboarding}
         value={value}
         maxDate={date}
         onChange={(v) => onChange({ ...value, ...v })}
       />
       <label className="field-label">
-        Situation à la date de la séance
-        <select
-          aria-label="Situation à la date de la séance"
+        {defaults
+          ? "Votre situation actuelle"
+          : "Situation à la date de la séance"}
+        <ToolSelect
+          required={onboarding}
+          unknown="unknown"
+          aria-label={
+            defaults
+              ? "Votre situation actuelle"
+              : "Situation à la date de la séance"
+          }
           aria-describedby={`${id}-situation-help`}
           value={value.situation}
-          onChange={(e) =>
+          onChange={(situation) =>
             onChange({
               ...value,
-              situation: e.target.value as ToolContext["situation"],
+              situation: situation as ToolContext["situation"],
             })
           }
         >
           {Object.entries(SITUATION_LABELS).map(([id, label]) => (
             <option key={id} value={id}>
-              {label}
+              {onboarding && id === "unknown" ? "Je ne sais pas" : label}
             </option>
           ))}
-        </select>
+        </ToolSelect>
         <small id={`${id}-situation-help`}>
           Par exemple : œdèmes importants, amputation, maladie ou traitement
           modifiant fortement la composition corporelle. Mesura suspend les
@@ -173,32 +242,35 @@ export function SessionToolFields({
           la grossesse ou l’allaitement.
         </small>
       </label>
+      {!defaults && (
+        <label className="field-label">
+          Hauteur corporelle de cette séance, en cm
+          <input
+            aria-label="Hauteur corporelle de cette séance, en cm"
+            aria-describedby={`${id}-height-help`}
+            inputMode="decimal"
+            value={height}
+            onChange={(e) => {
+              setHeight(e.target.value);
+              onChange({ ...value, heightOrigin: "session" });
+            }}
+          />
+          <small id={`${id}-height-help`}>
+            {value.heightOrigin === "profile"
+              ? "Valeur reprise du profil : vérifiez qu’elle était déjà mesurée à cette date."
+              : value.heightOrigin === "legacy"
+                ? "Valeur historique conservée ; date de mesure initiale inconnue si non renseignée."
+                : "Valeur renseignée pour cette séance."}
+          </small>
+        </label>
+      )}
       <label className="field-label">
-        Hauteur corporelle de cette séance, en cm
+        {heightDateLabel}
         <input
-          aria-label="Hauteur corporelle de cette séance, en cm"
-          aria-describedby={`${id}-height-help`}
-          inputMode="decimal"
-          value={height}
-          onChange={(e) => {
-            setHeight(e.target.value);
-            onChange({ ...value, heightOrigin: "session" });
-          }}
-        />
-        <small id={`${id}-height-help`}>
-          {value.heightOrigin === "profile"
-            ? "Valeur reprise du profil : vérifiez qu’elle était déjà mesurée à cette date."
-            : value.heightOrigin === "legacy"
-              ? "Valeur historique conservée ; date de mesure initiale inconnue si non renseignée."
-              : "Valeur renseignée pour cette séance."}
-        </small>
-      </label>
-      <label className="field-label">
-        Date de mesure de la hauteur
-        <input
-          aria-label="Date de mesure de la hauteur"
+          aria-label={heightDateLabel}
           aria-describedby={`${id}-date-help`}
           type="date"
+          required={onboarding}
           max={date}
           value={value.heightDate ?? ""}
           onChange={(e) =>
@@ -212,13 +284,15 @@ export function SessionToolFields({
       </label>
       <label className="field-label">
         Protocole du tour de taille
-        <select
+        <ToolSelect
+          required={onboarding}
+          unknown="unknown"
           aria-label="Protocole du tour de taille"
           value={value.waistProtocol}
-          onChange={(e) =>
+          onChange={(waistProtocol) =>
             onChange({
               ...value,
-              waistProtocol: e.target.value as ToolContext["waistProtocol"],
+              waistProtocol: waistProtocol as ToolContext["waistProtocol"],
             })
           }
         >
@@ -227,29 +301,46 @@ export function SessionToolFields({
               {label}
             </option>
           ))}
-        </select>
+        </ToolSelect>
       </label>
       <ProtocolGuide />
       <label className="field-label">
         Protocole de la mesure spécifique RFM
-        <select
+        <ToolSelect
+          required={onboarding}
+          unknown="unknown"
           aria-label="Protocole de la mesure spécifique RFM"
           value={value.rfmWaistProtocol}
-          onChange={(e) =>
+          onChange={(rfmWaistProtocol) =>
             onChange({
               ...value,
-              rfmWaistProtocol: e.target
-                .value as ToolContext["rfmWaistProtocol"],
+              rfmWaistProtocol:
+                rfmWaistProtocol as ToolContext["rfmWaistProtocol"],
             })
           }
         >
-          <option value="unknown">Protocole inconnu</option>
+          <option value="unknown">
+            {onboarding
+              ? "Je n’utilise pas cette mesure pour le moment"
+              : "Protocole inconnu"}
+          </option>
           <option value="iliac-crest">
             Bord supérieur de la crête iliaque droite (RFM)
           </option>
-        </select>
+        </ToolSelect>
       </label>
       <ProtocolGuide rfm />
+    </>
+  );
+  return defaults ? (
+    <section className="stack tool-fields" aria-labelledby={`${id}-title`}>
+      <h2 id={`${id}-title`}>Données pour les outils</h2>
+      {fields}
+    </section>
+  ) : (
+    <details className="optional-panel tool-fields">
+      <summary>Données pour les outils</summary>
+      {fields}
     </details>
   );
 }

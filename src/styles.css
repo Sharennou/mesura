@@ -504,6 +504,37 @@ textarea {
   font-size: 10px;
   letter-spacing: 0.04em;
 }
+
+.measure-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.measure-label-row label {
+  min-width: 0;
+}
+.measure-guide-link {
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 4px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--cobalt);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.weight-card .measure-label-row {
+  justify-content: flex-start;
+  gap: 12px;
+}
+.weight-card .measure-guide-link {
+  color: inherit;
+}
 .tile-input-row {
   display: flex;
   align-items: baseline;

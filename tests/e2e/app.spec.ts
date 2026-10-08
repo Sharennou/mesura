@@ -124,14 +124,34 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
   await page.getByLabel("Votre hauteur en cm").fill("175,5");
   await expect(page.getByLabel("Date de naissance")).toHaveValue("");
   await expect(page.getByLabel("Sexe utilisé pour les calculs")).toHaveValue(
-    "unspecified",
+    "",
   );
   await expect(page.getByRole("status")).toContainText(
     "Âge actuel : Non renseigné",
   );
+  await page.getByLabel("Votre objectif").selectOption("observe");
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Commencer mon suivi" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Votre point de départ.", exact: true }),
+  ).toBeVisible();
+  expect(
+    (await (await page.request.get("/api/account")).json()).profile
+      .onboardingCompleted,
+  ).toBe(false);
   await page.getByLabel("Date de naissance").fill(birthDate);
   await expect(page.getByRole("status")).toContainText("Âge actuel : 30 ans");
   await page.getByLabel("Sexe utilisé pour les calculs").selectOption("female");
+  await page.getByLabel("Votre situation actuelle").selectOption("none");
+  await page
+    .getByLabel("Date de mesure de la hauteur", { exact: true })
+    .fill("2000-01-01");
+  await page
+    .getByLabel("Protocole du tour de taille", { exact: true })
+    .selectOption("nice-midpoint");
+  await page
+    .getByLabel("Protocole de la mesure spécifique RFM")
+    .selectOption("unknown");
   await page.getByLabel("Votre objectif").selectOption("observe");
   await page.getByRole("checkbox").check();
   await page.route("**/api/onboarding", (route) => route.abort());
@@ -171,6 +191,11 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
     page.getByRole("heading", { name: "Nouvelle mesure", exact: true }),
   ).toBeVisible();
   const setup = await (await page.request.get("/api/account")).json();
+  expect(setup.profile.visible).toEqual(["waist", "hips"]);
+  await expect(page.locator(".measure-tile")).toHaveCount(2);
+  await expect(page.getByLabel("Poitrine en cm", { exact: true })).toHaveCount(
+    0,
+  );
   expect(setup.profile).toMatchObject({
     height: 175.5,
     onboardingCompleted: true,
@@ -187,6 +212,15 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
   await expect(
     page.getByLabel("Équation pour le RFM et la dépense au repos"),
   ).toHaveValue("female");
+  await expect(page.getByLabel("Situation à la date de la séance")).toHaveValue(
+    "none",
+  );
+  await expect(
+    page.getByLabel("Protocole du tour de taille", { exact: true }),
+  ).toHaveValue("nice-midpoint");
+  await expect(
+    page.getByLabel("Date de mesure de la hauteur", { exact: true }),
+  ).toHaveValue("2000-01-01");
   await page.goto("/#reminder");
   await page.getByRole("button", { name: "Mercredi", exact: true }).click();
   await page.getByRole("button", { name: "Vendredi", exact: true }).click();
@@ -219,9 +253,13 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
   ).toBeVisible();
   await page.getByLabel("Sexe utilisé pour les calculs").focus();
   await page.keyboard.press("Tab");
+  await expect(page.getByLabel("Votre situation actuelle")).toBeFocused();
+  await page.keyboard.press("Tab");
   await expect(
     page.getByLabel("Date de mesure de la hauteur du profil"),
   ).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(page.getByLabel("Votre situation actuelle")).toBeFocused();
   await page.keyboard.press("Shift+Tab");
   await expect(page.getByLabel("Sexe utilisé pour les calculs")).toBeFocused();
   await page.getByLabel("Sexe utilisé pour les calculs").selectOption("male");
@@ -265,7 +303,7 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
   await page.reload();
   await expect(page.getByAltText("Votre photo de profil")).toBeVisible();
   const withAvatar = await (await page.request.get("/api/account")).json();
-  expect(withAvatar.profile.toolProfile).toEqual({
+  expect(withAvatar.profile.toolProfile).toMatchObject({
     birthDate: correctedBirthDate,
     equation: "male",
   });

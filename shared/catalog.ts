@@ -17,4 +17,4 @@ export const STANDARD_MEASURES: Measure[] = [
   { id: "calf-left", name: "Mollet gauche", unit: "cm" },
   { id: "calf-right", name: "Mollet droit", unit: "cm" },
 ];
-export const DEFAULT_VISIBLE = ["waist", "hips", "chest", "thigh-left"];
+export const DEFAULT_VISIBLE = ["waist", "hips"];

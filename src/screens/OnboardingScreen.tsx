@@ -1,5 +1,6 @@
-import { EquationFields } from "../components/ToolFields";
-import { EMPTY_TOOL_PROFILE, validDate } from "../../shared/body-tools";
+import { SessionToolFields } from "../components/ToolFields";
+import { newToolContext } from "../../shared/body-tools";
+import { onboardingSchema } from "../../shared/onboarding";
 import { useState, type FormEvent } from "react";
 import { ArrowRight, LogOut } from "lucide-react";
 import { useApp } from "../context";
@@ -14,9 +15,10 @@ export function OnboardingScreen() {
   const [height, setHeight] = useState(
     data.profile.height ? number(data.profile.height) : "",
   );
-  const [toolProfile, setToolProfile] = useState(
-    data.profile.toolProfile ?? { ...EMPTY_TOOL_PROFILE },
-  );
+  const [tools, setTools] = useState({
+    ...newToolContext(data.profile.toolProfile),
+    heightDate: data.profile.heightDate ?? null,
+  });
   const today = localDate(data.profile.timezone);
   const [choice, setChoice] = useState(data.goal ? "target" : "");
   const [measureId, setMeasureId] = useState(data.goal?.measureId || "weight");
@@ -34,7 +36,7 @@ export function OnboardingScreen() {
     const h = parseDecimal(height),
       a = parseDecimal(start),
       b = parseDecimal(target);
-    if (h === null || !Number.isFinite(h) || h > 300) {
+    if (h === null || !Number.isFinite(h) || h <= 0 || h > 300) {
       setError("Renseignez votre taille en centimètres, entre 0 et 300.");
       return;
     }
@@ -51,18 +53,33 @@ export function OnboardingScreen() {
       );
       return;
     }
-    if (
-      toolProfile.birthDate &&
-      (!validDate(toolProfile.birthDate) || toolProfile.birthDate > today)
-    ) {
-      setError(
-        "Vérifiez votre date de naissance : elle doit être valide et ne pas être dans le futur.",
-      );
-      return;
-    }
     if (!consent) {
       setError(
         "Cochez l’autorisation de suivi pour enregistrer ces informations.",
+      );
+      return;
+    }
+    const payload = {
+      height: h,
+      heightDate: tools.heightDate,
+      toolProfile: {
+        birthDate: tools.birthDate,
+        equation: tools.equation,
+        situation: tools.situation,
+        waistProtocol: tools.waistProtocol,
+        rfmWaistProtocol: tools.rfmWaistProtocol,
+      },
+      consent,
+      version: CONSENT_VERSION,
+      goal: choice === "target" ? { measureId, start: a, target: b } : null,
+    };
+    if (
+      !onboardingSchema.safeParse(payload).success ||
+      tools.birthDate! > today ||
+      tools.heightDate! > today
+    ) {
+      setError(
+        "Complétez les données pour les outils avec des dates valides, jusqu’à aujourd’hui.",
       );
       return;
     }
@@ -71,13 +88,7 @@ export function OnboardingScreen() {
     try {
       const next = await api<AccountData>("/onboarding", {
         method: "POST",
-        body: JSON.stringify({
-          height: h,
-          toolProfile,
-          consent,
-          version: CONSENT_VERSION,
-          goal: choice === "target" ? { measureId, start: a, target: b } : null,
-        }),
+        body: JSON.stringify(payload),
       });
       setData(next);
       navigate("measure");
@@ -114,25 +125,14 @@ export function OnboardingScreen() {
             taille.
           </small>
         </label>
-        <section
-          className="stack"
-          aria-labelledby="onboarding-calculations-title"
-        >
-          <h2 id="onboarding-calculations-title">
-            Âge et sexe pour les calculs
-          </h2>
-          <EquationFields
-            profile
-            value={toolProfile}
-            onChange={setToolProfile}
-            maxDate={today}
-          />
-          <p className="small muted">
-            Ces informations complètent les nouvelles séances. Si vous les
-            laissez non renseignées, les outils qui en dépendent resteront
-            indisponibles.
-          </p>
-        </section>
+        <SessionToolFields
+          onboarding
+          value={tools}
+          onChange={setTools}
+          date={today}
+          height={height}
+          setHeight={setHeight}
+        />
         <label className="field-label">
           Votre objectif
           <select

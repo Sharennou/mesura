@@ -50,3 +50,9 @@ Demandes suivantes pour Mesures : retirer « Ajouter d’autres mensurations » 
 ## Outils — évolution du 6 octobre 2026
 
 La nouvelle demande remplace « IMC et ratios » par « Outils » et réintroduit explicitement des accès « Comprendre le calcul » et « Sources et limites » dans chaque carte. Les repères IMC adultes ne sont plus attribués lorsque l’âge ou la situation est inconnu. Les liens `#analysis` restent compatibles.
+
+## Inscription et Mesures — évolution du 8 octobre 2026
+
+Les données des outils sont obligatoires au démarrage du compte : hauteur datée, naissance, choix explicite d’équation, situation et protocoles. Les réponses inconnues et le refus d’utiliser les équations restent possibles après un choix explicite. Ces réglages sont repris dans les nouvelles séances et modifiables dans le profil. Les comptes existants et leurs séances ne sont pas modifiés.
+
+Les nouveaux comptes affichent uniquement poids, tour de taille et hanches. Toute autre mesure, y compris celle spécifique au RFM, s’ajoute dans « Personnaliser » les favoris. Le guide déroulant est conservé ; un lien « Guide » à droite de chaque nom ouvre directement la fiche correspondante, sans perdre le brouillon.

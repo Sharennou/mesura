@@ -89,16 +89,29 @@ try {
     assert.equal(new URL(page.url()).hash, "");
     await expect(page.getByRole("navigation")).toHaveCount(0);
     await page.getByLabel("Votre hauteur en cm").fill("172");
-    const toolProfile =
-      width === 390
-        ? { birthDate: "1996-01-01", equation: "female" }
-        : { birthDate: null, equation: "unspecified" };
-    if (toolProfile.birthDate) {
-      await page.getByLabel("Date de naissance").fill(toolProfile.birthDate);
-      await page
-        .getByLabel("Sexe utilisé pour les calculs")
-        .selectOption(toolProfile.equation);
-    }
+    const toolProfile = {
+      birthDate: "1996-01-01",
+      equation: width === 390 ? "female" : "unspecified",
+      situation: "none",
+      waistProtocol: "nice-midpoint",
+      rfmWaistProtocol: "unknown",
+    };
+    await page.getByLabel("Date de naissance").fill(toolProfile.birthDate);
+    await page
+      .getByLabel("Sexe utilisé pour les calculs")
+      .selectOption(toolProfile.equation);
+    await page
+      .getByLabel("Votre situation actuelle")
+      .selectOption(toolProfile.situation);
+    await page
+      .getByLabel("Date de mesure de la hauteur", { exact: true })
+      .fill("2000-01-01");
+    await page
+      .getByLabel("Protocole du tour de taille", { exact: true })
+      .selectOption(toolProfile.waistProtocol);
+    await page
+      .getByLabel("Protocole de la mesure spécifique RFM")
+      .selectOption(toolProfile.rfmWaistProtocol);
     await page.getByLabel("Votre objectif").selectOption("target");
     await page.getByLabel("Mon départ").fill("80");
     await page.getByLabel("Ma cible").fill("75");

@@ -35,6 +35,14 @@ for (const [name, count] of [
     const result = await client.post("/api/onboarding", {
       data: {
         height: 175,
+        heightDate: today,
+        toolProfile: {
+          birthDate: "1996-01-01",
+          equation: "unspecified",
+          situation: "unknown",
+          waistProtocol: "unknown",
+          rfmWaistProtocol: "unknown",
+        },
         consent: true,
         version: CONSENT_VERSION,
         goal: null,

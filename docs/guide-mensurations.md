@@ -1,8 +1,8 @@
 # Guide des mesures
 
-Mise à jour du 6 octobre 2026, en développement. Un guide repliable apparaît juste sous les champs des mensurations favorites. Le choix propose les favorites dans leur ordre, puis toutes les autres mensurations actives. Une fiche est affichée à la fois : schéma SVG annoté, repère, trois étapes courtes et sources. L’ouverture et le choix sont conservés en mémoire pendant la navigation ; les valeurs du formulaire restent indépendantes.
+Mise à jour du 8 octobre 2026, en développement. Un guide repliable apparaît juste sous les champs des mensurations favorites. Le choix propose les favorites dans leur ordre, puis toutes les autres mensurations actives. Une fiche est affichée à la fois : schéma SVG annoté, repère, trois étapes courtes et sources. Un lien « Guide » à droite de chaque nom ouvre la fiche correspondante, la fait défiler dans la vue et place le focus sur son titre. Le poids possède aussi trois consignes de pesée. L’ouverture et le choix sont conservés en mémoire pendant la navigation ; les valeurs du formulaire restent indépendantes.
 
-Les 14 mensurations du catalogue sont couvertes. Les quatre paires de membres identifient le côté de la personne mesurée, indépendamment du côté dominant. Les schémas sont des illustrations originales de repérage, non à l’échelle. Une mesure personnalisée conserve son nom et son unité, mais reçoit uniquement une explication pour définir sa méthode : aucune anatomie n’est déduite du nom.
+Toutes les mensurations du catalogue sont couvertes. Les quatre paires de membres identifient le côté de la personne mesurée, indépendamment du côté dominant. Les schémas sont des illustrations originales de repérage, non à l’échelle. Une mesure personnalisée conserve son nom et son unité, mais reçoit uniquement une explication pour définir sa méthode : aucune anatomie n’est déduite du nom.
 
 ## Conventions et références
 
@@ -34,4 +34,4 @@ Les blocs « À éviter » et « Bien mesurer à chaque séance » ont été ret
 
 À vérifier sur téléphone : lecture des annotations à taille réelle, utilisation du sélecteur natif et du lecteur d’écran. Un essai de prise de mesures avec une personne formée en anthropométrie reste utile pour valider la compréhension des gestes et des repères ; les contrôles de l’interface ne valident pas la précision de la mesure corporelle obtenue.
 
-Vérifié : compilation TypeScript/Vite et quatre parcours ciblés réussis (guide et première sauvegarde, à 360 × 800 et 390 × 844 px). Le test du guide couvre les 14 fiches, le cas personnalisé, axe WCAG 2.1 AA, les contrôles de 44 px, l’absence de débordement et les retours avec brouillon conservé. Les captures de la taille, du bras et de la cuisse sont ajoutées à `.runtime/ux-review.html`.
+Vérifié : compilation TypeScript/Vite et quatre parcours ciblés réussis (guide et première sauvegarde, à 360 × 800 et 390 × 844 px). Le test du guide couvre toutes les fiches, le cas personnalisé, axe WCAG 2.1 AA, les contrôles de 44 px, l’absence de débordement et les retours avec brouillon conservé. Les captures de la taille, du bras et de la cuisse sont ajoutées à `.runtime/ux-review.html`.
