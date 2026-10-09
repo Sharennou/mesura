@@ -30,11 +30,6 @@ export const newToolContext = (
   heightDate: null,
   heightOrigin: "legacy",
 });
-export const PROTOCOL_LABELS: Record<WaistProtocol, string> = {
-  unknown: "Protocole inconnu",
-  "nice-midpoint": "Mi-distance côte–crête iliaque (NICE)",
-  "iliac-crest": "Bord supérieur de la crête iliaque droite",
-};
 // The standard entry fields follow their catalogue guides. Saved sessions keep
 // their original context, including unknown legacy protocols.
 export function newMeasurementToolContext(
@@ -48,11 +43,6 @@ export function newMeasurementToolContext(
     heightOrigin: "profile",
   };
 }
-export const EQUATION_LABELS: Record<Equation, string> = {
-  unspecified: "Non renseigné",
-  male: "Équation masculine",
-  female: "Équation féminine",
-};
 export function validDate(date: unknown): date is string {
   return (
     typeof date === "string" &&
@@ -158,7 +148,7 @@ export function adultEligibility(
     !context ||
     ![TOOL_VERSION, LEGACY_TOOL_VERSION].includes(context.version)
   )
-    return "La naissance et le sexe utilisés pour les calculs ne sont pas connus pour cette séance.";
+    return "La date de naissance et le sexe ne sont pas connus pour cette séance.";
   const age = ageAt(context.birthDate, date);
   if (age === null)
     return "Date de naissance manquante ou incompatible avec la date de la séance.";

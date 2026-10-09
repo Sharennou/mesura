@@ -19,9 +19,7 @@ test("point de départ : champs et objectif utilisables de 320 px à la tablette
   ).toBeVisible();
   await page.getByLabel("Votre hauteur en cm").fill("175,5");
   await page.getByLabel("Date de naissance").fill("1996-01-01");
-  await page
-    .getByLabel("Sexe utilisé pour les calculs")
-    .selectOption("unspecified");
+  await page.getByLabel("Sexe").selectOption("unspecified");
   await page.getByLabel("Votre objectif").selectOption("target");
   await page.getByLabel("Mon départ (kg)").fill("80");
   await page.getByLabel("Ma cible (kg)").fill("75");

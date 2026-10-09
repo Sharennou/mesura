@@ -19,10 +19,10 @@ export function LegalScreen() {
           consentement explicite pour votre suivi personnel.
         </p>
         <p>
-          Votre date de naissance et le sexe utilisé pour les calculs sont
-          demandés au démarrage. Les protocoles de mesure restent modifiables
-          dans votre profil. Ces informations restent privées et incluses dans
-          vos exports ; les calculs sont effectués dans votre navigateur.
+          Votre date de naissance et votre sexe sont demandés au démarrage et
+          restent modifiables dans votre profil. Ces informations restent
+          privées et incluses dans vos exports ; les calculs sont effectués dans
+          votre navigateur.
         </p>
         <p>
           Les canaux de rappel sont facultatifs. Vos données ne sont ni

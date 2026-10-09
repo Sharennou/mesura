@@ -1,8 +1,5 @@
-import { ProfileToolFields } from "../components/ToolFields";
-import {
-  EMPTY_TOOL_PROFILE,
-  newMeasurementToolContext,
-} from "../../shared/body-tools";
+import { PersonalFields } from "../components/PersonalFields";
+import { EMPTY_TOOL_PROFILE } from "../../shared/body-tools";
 import { localDate } from "../../shared/calculations";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
@@ -36,7 +33,6 @@ export function ProfileScreen({
   const [toolProfile, setToolProfile] = useState(
     data.profile.toolProfile ?? { ...EMPTY_TOOL_PROFILE },
   );
-  const [heightDate, setHeightDate] = useState(data.profile.heightDate ?? "");
   const [avatar, setAvatar] = useState(data.profile.avatar ?? null);
   const photoInput = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -60,13 +56,12 @@ export function ProfileScreen({
         await api<AccountData>("/profile", {
           method: "PATCH",
           body: JSON.stringify({
-            ...data.profile,
             name,
             height: parsed,
             avatar,
-            ...(data.consents.body
-              ? { toolProfile, heightDate: heightDate || null }
-              : {}),
+            timezone: data.profile.timezone,
+            visible: data.profile.visible,
+            ...(data.consents.body ? { toolProfile } : {}),
           }),
         }),
       );
@@ -85,7 +80,7 @@ export function ProfileScreen({
           <LinkCard
             icon={UserRound}
             title="Profil"
-            description={`${data.profile.name} · âge, sexe pour les calculs, hauteur et photo.`}
+            description={`${data.profile.name} · âge, sexe, hauteur et photo.`}
             onClick={() => navigate("profile")}
           />
           <LinkCard
@@ -247,7 +242,7 @@ export function ProfileScreen({
           onClick={() => navigate("privacy")}
         />
       )}
-      <form onSubmit={submit} className="stack">
+      <form onSubmit={submit} className="stack profile-form">
         <label className="field-label">
           Pseudo
           <input
@@ -264,38 +259,24 @@ export function ProfileScreen({
             placeholder="Ex. 175,0"
             value={height}
             disabled={!data.consents.body}
-            onChange={(e) => {
-              setHeight(e.target.value);
-              setHeightDate("");
-            }}
+            onChange={(e) => setHeight(e.target.value)}
           />
           <small>
             Votre hauteur corporelle, distincte du tour de taille. Une
-            modification s’applique aux futures entrées. Après un changement,
-            précisez sa date de mesure dans les réglages des outils ci-dessous.
+            modification s’applique aux futures entrées.
           </small>
         </label>
         {data.consents.body && (
           <>
-            <ProfileToolFields
-              value={{
-                ...newMeasurementToolContext(toolProfile),
-                heightDate: heightDate || null,
-              }}
-              onChange={(value) => {
-                setToolProfile({
-                  birthDate: value.birthDate,
-                  equation: value.equation,
-                  waistProtocol: value.waistProtocol,
-                });
-                setHeightDate(value.heightDate ?? "");
-              }}
-              date={localDate(data.profile.timezone)}
+            <PersonalFields
+              value={toolProfile}
+              onChange={setToolProfile}
+              maxDate={localDate(data.profile.timezone)}
             />
             <p className="small">
-              Ces réglages seront proposés aux nouvelles séances. Les entrées
-              déjà enregistrées restent inchangées. Une séance en cours garde
-              les informations déjà saisies.
+              Ces informations seront reprises dans les nouvelles séances. Les
+              entrées déjà enregistrées restent inchangées. Une séance en cours
+              garde les informations déjà saisies.
             </p>
           </>
         )}

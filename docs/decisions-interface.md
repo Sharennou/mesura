@@ -53,7 +53,7 @@ Décision initiale, remplacée par la simplification du 8 octobre ci-dessous : �
 
 ## Inscription et Mesures — évolution du 8 octobre 2026
 
-L’inscription demande obligatoirement la hauteur, la naissance et le choix du sexe utilisé pour les calculs, puis l’objectif et le consentement. Après simplification demandée, retirer le titre « Données pour les outils », les textes d’aide et d’introduction, l’âge affiché, la situation actuelle, la date de mesure de la hauteur et les protocoles de l’inscription. Garder uniquement les libellés des questions, les champs et l’autorisation de suivi. Les renseignements complémentaires de hauteur et de protocole restent dans le profil ; aucune date de mesure n’est présumée.
+L’inscription demande obligatoirement la hauteur, la naissance et le choix du sexe, puis l’objectif et le consentement. Après simplification demandée, retirer le titre « Données pour les outils », les textes d’aide et d’introduction, l’âge affiché, la situation actuelle, la date de mesure de la hauteur et les protocoles de l’inscription. Garder uniquement les libellés des questions, les champs et l’autorisation de suivi. Dans le profil, intégrer directement naissance et sexe au formulaire, sans bloc « Données pour les outils », sans sélecteur de protocole ni date de mesure de la hauteur. Aucune date de mesure n’est présumée.
 
 Les nouveaux comptes affichent uniquement poids, tour de taille et hanches. Toute autre mesure s’ajoute dans « Personnaliser » les favoris. Le guide déroulant est conservé ; un lien « Guide » à droite de chaque mensuration ouvre directement la fiche correspondante, sans perdre le brouillon. Le poids ne possède ni lien ni fiche dans le guide.
 

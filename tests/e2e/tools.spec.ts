@@ -195,7 +195,7 @@ test("analyse approfondie : profil, dates lisibles, calculs et correction par l�
   await page.goto("/#profile");
   await expect(page.getByLabel("Votre situation actuelle")).toHaveCount(0);
   await expect(page.getByText(/RFM/)).toHaveCount(0);
-  await page.getByLabel("Sexe utilisé pour les calculs").selectOption("female");
+  await page.getByLabel("Sexe").selectOption("female");
   await page.getByRole("button", { name: "Enregistrer mon profil" }).click();
   await expect(
     page.getByText("Profil enregistré.", { exact: true }),

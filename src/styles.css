@@ -2775,11 +2775,7 @@ select {
 .tool-class-high {
   background: #fff0d9;
 }
-.tool-fields .field-label {
-  margin: 18px 0;
-}
-.tools-section select,
-.tool-fields select {
+.tools-section select {
   width: 100%;
   min-width: 0;
 }
@@ -2796,7 +2792,10 @@ select {
 .onboarding-form,
 .onboarding-form .stack,
 .onboarding-form .field-label,
-.onboarding-form .check-label span {
+.onboarding-form .check-label span,
+.profile-form,
+.profile-form .stack,
+.profile-form .field-label {
   min-width: 0;
 }
 .onboarding-screen h1 {
@@ -2804,13 +2803,16 @@ select {
   overflow-wrap: break-word;
 }
 .onboarding-form .field-label > input,
-.onboarding-form .field-label > select {
+.onboarding-form .field-label > select,
+.profile-form .field-label > input,
+.profile-form .field-label > select {
   display: block;
   min-height: 52px;
   max-width: 100%;
   font-size: 16px;
 }
-.onboarding-form .field-label > select {
+.onboarding-form .field-label > select,
+.profile-form .field-label > select {
   -webkit-appearance: none;
   appearance: none;
   padding-right: 32px;
@@ -2820,12 +2822,14 @@ select {
   background-size: 18px;
   text-overflow: ellipsis;
 }
-.onboarding-form input[type="date"] {
+.onboarding-form input[type="date"],
+.profile-form input[type="date"] {
   -webkit-appearance: none;
   appearance: none;
   text-align: left;
 }
-.onboarding-form input[type="date"]::-webkit-date-and-time-value {
+.onboarding-form input[type="date"]::-webkit-date-and-time-value,
+.profile-form input[type="date"]::-webkit-date-and-time-value {
   min-width: 0;
   text-align: left;
 }

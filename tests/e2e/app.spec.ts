@@ -95,6 +95,7 @@ test("la connexion est obligatoire, y compris pendant le chargement et par lien 
 test("compte réel : accessibilité, consentement, sauvegarde, correction, export et suppression", async ({
   page,
   context,
+  browserName,
 }, testInfo) => {
   test.slow();
   const email = `parcours-${testInfo.project.name}-${Date.now()}@example.test`;
@@ -123,9 +124,7 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
   await expect(page.getByRole("navigation")).toHaveCount(0);
   await page.getByLabel("Votre hauteur en cm").fill("175,5");
   await expect(page.getByLabel("Date de naissance")).toHaveValue("");
-  await expect(page.getByLabel("Sexe utilisé pour les calculs")).toHaveValue(
-    "",
-  );
+  await expect(page.getByLabel("Sexe")).toHaveValue("");
   await expect(page.getByRole("status")).toHaveCount(0);
   await expect(
     page.getByText("Données pour les outils", { exact: true }),
@@ -152,7 +151,7 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
       .onboardingCompleted,
   ).toBe(false);
   await page.getByLabel("Date de naissance").fill(birthDate);
-  await page.getByLabel("Sexe utilisé pour les calculs").selectOption("female");
+  await page.getByLabel("Sexe").selectOption("female");
   await page.getByLabel("Votre objectif").selectOption("observe");
   await page.getByRole("checkbox").check();
   await page.route("**/api/onboarding", (route) => route.abort());
@@ -160,9 +159,7 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
   await expect(page.getByRole("alert")).toContainText("connexion");
   await expect(page.getByLabel("Votre hauteur en cm")).toHaveValue("175,5");
   await expect(page.getByLabel("Date de naissance")).toHaveValue(birthDate);
-  await expect(page.getByLabel("Sexe utilisé pour les calculs")).toHaveValue(
-    "female",
-  );
+  await expect(page.getByLabel("Sexe")).toHaveValue("female");
   expect(
     (await (await page.request.get("/api/account")).json()).consents.body,
   ).toBe(false);
@@ -235,26 +232,39 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
   await page.goto("/#account");
   await page.getByRole("button", { name: /^Profil / }).click();
   await expect(page.getByLabel("Pseudo", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Données pour les outils", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByLabel("Protocole du tour de taille", { exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByLabel("Date de mesure de la hauteur du profil"),
+  ).toHaveCount(0);
+  await expect(page.locator('form input[type="date"]')).toHaveCount(1);
+  await expect(page.getByLabel("Sexe").getByRole("option")).toHaveText([
+    "Non renseigné",
+    "Masculin",
+    "Féminin",
+  ]);
   await expect(page.getByLabel("Date de naissance")).toBeVisible();
   await expect(page.getByLabel("Date de naissance")).toHaveValue(birthDate);
-  await expect(page.getByLabel("Sexe utilisé pour les calculs")).toHaveValue(
-    "female",
-  );
+  await expect(page.getByLabel("Sexe")).toHaveValue("female");
   await page.getByLabel("Date de naissance").fill(correctedBirthDate);
   await expect(
     page.getByText("Âge actuel : 31 ans.", { exact: true }),
   ).toBeVisible();
-  await page.getByLabel("Sexe utilisé pour les calculs").focus();
-  await page.keyboard.press("Tab");
+  await page.getByLabel("Sexe").focus();
+  await page.keyboard.press(browserName === "webkit" ? "Alt+Tab" : "Tab");
   await expect(
-    page.getByLabel("Date de mesure de la hauteur du profil"),
+    page.getByRole("button", { name: "Enregistrer mon profil", exact: true }),
   ).toBeFocused();
-  await page.keyboard.press("Shift+Tab");
-  await expect(page.getByLabel("Sexe utilisé pour les calculs")).toBeFocused();
-  await page.getByLabel("Sexe utilisé pour les calculs").selectOption("male");
-  await expect(page.getByLabel("Sexe utilisé pour les calculs")).toHaveValue(
-    "male",
+  await page.keyboard.press(
+    browserName === "webkit" ? "Alt+Shift+Tab" : "Shift+Tab",
   );
+  await expect(page.getByLabel("Sexe")).toBeFocused();
+  await page.getByLabel("Sexe").selectOption("male");
+  await expect(page.getByLabel("Sexe")).toHaveValue("male");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -285,7 +295,14 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
     buffer: avatarBytes,
   });
   await expect(page.getByAltText("Votre photo de profil")).toBeVisible();
-  await page.getByRole("button", { name: "Enregistrer mon profil" }).click();
+  const [profileRequest] = await Promise.all([
+    page.waitForRequest(
+      (request) =>
+        request.url().endsWith("/api/profile") && request.method() === "PATCH",
+    ),
+    page.getByRole("button", { name: "Enregistrer mon profil" }).click(),
+  ]);
+  expect(profileRequest.postDataJSON()).not.toHaveProperty("heightDate");
   await expect(
     page.getByText("Profil enregistré.", { exact: true }),
   ).toBeVisible();
@@ -299,9 +316,7 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
   await expect(page.getByLabel("Date de naissance")).toHaveValue(
     correctedBirthDate,
   );
-  await expect(page.getByLabel("Sexe utilisé pour les calculs")).toHaveValue(
-    "male",
-  );
+  await expect(page.getByLabel("Sexe")).toHaveValue("male");
   await expect(
     page
       .getByRole("button", { name: "Mon compte et mes réglages" })

@@ -100,3 +100,10 @@ Validation de cet ajustement : compilations locale et cloud, 150 tests unitaires
 - Le catalogue contient 15 mesures et l’analyse approfondie conserve quatre outils. L’outil retiré n’apparaît plus dans le profil, les favoris, les guides, les objectifs ou les exports. Les anciens comptes restent lisibles ; les valeurs retirées sont préservées en stockage lors d’une correction et exclues des parcours actifs. Les métadonnées obsolètes sont ignorées et les exports passent au schéma 4.
 - Compilation réussie, 148 tests unitaires/API/cloud/SQL, 26 parcours mobiles à 390/360 px et contrôle responsive WebKit réussis ; contrôle TypeScript de la fonction Edge réussi. Le jeu fictif en mode `--dry-run` contient 32 entrées et 413 valeurs, sans création de compte.
 - Le parcours de guide vérifie aussi la réouverture immédiate d’une fiche après fermeture du panneau. Aucune publication ni modification de données de production effectuée.
+
+### Profil simplifié — 9 octobre 2026
+
+- Le profil intègre directement naissance et sexe au formulaire. Aucun titre « Données pour les outils », sélecteur de protocole ou champ de date de mesure de la hauteur. Le libellé « Sexe » et les réponses « Masculin », « Féminin », « Non renseigné » sont communs au profil et à l’inscription.
+- La sauvegarde du profil ne transmet plus de date de mesure cachée. Les anciennes métadonnées restent compatibles ; une modification de hauteur efface sa date antérieure via les règles API existantes, sans changer les séances déjà sauvegardées.
+- Compilation et 148 tests unitaires/API/cloud/SQL réussis. Huit parcours ciblés passent sous Chromium à 390/360 px. Le formulaire de démarrage et une vérification ciblée du profil passent sous WebKit mobile de 320 à 768 px, avec sauvegarde, rechargement et ancien profil.
+- Le parcours Safari complet, avec service workers bloqués pour permettre l’interception réseau, dépasse les contrôles du profil mais révèle un sélecteur de 24 px dans le guide des mesures. Ce contrôle extérieur au profil reste à corriger. Aucune publication effectuée.

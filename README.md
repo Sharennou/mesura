@@ -39,7 +39,7 @@ npm run dev
 1. L’accueil impose la création d’un compte ou la connexion. Aucun écran de suivi n’est accessible sans connexion, y compris par lien direct.
 2. Créer un compte : la session s’ouvre immédiatement, sans email de confirmation. Ou se connecter à son compte existant.
 3. Le SMTP reste utilisé pour la récupération du mot de passe et les rappels facultatifs.
-4. Après l’inscription, renseigner sa hauteur, sa date de naissance et le sexe utilisé pour les calculs, choisir une cible ou le suivi sans cible et cocher une seule autorisation sur l’écran de démarrage. Le tout est sauvegardé ensemble ; cet écran ne revient pas après sa validation.
+4. Après l’inscription, renseigner sa hauteur, sa date de naissance et le sexe, choisir une cible ou le suivi sans cible et cocher une seule autorisation sur l’écran de démarrage. Le tout est sauvegardé ensemble ; cet écran ne revient pas après sa validation.
 5. Enregistrer une mesure ou une note, puis consulter l’analyse.
 
 Les nouveaux comptes commencent sans mesure ni note. Leur taille et leur éventuel objectif viennent du formulaire de démarrage. Les rappels sont autorisés au moment de leur activation ; les choix restent indépendants et modifiables en une action dans « Données et confidentialité ». Le mode découverte et ses données fictives ont été supprimés. Une ancienne valeur personnelle est affichée séparément comme repère ; les champs de nouvelle mesure restent vides. Le serveur bloque toute collecte sans consentement et n’annonce la réussite qu’après une sauvegarde réelle.

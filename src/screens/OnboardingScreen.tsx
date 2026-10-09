@@ -1,4 +1,4 @@
-import { EquationFields } from "../components/ToolFields";
+import { PersonalFields } from "../components/PersonalFields";
 import { EMPTY_TOOL_PROFILE } from "../../shared/body-tools";
 import { onboardingSchema } from "../../shared/onboarding";
 import { useState, type FormEvent } from "react";
@@ -104,8 +104,7 @@ export function OnboardingScreen() {
             onChange={(e) => setHeight(e.target.value)}
           />
         </label>
-        <EquationFields
-          profile
+        <PersonalFields
           required
           compact
           value={toolProfile}
