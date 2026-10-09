@@ -66,7 +66,6 @@ describe("Outils : persistance locale et compatibilité", () => {
       { ...onboardingTools.toolProfile, birthDate: null },
       { ...onboardingTools.toolProfile, equation: undefined },
       { ...onboardingTools.toolProfile, waistProtocol: "invalid" },
-      { ...onboardingTools.toolProfile, rfmWaistProtocol: "nice-midpoint" },
       {
         ...onboardingTools.toolProfile,
         birthDate: "9999-01-01",
@@ -116,7 +115,6 @@ describe("Outils : persistance locale et compatibilité", () => {
       birthDate: "1996-10-05",
       equation: "male",
       waistProtocol: "nice-midpoint",
-      rfmWaistProtocol: "iliac-crest",
     };
     const saved = await call(
       "POST",
@@ -167,14 +165,13 @@ describe("Outils : persistance locale et compatibilité", () => {
     const tools = {
       ...newToolContext({ birthDate: "1996-10-06", equation: "female" }),
       waistProtocol: "nice-midpoint",
-      rfmWaistProtocol: "iliac-crest",
       heightDate: "2026-09-01",
       heightOrigin: "session",
     };
     const body = {
       date: "2026-10-06",
       height: 180,
-      values: { weight: 80, waist: 90.12345, "waist-rfm": 90 },
+      values: { weight: 80, waist: 90.12345 },
       note: "",
       requestId: crypto.randomUUID(),
       tools,
@@ -229,7 +226,7 @@ describe("Outils : persistance locale et compatibilité", () => {
     const json = (
       await call("POST", "/api/export", { format: "json" }, user.cookie)
     ).json();
-    expect(json.schemaVersion).toBe(3);
+    expect(json.schemaVersion).toBe(4);
     expect(json.entries.find((e: any) => e.id === id).tools).toEqual(tools);
     const csv = await call(
       "POST",
@@ -245,7 +242,7 @@ describe("Outils : persistance locale et compatibilité", () => {
       "/api/entries",
       {
         ...body,
-        tools: { ...tools, rfmWaistProtocol: "nice-midpoint" },
+        tools: { ...tools, waistProtocol: "invalid" },
         requestId: crypto.randomUUID(),
       },
       user.cookie,
@@ -264,5 +261,78 @@ describe("Outils : persistance locale et compatibilité", () => {
     expect(empty.entries).toEqual([]);
     expect(empty.profile.toolProfile).toBeUndefined();
     expect(empty.profile.heightDate).toBeNull();
+  });
+
+  it("masque les anciennes valeurs retirées et les conserve lors d’une correction", async () => {
+    const user = await account("retired-tools@example.test");
+    await call(
+      "POST",
+      "/api/onboarding",
+      {
+        ...onboardingTools,
+        height: 180,
+        consent: true,
+        version: CONSENT_VERSION,
+        goal: null,
+      },
+      user.cookie,
+    );
+    const body = {
+      date: "2026-10-06",
+      height: 180,
+      values: { waist: 90 },
+      note: "",
+      requestId: crypto.randomUUID(),
+    };
+    const created = await call("POST", "/api/entries", body, user.cookie);
+    expect(created.statusCode).toBe(200);
+    const id = created.json().id;
+    db.prepare("UPDATE entries SET values_json = ? WHERE id = ?").run(
+      JSON.stringify({ waist: 90, "waist-rfm": 92 }),
+      id,
+    );
+    const visible = (
+      await call("GET", "/api/account", undefined, user.cookie)
+    ).json();
+    expect(visible.entries[0].values).toEqual({ waist: 90 });
+    expect(
+      visible.measures.some((m: { id: string }) => m.id === "waist-rfm"),
+    ).toBe(false);
+    expect(
+      (
+        await call(
+          "PUT",
+          `/api/entries/${id}`,
+          {
+            ...body,
+            values: { waist: 89 },
+          },
+          user.cookie,
+        )
+      ).statusCode,
+    ).toBe(200);
+    const stored = JSON.parse(
+      db.prepare("SELECT values_json FROM entries WHERE id = ?").get(id)
+        .values_json,
+    );
+    expect(stored).toEqual({ waist: 89, "waist-rfm": 92 });
+    const exported = (
+      await call("POST", "/api/export", { format: "json" }, user.cookie)
+    ).json();
+    expect(exported.entries[0].values).toEqual({ waist: 89 });
+    expect(
+      (
+        await call(
+          "POST",
+          "/api/entries",
+          {
+            ...body,
+            values: { "waist-rfm": 92 },
+            requestId: crypto.randomUUID(),
+          },
+          user.cookie,
+        )
+      ).statusCode,
+    ).toBe(400);
   });
 });

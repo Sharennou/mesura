@@ -61,13 +61,13 @@ Docker, email externe et réception Web Push sur téléphone ne sont pas déclar
 - Liens scientifiques : pages officielles et miroirs primaires consultés ; OMS et PubMed peuvent opposer un contrôle anti-robot aux requêtes automatisées. Les liens et DOI restent ceux des publications. Voir [le dossier scientifique](outils-scientifiques.md).
 - Avertissement Vite : bundle principal dépassant 500 ko, sans erreur de compilation. Aucun déploiement effectué. Essai sur téléphone physique/lecteur d’écran et validation clinique non réalisés.
 
-Un premier passage mobile a révélé les libellés de formulaire à raccourcir et le schéma RFM à ajouter au guide existant ; ils ont été corrigés. Le passage complet final utilise des sources stables, sans modification ni recompilation simultanée du serveur de test.
+Un premier passage mobile a révélé les libellés de formulaire à raccourcir ; ils ont été corrigés. Le passage complet final utilise des sources stables, sans modification ni recompilation simultanée du serveur de test.
 
 
 ## Inscription et guides — vérification du 8 octobre 2026
 
 - Compilations locale et cloud, 150 tests unitaires/API/cloud/SQL et contrôle TypeScript de la fonction Edge réussis.
-- Les 12 parcours mobiles passent à 390 et 360 px : démarrage incomplet bloqué, sauvegarde atomique des données des outils et reprise dans les nouvelles séances, favoris de départ limités au tour de taille et aux hanches en plus du poids, ajout du RFM par les favoris.
+- Les 12 parcours mobiles passent à 390 et 360 px : démarrage incomplet bloqué, sauvegarde atomique des données des outils et reprise dans les nouvelles séances, favoris de départ limités au tour de taille et aux hanches en plus du poids, ajout des autres mensurations par les favoris.
 - Les liens « Guide » ouvrent la bonne fiche à la souris et au clavier, placent le focus sur son titre et conservent le brouillon ; le menu déroulant reste utilisable. Captures mobiles, contrôles axe et vérification du débordement réussis.
 - Réglages des outils accessibles dans le profil ; nouveaux champs intégrés dans le parcours au clavier. Les données et favoris existants restent compatibles.
 - `npm run test:pages` : chemins GitHub Pages et démarrage cloud complet vérifiés à 390/360 px, avec Auth simulé. Aucune publication effectuée.
@@ -82,7 +82,7 @@ Validation de cet ajustement : compilations locale et cloud, 150 tests unitaires
 ### Mesures et Analyse approfondie — simplification du 8 octobre 2026
 
 - Compilations locale et cloud et contrôle TypeScript de la fonction Edge réussis ; 148 tests unitaires/API/cloud/SQL passent.
-- Les 12 parcours mobiles passent à 390 et 360 px : aucun guide du poids (lien ou option), aucun formulaire de données des outils dans Mesures, dates françaises lisibles et seules rubriques « Comprendre le calcul » dans les cinq cartes. Sources, données utilisées, raccourcis de correction et situation déclarée sont absents.
+- Les 12 parcours mobiles passent à 390 et 360 px : aucun guide du poids (lien ou option), aucun formulaire de données des outils dans Mesures, dates françaises lisibles et seules rubriques « Comprendre le calcul » dans les quatre cartes. Sources, données utilisées, raccourcis de correction et situation déclarée sont absents.
 - Calculs à partir du profil minimal d’inscription, équations masculine/féminine, snapshots conservés après modification du profil, correction par l’historique sans perte de précision et rechargement vérifiés. Les contextes v1 restent lisibles et le champ obsolète de situation est ignoré ; la hauteur sans date connue est utilisable, les dates futures connues restent exclues.
 - Contrôles axe WCAG, débordement et inspection des captures mobiles réussis. `npm run test:pages` valide les chemins `/mesura/` et les callbacks Auth simulés à 390/360 px.
 - Aucune publication ni mutation de données de production effectuée.
@@ -91,5 +91,12 @@ Validation de cet ajustement : compilations locale et cloud, 150 tests unitaires
 
 - Compilation locale et contrôle TypeScript de la fonction Edge réussis ; 149 tests unitaires/API/cloud/SQL passent.
 - Quatre parcours ciblés réussis (analyse approfondie et courbes, à 390/360 px), avec contrôle axe et débordement. La carte porte uniquement « Tour de taille / hauteur », sans phrase introductive.
-- Une séance avec `waist: 90` et une hauteur de 180 cm affiche bien 0,50 sans mesure RFM et sans alerte de protocole, même lorsque ses anciennes métadonnées indiquent « inconnu ». Ces métadonnées restent intactes ; les conditions de classification sont conservées. Le RFM reste indépendant.
+- Une séance avec `waist: 90` et une hauteur de 180 cm affiche bien 0,50 sans alerte de protocole, même lorsque ses anciennes métadonnées indiquent « inconnu ». Ces métadonnées restent intactes ; les conditions de classification sont conservées.
 - Aucune publication effectuée.
+
+### Point de départ et catalogue — 9 octobre 2026
+
+- Formulaire vérifié à 320, 360, 390, 430 et 768 px sous Chromium et WebKit mobile : aucun débordement, champs de 52 px minimum, objectif en une colonne sous 375 px et libellés raccourcis. Les menus sont stylés explicitement pour conserver leur taille sous Safari. La saisie décimale et l’enregistrement réel d’un objectif sont vérifiés.
+- Le catalogue contient 15 mesures et l’analyse approfondie conserve quatre outils. L’outil retiré n’apparaît plus dans le profil, les favoris, les guides, les objectifs ou les exports. Les anciens comptes restent lisibles ; les valeurs retirées sont préservées en stockage lors d’une correction et exclues des parcours actifs. Les métadonnées obsolètes sont ignorées et les exports passent au schéma 4.
+- Compilation réussie, 148 tests unitaires/API/cloud/SQL, 26 parcours mobiles à 390/360 px et contrôle responsive WebKit réussis ; contrôle TypeScript de la fonction Edge réussi. Le jeu fictif en mode `--dry-run` contient 32 entrées et 413 valeurs, sans création de compte.
+- Le parcours de guide vérifie aussi la réouverture immédiate d’une fiche après fermeture du panneau. Aucune publication ni modification de données de production effectuée.

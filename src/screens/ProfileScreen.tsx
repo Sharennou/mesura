@@ -287,7 +287,6 @@ export function ProfileScreen({
                   birthDate: value.birthDate,
                   equation: value.equation,
                   waistProtocol: value.waistProtocol,
-                  rfmWaistProtocol: value.rfmWaistProtocol,
                 });
                 setHeightDate(value.heightDate ?? "");
               }}

@@ -121,6 +121,8 @@ export function MeasureScreen() {
   const formRef = useRef<HTMLFormElement>(null);
   const guideRef = useRef<HTMLDetailsElement>(null);
   function openGuide(id: string) {
+    // A native summary toggle may still be pending when the shortcut is used.
+    if (guideRef.current) guideRef.current.open = true;
     setViewState((state) => ({
       ...state,
       "measure.guide.selected": id,

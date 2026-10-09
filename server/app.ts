@@ -44,7 +44,7 @@ import {
 } from "../shared/recurrence";
 import { localDate } from "../shared/calculations";
 import { onboardingSchema } from "../shared/onboarding";
-import { DEFAULT_VISIBLE } from "../shared/catalog";
+import { DEFAULT_VISIBLE, retiredValues } from "../shared/catalog";
 import {
   APP_NAME,
   APP_SLUG,
@@ -516,6 +516,14 @@ export async function buildApp() {
         .get(userId, e.requestId) as any);
     if (duplicate) return getEntries(userId).find((x) => x.id === duplicate.id);
     const id = entryId || randomUUID();
+    const savedValues = {
+      ...retiredValues(
+        entryId
+          ? (getEntries(userId).find((x) => x.id === entryId)?.values ?? {})
+          : {},
+      ),
+      ...e.values,
+    };
     const now = new Date().toISOString();
     db.transaction(() => {
       if (!consent(userId, "body"))
@@ -526,7 +534,7 @@ export async function buildApp() {
         ).run(
           e.date,
           e.height,
-          JSON.stringify(e.values),
+          JSON.stringify(savedValues),
           e.note,
           now,
           id,

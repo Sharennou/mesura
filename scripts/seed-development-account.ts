@@ -120,12 +120,11 @@ for (const index of [26, 27]) {
   const sample = entries[index];
   entries.push({
     ...sample,
-    values: { ...sample.values, "waist-rfm": round(sample.values.waist + 1.5) },
-    note: "[Données fictives] Séance complète pour les outils : adulte fictif, équation masculine, protocoles NICE et RFM distincts.",
+    values: { ...sample.values },
+    note: "[Données fictives] Séance complète pour les outils : adulte fictif, équation masculine, protocole NICE.",
     tools: {
       ...newToolContext(toolProfile),
       waistProtocol: "nice-midpoint",
-      rfmWaistProtocol: "iliac-crest",
       heightDate: sample.date,
       heightOrigin: "session",
     },
@@ -135,7 +134,11 @@ for (const index of [26, 27]) {
 function matchesEntry(stored: Entry, entry: (typeof entries)[number]) {
   return (
     stored.date === entry.date &&
-    stored.note === entry.note &&
+    (stored.note === entry.note ||
+      (entry.tools &&
+        stored.note.startsWith(
+          "[Données fictives] Séance complète pour les outils :",
+        ))) &&
     stored.height === entry.height &&
     (!entry.tools ||
       Object.entries(entry.tools).every(
@@ -255,7 +258,6 @@ try {
       toolProfile: {
         ...toolProfile,
         waistProtocol: "nice-midpoint",
-        rfmWaistProtocol: "iliac-crest",
       },
       consent: true,
       version: CONSENT_VERSION,
@@ -304,7 +306,6 @@ try {
       results.bmi === null ||
       results.waistHips === null ||
       results.abdominal.category === null ||
-      results.rfm.value === null ||
       results.energy.value === null
     )
       throw new Error(

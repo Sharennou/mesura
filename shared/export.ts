@@ -1,5 +1,6 @@
 import type { AccountData } from "./types.ts";
 import { TOOL_VERSION } from "./body-tools.ts";
+import { activeAccountData } from "./catalog.ts";
 /** The first seven CSV columns remain compatible; later metadata is versioned. */
 export function accountCsv(a: AccountData) {
   const rows: unknown[][] = [
@@ -13,7 +14,6 @@ export function accountCsv(a: AccountData) {
       "note",
       "entree_id",
       "protocole_tour_taille",
-      "protocole_rfm",
       "hauteur_date",
       "hauteur_origine",
       "naissance",
@@ -22,7 +22,7 @@ export function accountCsv(a: AccountData) {
       "version_calcul",
     ],
   ];
-  for (const e of a.entries) {
+  for (const e of activeAccountData(a).entries) {
     const values = Object.entries(e.values);
     for (const [id, value] of values.length ? values : [["", ""]]) {
       const measure = a.measures.find((m) => m.id === id);
@@ -36,7 +36,6 @@ export function accountCsv(a: AccountData) {
         e.note,
         e.id,
         e.tools?.waistProtocol ?? "unknown",
-        e.tools?.rfmWaistProtocol ?? "unknown",
         e.tools?.heightDate ?? "",
         e.tools?.heightOrigin ?? "legacy",
         e.tools?.birthDate ?? "",
@@ -61,4 +60,4 @@ export function accountCsv(a: AccountData) {
       .join("\r\n")
   );
 }
-export const EXPORT_SCHEMA_VERSION = 3;
+export const EXPORT_SCHEMA_VERSION = 4;

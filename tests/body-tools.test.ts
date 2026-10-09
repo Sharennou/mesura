@@ -15,7 +15,6 @@ import {
   mifflin,
   newToolContext,
   orderedSessions,
-  rfm,
   thresholdNumber,
   validDate,
   waistHeight,
@@ -42,7 +41,7 @@ const session = (patch: Partial<Entry> = {}): Entry => ({
   date: "2026-10-06",
   createdAt: "2026-10-06T09:00:00Z",
   height: 180,
-  values: { weight: 80, waist: 90, hips: 100, "waist-rfm": 90 },
+  values: { weight: 80, waist: 90, hips: 100 },
   note: "",
   photos: [],
   tools: {
@@ -50,7 +49,6 @@ const session = (patch: Partial<Entry> = {}): Entry => ({
     heightDate: "2026-09-01",
     heightOrigin: "profile",
     waistProtocol: "nice-midpoint",
-    rfmWaistProtocol: "iliac-crest",
   },
   ...patch,
 });
@@ -74,15 +72,6 @@ describe("Formules et conversions conformes aux références, sans validation cl
   ])("RTH %s / 180 = %s", (waist, expected) =>
     expect(waistHeight(waist, 180)).toBe(expected),
   );
-  it.each(["male", "female"] as const)(
-    "RFM %s en cm, m et unités converties",
-    (equation) => {
-      const expected = equation === "male" ? 24 : 36;
-      expect(rfm(180, 90, equation)).toBe(expected);
-      expect(rfm(1.8, 0.9, equation, "m", "m")).toBe(expected);
-      expect(rfm(1.8, 90, equation, "m", "cm")).toBe(expected);
-    },
-  );
   it.each([
     ["male", 1780],
     ["female", 1614],
@@ -93,14 +82,11 @@ describe("Formules et conversions conformes aux références, sans validation cl
   it("refuse les unités incohérentes sans les deviner", () => {
     expect(lengthCm(180, "kg")).toBeNull();
     expect(weightKg(80, "cm")).toBeNull();
-    expect(rfm(180, 90, "male", "kg")).toBeNull();
     expect(mifflin(80, 180, 30, "male", "lb")).toBeNull();
   });
   it.each([undefined, null, NaN, Infinity, -Infinity, 0, -1, "90"])(
     "refuse une valeur invalide %s",
     (v) => {
-      expect(rfm(180, v, "male")).toBeNull();
-      expect(rfm(v, 90, "female")).toBeNull();
       expect(waistHeight(v, 180)).toBeNull();
       expect(mifflin(v, 180, 30, "male")).toBeNull();
     },
@@ -109,13 +95,10 @@ describe("Formules et conversions conformes aux références, sans validation cl
     expect(parseDecimal(" 90,12345 ")).toBe(90.12345);
     expect(parseDecimal("")).toBeNull();
     expect(parseDecimal("1,2,3")).toBeNaN();
-    expect(rfm(180, 90.12345, "male")).toBe(64 - 20 * (180 / 90.12345));
     expect(bmi(80.12345, 180.12345)).toBe(80.12345 / (180.12345 / 100) ** 2);
   });
   it("ne borne pas artificiellement les résultats impossibles", () => {
-    expect(rfm(180, 20, "male")).toBeNull();
-    expect(rfm(180, 56.25, "male")).toBeNull();
-    expect(rfm(180, 90, "unspecified")).toBeNull();
+    expect(mifflin(80, 180, 30, "unspecified")).toBeNull();
     expect(mifflin(1, 1, 78, "female")).toBeNull();
     expect(bmi(Infinity, 180)).toBeNull();
     expect(ratio(90, 0)).toBeNull();
@@ -160,7 +143,6 @@ describe("Âge historique et éligibilité", () => {
     const e = session();
     e.tools!.birthDate = `${2026 - age}-10-06`;
     const r = entryTools(e);
-    expect(r.rfm.value !== null).toBe(age >= 20 && age <= 69);
     expect(r.energy.value !== null).toBe(age >= 19 && age <= 78);
   });
   it("aucun repère adulte pour un enfant ou âge absent", () => {
@@ -177,7 +159,6 @@ describe("Âge historique et éligibilité", () => {
     const legacy = { ...e.tools, situation: "pregnancy" };
     e.tools = toolContextSchema.parse(legacy);
     expect(e.tools).not.toHaveProperty("situation");
-    expect(entryTools(e).rfm.value).toBe(24);
     expect(entryTools(e).energy.value).toBe(1780);
     expect(entryTools(e).abdominal.category).toBe("increased");
   });
@@ -189,7 +170,6 @@ describe("Âge historique et éligibilité", () => {
       }),
     });
     expect(e.tools!.heightDate).toBeNull();
-    expect(entryTools(e).rfm.value).toBe(24);
     expect(entryTools(e).energy.value).toBe(1780);
     expect(entryTools(e).abdominal.category).toBe("increased");
     expect(e.tools!.version).toBe(TOOL_VERSION);
@@ -197,9 +177,8 @@ describe("Âge historique et éligibilité", () => {
   it("équation non renseignée : aucun résultat fictif", () => {
     const e = session();
     e.tools!.equation = "unspecified";
-    expect(entryTools(e).rfm.value).toBeNull();
     expect(entryTools(e).energy.value).toBeNull();
-    expect(entryTools(e).rfm.reason).toContain("explicitement");
+    expect(entryTools(e).energy.reason).toContain("explicitement");
   });
 });
 describe("Protocoles, dates et absence de mélange des séances", () => {
@@ -223,7 +202,7 @@ describe("Protocoles, dates et absence de mélange des séances", () => {
       expect(entryTools(e).abdominal.reason).toBeNull();
     },
   );
-  it("le rapport tour de taille / hauteur utilise le tour normal sans mesure RFM", () => {
+  it("le rapport tour de taille / hauteur utilise le tour normal sans modifier son contexte", () => {
     const e = session({ values: { weight: 80, waist: 90 } });
     e.tools!.waistProtocol = "unknown";
     const original = structuredClone(e);
@@ -231,22 +210,17 @@ describe("Protocoles, dates et absence de mélange des séances", () => {
     expect(result.abdominal.value).toBe(0.5);
     expect(result.abdominal.reason).toBeNull();
     expect(result.abdominal.category).toBeNull();
-    expect(result.rfm.value).toBeNull();
     expect(e).toEqual(original);
   });
-  it("le RFM exige sa propre valeur et un protocole explicite", () => {
+  it("ignore les métadonnées de l’outil retiré dans les anciens contextes", () => {
     const e = session();
-    delete e.values["waist-rfm"];
-    expect(entryTools(e).rfm.value).toBeNull();
-    e.values["waist-rfm"] = 90;
-    e.tools!.rfmWaistProtocol = "unknown";
-    expect(entryTools(e).rfm.value).toBeNull();
-    expect(
-      toolContextSchema.safeParse({
-        ...e.tools,
-        rfmWaistProtocol: "nice-midpoint",
-      }).success,
-    ).toBe(false);
+    const tools = toolContextSchema.parse({
+      ...e.tools,
+      rfmWaistProtocol: "iliac-crest",
+    });
+    expect(tools).toEqual(e.tools);
+    expect(tools).not.toHaveProperty("rfmWaistProtocol");
+    expect(entryTools(e)).not.toHaveProperty("rfm");
   });
   it("ne recherche ni poids ni tour de taille dans une autre séance", () => {
     const e = session({ values: { waist: 90 } });
@@ -269,16 +243,15 @@ describe("Protocoles, dates et absence de mélange des séances", () => {
     ).toEqual(["early", "late"]);
     const e = session();
     e.tools!.heightDate = "2026-10-07";
-    expect(entryTools(e).rfm.value).toBeNull();
     expect(entryTools(e).energy.value).toBeNull();
     expect(entryTools(e).bmi).toBeNull();
     expect(toolDateIssue(e.tools, e.date)).toContain("après");
   });
   it("hauteur antérieure explicite, pas de substitution par le profil actuel", () => {
     const e = session();
-    expect(entryTools(e).rfm.value).toBe(24);
+    expect(entryTools(e).energy.value).toBe(1780);
     e.tools!.heightDate = null;
-    expect(entryTools(e).rfm.value).toBe(24);
+    expect(entryTools(e).energy.value).toBe(1780);
     expect(entryTools(e).bmi).toBeCloseTo(24.691358);
   });
   it("préserve les anciens ratios sans attribuer de protocole", () => {
@@ -289,7 +262,6 @@ describe("Protocoles, dates et absence de mélange des séances", () => {
     expect(r.waistHips).toBe(0.9);
     expect(r.abdominal.value).toBe(0.5);
     expect(r.abdominal.category).toBeNull();
-    expect(r.rfm.value).toBeNull();
     expect(e).toEqual(original);
   });
 });
@@ -324,22 +296,71 @@ describe("Migration, sauvegarde cloud et exports", () => {
       db.close();
     }
   });
-  it("charge les anciens comptes sans requalifier les mesures et ajoute le catalogue une seule fois", () => {
+  it("retire l’ancien outil des parcours sans effacer les valeurs sauvegardées", () => {
     const a = emptyCloudAccount("Test");
-    a.entries = [session({ tools: undefined })];
-    a.measures = a.measures.filter((m) => m.id !== "waist-rfm");
+    a.consents.body = true;
+    a.entries = [
+      session({ tools: undefined, values: { waist: 90, "waist-rfm": 92 } }),
+      session({
+        id: "retired-only",
+        tools: undefined,
+        values: { "waist-rfm": 92 },
+      }),
+    ];
+    a.measures.push({
+      id: "waist-rfm",
+      name: "Tour de taille — RFM",
+      unit: "cm",
+    });
+    a.profile.visible.push("waist-rfm");
+    a.goal = {
+      measureId: "waist-rfm",
+      start: 92,
+      target: 90,
+      startDate: "2026-10-06",
+    };
     const original = structuredClone(a),
       upgraded = upgradeCloudAccount(a);
     expect(upgraded.entries).toEqual(a.entries);
     expect(upgraded.entries[0].tools).toBeUndefined();
-    expect(upgraded.measures.filter((m) => m.id === "waist-rfm")).toHaveLength(
-      1,
+    expect(upgraded.measures.find((m) => m.id === "waist-rfm")?.archived).toBe(
+      true,
     );
     expect(upgradeCloudAccount(upgraded)).toEqual(upgraded);
     expect(a).toEqual(original);
-    expect(
-      publicCloudAccount(a).measures.some((m) => m.id === "waist-rfm"),
-    ).toBe(true);
+    const visible = publicCloudAccount(a);
+    expect(visible.measures.some((m) => m.id === "waist-rfm")).toBe(false);
+    expect(visible.profile.visible).not.toContain("waist-rfm");
+    expect(visible.entries[0].values).toEqual({ waist: 90 });
+    expect(visible.entries).toHaveLength(1);
+    expect(visible.goal).toBeNull();
+    expect(accountCsv(a)).not.toMatch(/rfm/i);
+    const edited = mutateCloudAccount(
+      a,
+      "PUT",
+      "/entries/test",
+      {
+        ...a.entries[0],
+        values: { waist: 89 },
+        requestId: crypto.randomUUID(),
+      },
+      caps,
+      now,
+    ).account;
+    expect(edited.entries[0].values).toEqual({ waist: 89, "waist-rfm": 92 });
+    expect(() =>
+      mutateCloudAccount(
+        a,
+        "POST",
+        "/entries",
+        {
+          ...a.entries[0],
+          requestId: crypto.randomUUID(),
+        },
+        caps,
+        now,
+      ),
+    ).toThrow("Mesure inconnue");
   });
   it("aller-retour cloud, mise à jour ancienne, validation et retrait", () => {
     let a = emptyCloudAccount("Test");

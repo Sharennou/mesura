@@ -2791,3 +2791,61 @@ select {
   outline: 3px solid var(--cobalt);
   outline-offset: 3px;
 }
+
+.onboarding-screen,
+.onboarding-form,
+.onboarding-form .stack,
+.onboarding-form .field-label,
+.onboarding-form .check-label span {
+  min-width: 0;
+}
+.onboarding-screen h1 {
+  font-size: clamp(32px, 10vw, 44px);
+  overflow-wrap: break-word;
+}
+.onboarding-form .field-label > input,
+.onboarding-form .field-label > select {
+  display: block;
+  min-height: 52px;
+  max-width: 100%;
+  font-size: 16px;
+}
+.onboarding-form .field-label > select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230c0c10' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 18px;
+  text-overflow: ellipsis;
+}
+.onboarding-form input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: left;
+}
+.onboarding-form input[type="date"]::-webkit-date-and-time-value {
+  min-width: 0;
+  text-align: left;
+}
+.onboarding-form .two-fields {
+  margin: 0;
+}
+.onboarding-form .check-label {
+  font-size: 12px;
+}
+.onboarding-form .primary {
+  min-width: 0;
+  white-space: normal;
+  text-align: center;
+}
+.onboarding-screen > .secondary {
+  width: 100%;
+  margin-top: 16px;
+}
+@media (max-width: 374px) {
+  .onboarding-form .two-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -90,9 +90,9 @@ export function OnboardingScreen() {
     }
   }
   return (
-    <>
+    <section className="onboarding-screen">
       <PageTitle title="Votre point de départ." back={false} />
-      <form onSubmit={submit} className="stack">
+      <form onSubmit={submit} className="stack onboarding-form">
         <label className="field-label">
           Votre hauteur en cm
           <input
@@ -122,10 +122,8 @@ export function OnboardingScreen() {
             <option value="" disabled>
               Choisir mon cap
             </option>
-            <option value="target">Atteindre ou maintenir une cible</option>
-            <option value="observe">
-              Suivre mon évolution sans cible chiffrée
-            </option>
+            <option value="target">Viser ou maintenir une cible</option>
+            <option value="observe">Suivre sans cible chiffrée</option>
           </select>
         </label>
         {choice === "target" && (
@@ -195,6 +193,6 @@ export function OnboardingScreen() {
         Me déconnecter
         <Icon as={LogOut} />
       </Button>
-    </>
+    </section>
   );
 }

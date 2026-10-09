@@ -40,7 +40,6 @@ for (const [name, count] of [
           birthDate: "1996-01-01",
           equation: "unspecified",
           waistProtocol: "unknown",
-          rfmWaistProtocol: "unknown",
         },
         consent: true,
         version: CONSENT_VERSION,

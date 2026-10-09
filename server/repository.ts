@@ -2,7 +2,11 @@ import { db, dataDir } from "./db";
 import { randomUUID } from "node:crypto";
 import { rmSync } from "node:fs";
 import { resolve } from "node:path";
-import { DEFAULT_VISIBLE, STANDARD_MEASURES } from "../shared/catalog";
+import {
+  DEFAULT_VISIBLE,
+  STANDARD_MEASURES,
+  activeAccountData,
+} from "../shared/catalog";
 import { toolContextSchema, toolProfileSchema } from "../shared/tool-schemas";
 import type {
   AccountData,
@@ -92,7 +96,7 @@ export function accountData(userId: string, name: string): AccountData {
   const goal = db
     .prepare("SELECT * FROM goals WHERE user_id = ?")
     .get(userId) as any;
-  return {
+  return activeAccountData({
     profile: {
       avatar: p?.avatar ?? null,
       onboardingCompleted: Boolean(p?.onboarding_completed),
@@ -131,7 +135,7 @@ export function accountData(userId: string, name: string): AccountData {
         .prepare("SELECT COUNT(*) AS n FROM subscriptions WHERE user_id = ?")
         .get(userId) as any
     ).n,
-  };
+  });
 }
 export function deletePhotos(userId: string, entryId?: string) {
   const rows = (

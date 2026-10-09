@@ -7,7 +7,13 @@ import {
 import { avatarSchema } from "./avatar.ts";
 import { z } from "zod";
 import { DateTime } from "luxon";
-import { STANDARD_MEASURES, DEFAULT_VISIBLE } from "./catalog.ts";
+import {
+  STANDARD_MEASURES,
+  DEFAULT_VISIBLE,
+  activeAccountData,
+  isActiveMeasure,
+  retiredValues,
+} from "./catalog.ts";
 import { CONSENT_TEXTS, CONSENT_VERSION } from "./config.ts";
 import { nextOccurrences, reminderAnchor, reminderDays } from "./recurrence.ts";
 import { onboardingSchema } from "./onboarding.ts";
@@ -67,6 +73,10 @@ export function upgradeCloudAccount(a: CloudAccount): CloudAccount {
   for (const entry of next.entries) {
     if (entry.tools) entry.tools = toolContextSchema.parse(entry.tools);
   }
+  for (const measure of next.measures) {
+    if (!isActiveMeasure(measure.id)) measure.archived = true;
+  }
+  next.profile.visible = next.profile.visible.filter(isActiveMeasure);
   for (const measure of STANDARD_MEASURES) {
     if (!next.measures.some((m) => m.id === measure.id))
       next.measures.push(structuredClone(measure));
@@ -76,7 +86,7 @@ export function upgradeCloudAccount(a: CloudAccount): CloudAccount {
 export function publicCloudAccount(input: CloudAccount): AccountData {
   const a = upgradeCloudAccount(input);
   const { profile, entries, measures, goal, consents, reminder } = a;
-  return {
+  return activeAccountData({
     profile: {
       ...profile,
       onboardingCompleted:
@@ -89,7 +99,7 @@ export function publicCloudAccount(input: CloudAccount): AccountData {
     consents,
     reminder,
     devices: a.subscriptions.length,
-  };
+  });
 }
 export function cloudFail(message: string, statusCode = 400): never {
   throw Object.assign(new Error(message), { statusCode });
@@ -302,6 +312,7 @@ export function mutateCloudAccount(
     if (
       Object.keys(e.values).some(
         (v) =>
+          !isActiveMeasure(v) ||
           !a.measures.some(
             (m) => m.id === v && (!m.archived || old?.values[v] !== undefined),
           ),
@@ -315,7 +326,7 @@ export function mutateCloudAccount(
     const entry: Entry = {
       id: entryId,
       date: e.date,
-      values: e.values,
+      values: { ...retiredValues(old?.values ?? {}), ...e.values },
       note: e.note,
       height: e.height,
       ...((e.tools ?? old?.tools) ? { tools: e.tools ?? old?.tools } : {}),

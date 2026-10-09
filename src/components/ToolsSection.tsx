@@ -88,18 +88,11 @@ export function ToolsSection({
       e.tools?.waistProtocol !== undefined &&
       entryTools(e).abdominal.category !== null,
   );
-  const previousRfm = prior.find(
-    (e) =>
-      e.tools?.equation === entry?.tools?.equation &&
-      e.tools?.version === entry?.tools?.version &&
-      entryTools(e).rfm.value !== null,
-  );
   const variation = (
     value: number | null | undefined,
     old: Entry | undefined,
-    key: "abdominal" | "rfm",
   ) => {
-    const before = old ? entryTools(old)[key].value : null;
+    const before = old ? entryTools(old).abdominal.value : null;
     if (value == null || before == null || !old)
       return (
         <p className="small muted">
@@ -108,9 +101,7 @@ export function ToolsSection({
       );
     return (
       <p className="small">
-        {key === "rfm" ? "Variation de l’estimation" : "Variation du rapport"} :{" "}
-        {delta(value - before, key === "rfm" ? 1 : 3)}{" "}
-        {key === "rfm" ? "point(s) de pourcentage" : ""} depuis le{" "}
+        Variation du rapport : {delta(value - before, 3)} depuis le{" "}
         {sessionDate(old.date)}.
       </p>
     );
@@ -188,7 +179,6 @@ export function ToolsSection({
           variation={variation(
             result?.abdominal.category ? result.abdominal.value : null,
             previousAbdominal,
-            "abdominal",
           )}
         >
           {result?.abdominal.category && (
@@ -232,25 +222,6 @@ export function ToolsSection({
               Rapport = tour de taille (cm) / tour de hanches (cm), mesurés dans
               la même séance. Hanches : ruban horizontal autour de la partie la
               plus saillante des fesses.
-            </p>
-          </details>
-        </Card>
-        <Card
-          id="rfm"
-          title="Masse grasse estimée — RFM"
-          value={result?.rfm.value != null ? number(result.rfm.value) : null}
-          unit="%"
-          explanation="Estimation de la proportion de masse grasse à partir de la hauteur et d’un tour de taille spécifique."
-          reason={result?.rfm.reason}
-          variation={variation(result?.rfm.value, previousRfm, "rfm")}
-        >
-          <details className="tool-details">
-            <summary>Comprendre le calcul</summary>
-            <p>
-              Équation masculine : 64 − 20 × (hauteur / tour de taille).
-              Équation féminine : 76 − 20 × (hauteur / tour de taille). Les deux
-              longueurs sont en cm ou dans la même unité. Le résultat est déjà
-              en %, sans multiplication par 100.
             </p>
           </details>
         </Card>

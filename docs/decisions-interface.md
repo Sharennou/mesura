@@ -55,7 +55,7 @@ Décision initiale, remplacée par la simplification du 8 octobre ci-dessous : �
 
 L’inscription demande obligatoirement la hauteur, la naissance et le choix du sexe utilisé pour les calculs, puis l’objectif et le consentement. Après simplification demandée, retirer le titre « Données pour les outils », les textes d’aide et d’introduction, l’âge affiché, la situation actuelle, la date de mesure de la hauteur et les protocoles de l’inscription. Garder uniquement les libellés des questions, les champs et l’autorisation de suivi. Les renseignements complémentaires de hauteur et de protocole restent dans le profil ; aucune date de mesure n’est présumée.
 
-Les nouveaux comptes affichent uniquement poids, tour de taille et hanches. Toute autre mesure, y compris celle spécifique au RFM, s’ajoute dans « Personnaliser » les favoris. Le guide déroulant est conservé ; un lien « Guide » à droite de chaque mensuration ouvre directement la fiche correspondante, sans perdre le brouillon. Le poids ne possède ni lien ni fiche dans le guide.
+Les nouveaux comptes affichent uniquement poids, tour de taille et hanches. Toute autre mesure s’ajoute dans « Personnaliser » les favoris. Le guide déroulant est conservé ; un lien « Guide » à droite de chaque mensuration ouvre directement la fiche correspondante, sans perdre le brouillon. Le poids ne possède ni lien ni fiche dans le guide.
 
 ## Analyse approfondie — simplification du 8 octobre 2026
 
@@ -65,4 +65,4 @@ Retirer le bloc « Données pour les outils » de Mesures. Les nouvelles séance
 
 ## Tour de taille / hauteur — ajustement du 8 octobre 2026
 
-La carte porte seulement « Tour de taille / hauteur ». Retirer sa phrase introductive sur l’adiposité et l’alerte « Mesurez le tour de taille […] Le protocole actuel est différent ou inconnu ». Le rapport utilise le tour de taille normal ; aucune mesure RFM n’est nécessaire. Les protocoles historiques restent conservés et les règles d’affichage des classifications sont inchangées.
+La carte porte seulement « Tour de taille / hauteur ». Retirer sa phrase introductive sur l’adiposité et l’alerte « Mesurez le tour de taille […] Le protocole actuel est différent ou inconnu ». Le rapport utilise le tour de taille normal. Les protocoles historiques restent conservés et les règles d’affichage des classifications sont inchangées.

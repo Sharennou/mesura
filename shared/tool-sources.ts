@@ -26,25 +26,6 @@ export const TOOL_SOURCES = {
     role: "Protocole et interprétation · variations selon les populations",
     url: "https://www.who.int/publications/i/item/9789241501491",
   },
-  rfm: {
-    title:
-      "Relative fat mass (RFM) as a new estimator of whole-body fat percentage — A cross-sectional study in American adult individuals",
-    authors: "Woolcott OO, Bergman RN",
-    year: "2018",
-    doi: "10.1038/s41598-018-29362-1",
-    role: "Formule, protocole et validation principale",
-    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC6054651/",
-  },
-  mexico: {
-    title:
-      "External validation of the relative fat mass (RFM) index in adults from north-west Mexico using different reference methods",
-    authors:
-      "Guzmán-León AE, Velarde AG, Vidal-Salas M, Urquijo-Ruiz LG, Caraveo-Gutiérrez LA, Valencia ME",
-    year: "2019",
-    doi: "10.1371/journal.pone.0226767",
-    role: "Validation externe",
-    url: "https://pubmed.ncbi.nlm.nih.gov/31891616/",
-  },
   mifflin: {
     title:
       "A new predictive equation for resting energy expenditure in healthy individuals",

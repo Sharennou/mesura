@@ -48,7 +48,7 @@ test("analyse approfondie : profil, dates lisibles, calculs et correction par l�
     page.getByRole("heading", { name: "Analyse approfondie", exact: true }),
   ).toBeVisible();
   await expect(page.locator(".tool-value")).not.toContainText(["24,0", "1780"]);
-  // A saved normal waist measurement needs no RFM value, even when its old
+  // A saved normal waist measurement is sufficient, even when its old
   // protocol metadata is unknown. Keep that metadata without showing an alert.
   const legacyTools = newToolContext({ birthDate, equation: "male" });
   const legacy = await page.request.post("/api/entries", {
@@ -74,11 +74,7 @@ test("analyse approfondie : profil, dates lisibles, calculs et correction par l�
   );
   await expect(normalWaist.locator(".tool-state")).toHaveCount(0);
   await expect(normalWaist.locator(".indicator-explanation")).toHaveCount(0);
-  await expect(
-    page
-      .getByRole("article", { name: "Masse grasse estimée — RFM" })
-      .locator(".tool-value"),
-  ).toHaveText("Non disponible");
+  await expect(page.getByRole("article", { name: /RFM/ })).toHaveCount(0);
   await page
     .getByRole("button", { name: "Prendre une nouvelle mesure guidée" })
     .click();
@@ -94,25 +90,25 @@ test("analyse approfondie : profil, dates lisibles, calculs et correction par l�
   await page
     .getByRole("button", { name: "Personnaliser", exact: true })
     .click();
-  await page.getByRole("checkbox", { name: "Tour de taille — RFM" }).check();
-  await page.getByRole("button", { name: "Enregistrer mes favoris" }).click();
+  await expect(page.getByRole("checkbox", { name: /RFM/ })).toHaveCount(0);
   await page
-    .getByLabel("Tour de taille — RFM en cm", { exact: true })
-    .fill("90");
+    .getByRole("checkbox", { name: "Poitrine cm", exact: true })
+    .check();
+  await page.getByRole("button", { name: "Enregistrer mes favoris" }).click();
+  await page.getByLabel("Poitrine en cm", { exact: true }).fill("95");
   await page
     .getByRole("button", { name: "Enregistrer la mesure", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Voir mon analyse", exact: true })
     .click();
-  const rfm = page.getByRole("article", { name: "Masse grasse estimée — RFM" });
   const energy = page.getByRole("article", {
     name: "Dépense énergétique au repos estimée",
   });
   const abdomen = page.getByRole("article", {
     name: "Tour de taille / hauteur",
   });
-  await expect(rfm.locator(".tool-value")).toHaveText("24,0 %");
+  await expect(page.getByRole("article", { name: /RFM/ })).toHaveCount(0);
   await expect(energy.locator(".tool-value")).toHaveText("1780 kcal/jour");
   await expect(abdomen).toContainText("Adiposité abdominale augmentée");
   await expect(abdomen.locator(".indicator-explanation")).toHaveCount(0);
@@ -121,7 +117,7 @@ test("analyse approfondie : profil, dates lisibles, calculs et correction par l�
   ).toHaveText([formattedDate, formattedDate]);
   await expect(page.locator(".tools-section > p")).toHaveCount(0);
   await expect(page.locator(".tool-card summary")).toHaveText(
-    Array(5).fill("Comprendre le calcul"),
+    Array(4).fill("Comprendre le calcul"),
   );
   await expect(
     page.getByText("Sources et limites", { exact: true }),
@@ -133,8 +129,10 @@ test("analyse approfondie : profil, dates lisibles, calculs et correction par l�
   await expect(
     page.getByText(/Situation déclarée|situation n’est pas renseignée/),
   ).toHaveCount(0);
-  await rfm.getByText("Comprendre le calcul", { exact: true }).press("Enter");
-  await expect(rfm.getByText(/64 − 20/)).toBeVisible();
+  await energy
+    .getByText("Comprendre le calcul", { exact: true })
+    .press("Enter");
+  await expect(energy.getByText(/Mifflin–St Jeor/)).toBeVisible();
   expect(
     (
       await new AxeBuilder({ page })
@@ -172,24 +170,23 @@ test("analyse approfondie : profil, dates lisibles, calculs et correction par l�
     .getByRole("button", { name: "Enregistrer les modifications", exact: true })
     .click();
   await page.getByRole("button", { name: "Analyse", exact: true }).click();
-  await expect(rfm.locator(".tool-value")).toHaveText("24,0 %");
   await expect(energy.locator(".tool-value")).toHaveText("1780 kcal/jour");
   await expect(abdomen).toContainText("dans la plage de référence");
   await expect(abdomen.locator(".tool-value")).not.toHaveText(
     "0,50 (sans unité)",
   );
   await page.reload();
-  await expect(rfm.locator(".tool-value")).toHaveText("24,0 %");
+  await expect(energy.locator(".tool-value")).toHaveText("1780 kcal/jour");
   const data = await (await page.request.get("/api/account")).json();
   expect(data.entries[0].values.waist).toBe(89.9999);
   expect(data.entries[0].tools).toMatchObject({
     birthDate,
     equation: "male",
     waistProtocol: "nice-midpoint",
-    rfmWaistProtocol: "iliac-crest",
     heightDate: null,
   });
   expect(data.entries[0].tools).not.toHaveProperty("situation");
+  expect(data.entries[0].tools).not.toHaveProperty("rfmWaistProtocol");
   expect(
     data.entries.find((e: { id: string }) => e.id === legacyEntry.id).tools,
   ).toEqual(legacyTools);
@@ -197,6 +194,7 @@ test("analyse approfondie : profil, dates lisibles, calculs et correction par l�
   // A profile change is used by the next entry and leaves the saved one intact.
   await page.goto("/#profile");
   await expect(page.getByLabel("Votre situation actuelle")).toHaveCount(0);
+  await expect(page.getByText(/RFM/)).toHaveCount(0);
   await page.getByLabel("Sexe utilisé pour les calculs").selectOption("female");
   await page.getByRole("button", { name: "Enregistrer mon profil" }).click();
   await expect(
@@ -208,18 +206,14 @@ test("analyse approfondie : profil, dates lisibles, calculs et correction par l�
     .getByLabel("Tour de taille en cm", { exact: true })
     .fill("89,9999");
   await page
-    .getByLabel("Tour de taille — RFM en cm", { exact: true })
-    .fill("90");
-  await page
     .getByRole("button", { name: "Enregistrer la mesure", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Voir mon analyse", exact: true })
     .click();
-  await expect(rfm.locator(".tool-value")).toHaveText("36,0 %");
   await expect(energy.locator(".tool-value")).toHaveText("1614 kcal/jour");
   await page.getByLabel("Séance analysée").selectOption(data.entries[0].id);
-  await expect(rfm.locator(".tool-value")).toHaveText("24,0 %");
+  await expect(energy.locator(".tool-value")).toHaveText("1780 kcal/jour");
   await expect(
     page.getByLabel("Séance analysée").getByRole("option"),
   ).toHaveText([formattedDate, formattedDate, formattedDate]);

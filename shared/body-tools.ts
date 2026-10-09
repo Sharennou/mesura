@@ -10,12 +10,10 @@ export interface ToolProfile {
   birthDate: string | null;
   equation: Equation;
   waistProtocol?: WaistProtocol;
-  rfmWaistProtocol?: "unknown" | "iliac-crest";
 }
 export interface ToolContext extends ToolProfile {
   version: typeof TOOL_VERSION | typeof LEGACY_TOOL_VERSION;
   waistProtocol: WaistProtocol;
-  rfmWaistProtocol: "unknown" | "iliac-crest";
   heightDate: string | null;
   heightOrigin: "session" | "profile" | "legacy";
 }
@@ -29,14 +27,13 @@ export const newToolContext = (
   ...profile,
   version: TOOL_VERSION,
   waistProtocol: profile.waistProtocol ?? "unknown",
-  rfmWaistProtocol: profile.rfmWaistProtocol ?? "unknown",
   heightDate: null,
   heightOrigin: "legacy",
 });
 export const PROTOCOL_LABELS: Record<WaistProtocol, string> = {
   unknown: "Protocole inconnu",
   "nice-midpoint": "Mi-distance côte–crête iliaque (NICE)",
-  "iliac-crest": "Bord supérieur de la crête iliaque droite (RFM)",
+  "iliac-crest": "Bord supérieur de la crête iliaque droite",
 };
 // The standard entry fields follow their catalogue guides. Saved sessions keep
 // their original context, including unknown legacy protocols.
@@ -47,7 +44,6 @@ export function newMeasurementToolContext(
   return {
     ...newToolContext(profile),
     waistProtocol: profile?.waistProtocol ?? "nice-midpoint",
-    rfmWaistProtocol: profile?.rfmWaistProtocol ?? "iliac-crest",
     heightDate,
     heightOrigin: "profile",
   };
@@ -93,18 +89,6 @@ export function waistHeight(
   heightUnit = "cm",
 ) {
   return ratio(lengthCm(waist, waistUnit), lengthCm(height, heightUnit));
-}
-export function rfm(
-  height: unknown,
-  waist: unknown,
-  equation: Equation,
-  heightUnit = "cm",
-  waistUnit = "cm",
-) {
-  const r = ratio(lengthCm(height, heightUnit), lengthCm(waist, waistUnit));
-  if (r === null || !["male", "female"].includes(equation)) return null;
-  const value = (equation === "male" ? 64 : 76) - 20 * r;
-  return positive(value) && value < 100 ? value : null;
 }
 export function mifflin(
   weight: unknown,
@@ -223,17 +207,6 @@ export function entryTools(entry: Entry) {
       ? "Choisissez explicitement une équation masculine ou féminine."
       : null) ||
     heightEligibility(entry);
-  const rfmReason =
-    predictiveReason(20, 69) ||
-    (c?.rfmWaistProtocol !== "iliac-crest"
-      ? "Une mesure spécifique au bord supérieur de la crête iliaque droite est nécessaire pour le RFM."
-      : null) ||
-    (!positive(entry.values["waist-rfm"])
-      ? "Ajoutez le tour de taille spécifique au RFM dans cette séance."
-      : null);
-  const rfmValue = rfmReason
-    ? null
-    : rfm(entry.height, entry.values["waist-rfm"], c!.equation);
   const energyReason =
     predictiveReason(19, 78) ||
     (!positive(entry.values.weight)
@@ -259,14 +232,6 @@ export function entryTools(entry: Entry) {
           ? classifyAbdominal(rth, b)
           : null,
     },
-    rfm: {
-      value: rfmValue,
-      reason:
-        rfmReason ||
-        (rfmValue === null
-          ? "Résultat non interprétable : vérifiez les valeurs, les unités et le repère de mesure. Aucun pourcentage n’est corrigé automatiquement."
-          : null),
-    } satisfies ToolResult,
     energy: {
       value: energyValue,
       reason:

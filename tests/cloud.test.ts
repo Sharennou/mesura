@@ -51,7 +51,6 @@ describe("Sauvegarde distante", () => {
       { ...onboardingTools.toolProfile, birthDate: null },
       { ...onboardingTools.toolProfile, equation: undefined },
       { ...onboardingTools.toolProfile, waistProtocol: "invalid" },
-      { ...onboardingTools.toolProfile, rfmWaistProtocol: "nice-midpoint" },
       {
         ...onboardingTools.toolProfile,
         birthDate: "2026-10-06",
@@ -87,7 +86,6 @@ describe("Sauvegarde distante", () => {
       birthDate: "1996-10-05",
       equation: "female",
       waistProtocol: "nice-midpoint",
-      rfmWaistProtocol: "iliac-crest",
     };
     const saved = change(before, "POST", "/onboarding", {
       ...payload,

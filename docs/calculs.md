@@ -13,7 +13,6 @@ Voir aussi le [dossier scientifique Analyse approfondie](outils-scientifiques.md
 | IMC              | poids kg / (stature cm / 100)² | 1 décimale, kg/m² |
 | Taille / stature | tour de taille cm / stature cm | 2 décimales       |
 | Taille / hanches | tour de taille cm / hanches cm | 2 décimales       |
-| RFM | 64 (masculine) ou 76 (féminine) − 20 × hauteur / tour spécifique | 1 décimale, % |
 | DER Mifflin–St Jeor | 10 × poids kg + 6,25 × hauteur cm − 5 × âge + 5 (masculine) ou −161 (féminine) | entier, kcal/jour |
 
 La stature est conservée dans chaque entrée. Modifier le profil ne change pas les résultats passés. Une correction historique est explicite dans le formulaire d’édition. Les ratios utilisent les valeurs d’une même entrée. Une valeur absente ou un dénominateur nul produit un état indisponible.

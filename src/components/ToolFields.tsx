@@ -64,7 +64,7 @@ export function EquationFields({
   const age = ageAt(value.birthDate, maxDate);
   const equationLabel = profile
     ? "Sexe utilisé pour les calculs"
-    : "Équation pour le RFM et la dépense au repos";
+    : "Équation pour la dépense au repos";
   return (
     <div className="stack">
       <label className="field-label">
@@ -139,17 +139,14 @@ export function EquationFields({
     </div>
   );
 }
-export function ProtocolGuide({ rfm = false }: { rfm?: boolean }) {
+export function ProtocolGuide() {
   return (
     <details className="optional-panel">
-      <summary>
-        {rfm ? "Guide de mesure pour le RFM" : "Guide du tour de taille — NICE"}
-      </summary>
+      <summary>Guide du tour de taille — NICE</summary>
       <ol>
         <li>
-          {rfm
-            ? "Repérez, sur le côté droit, le bord supérieur de la crête iliaque (le haut de l’os du bassin)."
-            : "Repérez le bas de la dernière côte et le haut de la crête iliaque. Choisissez le milieu entre ces deux points."}
+          Repérez le bas de la dernière côte et le haut de la crête iliaque.
+          Choisissez le milieu entre ces deux points.
         </li>
         <li>
           Debout, sur peau nue, placez le ruban horizontalement autour du tronc,
@@ -161,16 +158,8 @@ export function ProtocolGuide({ rfm = false }: { rfm?: boolean }) {
           utilisé.
         </li>
       </ol>
-      <p className="small">
-        Les deux repères sont différents : une mesure NICE ne remplace pas la
-        mesure spécifique au RFM.
-      </p>
-      <a
-        href={rfm ? TOOL_SOURCES.rfm.url : TOOL_SOURCES.nice.url}
-        target="_blank"
-        rel="noreferrer"
-      >
-        {rfm ? "Publication et protocole RFM" : "Méthode NICE"} (nouvel onglet)
+      <a href={TOOL_SOURCES.nice.url} target="_blank" rel="noreferrer">
+        Méthode NICE (nouvel onglet)
       </a>
     </details>
   );
@@ -232,27 +221,6 @@ export function ProfileToolFields({
         </ToolSelect>
       </label>
       <ProtocolGuide />
-      <label className="field-label">
-        Protocole de la mesure spécifique RFM
-        <ToolSelect
-          unknown="unknown"
-          aria-label="Protocole de la mesure spécifique RFM"
-          value={value.rfmWaistProtocol}
-          onChange={(rfmWaistProtocol) =>
-            onChange({
-              ...value,
-              rfmWaistProtocol:
-                rfmWaistProtocol as ToolContext["rfmWaistProtocol"],
-            })
-          }
-        >
-          <option value="unknown">Protocole inconnu</option>
-          <option value="iliac-crest">
-            Bord supérieur de la crête iliaque droite (RFM)
-          </option>
-        </ToolSelect>
-      </label>
-      <ProtocolGuide rfm />
     </>
   );
   return (

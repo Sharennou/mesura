@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Bell,
   Ruler,
@@ -13,6 +13,7 @@ import logo from "./assets/mesura-logo.png";
 import { api, useSession, authClient } from "./api";
 import { CLOUD } from "./deployment";
 import { emptyAccountData } from "./account-data";
+import { activeAccountData } from "../shared/catalog";
 import {
   AppContext,
   type Screen,
@@ -62,7 +63,8 @@ export default function App() {
       ? (location.hash.slice(1) as Screen)
       : "measure",
   );
-  const [data, setData] = useState<AccountData>(emptyAccountData);
+  const [accountData, setData] = useState<AccountData>(emptyAccountData);
+  const data = useMemo(() => activeAccountData(accountData), [accountData]);
   const [capabilities, setCapabilities] = useState<Capabilities>({
     pushConfigured: false,
     emailConfigured: false,
