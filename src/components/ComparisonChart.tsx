@@ -8,7 +8,7 @@ export interface ChartSeries {
   unit: string;
   data: { date: string; value: number }[];
 }
-const colors = ["var(--volt)", "var(--cobalt)", "var(--white)"];
+const colors = ["var(--orange)", "var(--periwinkle)", "var(--white)"];
 const patterns = [undefined, "8 4", "2 4", "8 3 2 3", "12 3 3 3"];
 
 export function ComparisonChart({ series }: { series: ChartSeries[] }) {

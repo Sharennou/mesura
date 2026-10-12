@@ -1,5 +1,5 @@
 import { createAuthClient } from "better-auth/react";
-import { APP_NAME, APP_SLUG } from "../shared/config";
+import { API_CLIENT_ID, APP_SLUG } from "../shared/config";
 import { CLOUD } from "./deployment";
 import {
   cloudAuthClient,
@@ -28,7 +28,7 @@ export async function apiResponse(
   options: RequestInit = {},
 ): Promise<Response> {
   const headers = new Headers(options.headers);
-  headers.set("X-Requested-With", APP_NAME);
+  headers.set("X-Requested-With", API_CLIENT_ID);
   headers.set("X-Timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
   if (options.body && !(options.body instanceof FormData))
     headers.set("Content-Type", "application/json");
@@ -63,7 +63,7 @@ export async function downloadExport(format: string) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-Requested-With": APP_NAME,
+      "X-Requested-With": API_CLIENT_ID,
     },
     credentials: "same-origin",
     body: JSON.stringify({ format }),

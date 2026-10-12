@@ -1,4 +1,4 @@
-# Mesura
+# Somévo
 
 Application web mobile de suivi corporel, en français. Deux destinations : **Mesures** et **Analyse**. Archivo variable locale, neuf couleurs centralisées, contours de 2 px et ombres sans flou.
 
@@ -11,7 +11,7 @@ Les comptes et mesures privées utilisent le projet Supabase Free fourni par le 
 1. Installer toutes les migrations du dossier `supabase/migrations/` dans Supabase.
 2. Déployer la fonction `mesura-api` avec vérification JWT de la passerelle désactivée : la fonction vérifie elle-même chaque utilisateur et sa session. `npm run bundle:cloud` prépare aussi un fichier autonome pour l’éditeur Supabase.
 3. Supabase Auth : définir l’URL du site et les URLs de retour sur `https://sharennou.github.io/mesura/`, désactiver « Confirm email » et définir le minimum de mot de passe à six caractères. Le SMTP sert à la récupération de mot de passe ; Brevo est configuré pour Auth.
-4. Dans GitHub, choisir « Settings → Pages → Source → GitHub Actions », puis pousser sur `main`. Le workflow « Publier Mesura sur GitHub Pages » lance les contrôles et le déploiement.
+4. Dans GitHub, choisir « Settings → Pages → Source → GitHub Actions », puis pousser sur `main`. Le workflow « Publier Somévo sur GitHub Pages » lance les contrôles et le déploiement.
 
 Voir le [guide complet](docs/deploiement.md) pour les instructions exactes et les rappels. L’offre gratuite comporte des quotas et peut mettre un projet en pause après une semaine sans activité. Elle ne fournit pas de sauvegardes automatiques. Les comptes et mesures sont conservés dans Supabase, indépendamment d’un redéploiement GitHub.
 
@@ -73,7 +73,7 @@ Les tests couvrent les calculs, calendriers, deux comptes isolés, rejet des env
 
 Lire [le contexte de l’application](CONTEXTE.md) pour reprendre le projet et retrouver les décisions validées.
 
-React / TypeScript / Vite, Fastify, SQLite WAL, Better Auth, Sharp, Luxon et Web Push. Les versions sont figées par le lockfile. Le nom est centralisé dans **`shared/config.ts`** ; les icônes, le manifest, les WebP du logo et le CSS public sont régénérés avant lancement et compilation. Le logo source est conservé dans `src/assets/mesura-logo.png` ; ses versions WebP 2×/3× sont affichées dans l’en-tête. Lors d’un changement de nom, remplacer aussi cette source puisqu’elle contient le texte Mesura.
+React / TypeScript / Vite, Fastify, SQLite WAL, Better Auth, Sharp, Luxon et Web Push. Les versions sont figées par le lockfile. Le nom est centralisé dans **`shared/config.ts`** ; les icônes, le manifest, les WebP du logo et le CSS public sont régénérés avant lancement et compilation. Les deux logos fournis sont conservés dans `src/assets/somevo-logo.png` et `src/assets/somevo-icon.png` : logo complet en WebP pour les en-têtes, symbole seul pour le favicon PNG et les icônes PWA/Apple. La palette Somévo est définie dans `src/styles.css`. Le nom affiché garde son accent ; le slug technique `somevo` sert aux fichiers exportés. Les chemins historiques de l’API, du stockage et de GitHub Pages restent compatibles avec les comptes existants.
 
 Le formulaire public est prérendu au build avec son CSS critique, puis hydraté par React. Les fonctionnalités privées et Supabase se chargent à la demande, avec leurs contrôles d’accès. Archivo est livré en WOFF2 ; sa source et sa licence sont conservées. Voir [les optimisations, poids et mesures de performance](docs/performance.md). `npm run audit:performance -- URL DOSSIER 3` conserve trois audits Lighthouse par format et vérifie le formulaire utilisable.
 
@@ -87,7 +87,7 @@ La production exige HTTPS, secret d’authentification, SMTP, stockage persistan
 
 ## Hypothèses
 
-Le texte joint annonce neuf couleurs sans leur tableau de codes. Encre `#0C0C10` et cobalt `#2D3CFF` sont conservés ; les sept autres couleurs, dont volt `#D7FF3F`, sont centralisées dans `src/styles.css`. La liste détaillée des entités annoncée dans le texte est également absente : le modèle choisi est documenté.
+La nouvelle identité Somévo du 12 octobre remplace la palette initiale par les six couleurs fournies : charbon `#1B1B1B`, graphite `#2A2A2A`, orange `#FF490F`, pervenche `#99B2F3`, blanc `#FFFFFF`, gris `#B5B5B5`. Le modèle de données existant est conservé et documenté.
 
 Les essais sur téléphones, la configuration des prestataires et la validation juridique sont détaillés dans les documents. Cette livraison ne prétend pas valider ces paramètres externes.
 
@@ -97,7 +97,7 @@ Les rappels hebdomadaires acceptent plusieurs jours, à une heure commune. L’a
 
 ## Parcours mobiles — version de développement
 
-La refonte du parcours conserve la technologie, les données et l’identité visuelle. Mesures donne accès à l’historique en bas de page et conserve les brouillons pendant la navigation. L’Analyse adapte ses résultats aux données et rapproche les outils de comparaison. Les entrées ont un détail distinct de leur édition ; les retours restaurent le contexte. Mon espace commence par un menu, et les rappels distinguent horaires enregistrés et appareil configuré.
+La refonte du parcours conserve la technologie et les données. L’identité visuelle est désormais celle de Somévo. Mesures donne accès à l’historique en bas de page et conserve les brouillons pendant la navigation. L’Analyse adapte ses résultats aux données et rapproche les outils de comparaison. Les entrées ont un détail distinct de leur édition ; les retours restaurent le contexte. Mon espace commence par un menu, et les rappels distinguent horaires enregistrés et appareil configuré.
 
 Voir [le diagnostic, les changements et la validation](docs/ux-parcours.md). Le script `scripts/ux-preview.ts` prépare uniquement des comptes fictifs sur un serveur **local de développement**, sans réinitialiser de données. Les changements de cette session ne sont pas publiés.
 

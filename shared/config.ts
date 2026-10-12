@@ -1,4 +1,7 @@
-export const APP_NAME = "Mesura";
+export const APP_NAME = "Somévo";
+// Stable wire identifier: keep existing deployed APIs and cached clients compatible.
+// This is not a display name; branding must use APP_NAME.
+export const API_CLIENT_ID = "Mesura";
 // Supabase hébergé impose au moins 6 caractères.
 export const MIN_PASSWORD_LENGTH = 6;
 export const APP_SLUG =

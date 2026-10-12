@@ -17,8 +17,8 @@ import {
 } from "lucide-react";
 import type { AccountData, Capabilities, Entry } from "../shared/types";
 import { APP_NAME } from "../shared/config";
-import logo from "./assets/mesura-logo.webp";
-import logoRetina from "./assets/mesura-logo@3x.webp";
+import logo from "./assets/somevo-logo.webp";
+import logoRetina from "./assets/somevo-logo@3x.webp";
 import { hasCloudSession } from "./cloud-auth";
 import { api, useSession, authClient } from "./api";
 import { CLOUD } from "./deployment";
@@ -60,8 +60,8 @@ export default function App() {
   useModalFocus();
   useEffect(() => {
     document.getElementById("root")?.removeAttribute("inert");
-    performance.mark("mesura:interactive");
-    window.dispatchEvent(new Event("mesura:interactive"));
+    performance.mark("somevo:interactive");
+    window.dispatchEvent(new Event("somevo:interactive"));
   }, []);
   const [route, setRoute] = useState<Screen>(() =>
     screens.includes(location.hash.slice(1) as Screen)
@@ -433,9 +433,10 @@ export default function App() {
             <img
               className="brand-logo"
               src={logo}
-              srcSet={`${logo} 2x, ${logoRetina} 3x`}
-              width={100}
-              height={58}
+              srcSet={`${logo} 440w, ${logoRetina} 660w`}
+              sizes="220px"
+              width={176}
+              height={44}
               fetchPriority="high"
               alt=""
             />

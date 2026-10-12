@@ -366,7 +366,7 @@ export function ReminderScreen() {
         <h2>{notificationStatus}</h2>
         <p>
           {channel === "push"
-            ? "Votre consentement autorise Mesura à envoyer un rappel. L’autorisation du navigateur permet de l’afficher sur cet appareil. Ces deux choix sont distincts et volontaires."
+            ? `Votre consentement autorise ${APP_NAME} à envoyer un rappel. L’autorisation du navigateur permet de l’afficher sur cet appareil. Ces deux choix sont distincts et volontaires.`
             : "Votre consentement autorise l’envoi d’un rappel à l’adresse email de votre compte."}
         </p>
         {(channel === "push" ? pushAvailable : capabilities.emailConfigured) &&
@@ -383,8 +383,8 @@ export function ReminderScreen() {
               </label>
               {channel === "push" && permission === "denied" ? (
                 <p>
-                  Autorisez les notifications pour Mesura dans les réglages de
-                  votre navigateur, puis revenez ici.
+                  Autorisez les notifications pour {APP_NAME} dans les réglages
+                  de votre navigateur, puis revenez ici.
                 </p>
               ) : (
                 <Button
@@ -421,7 +421,7 @@ export function ReminderScreen() {
         />
       </section>
       <section
-        className={`reminder-status ${active && !dirty ? "cobalt" : ""}`}
+        className={`reminder-status ${active && !dirty ? "periwinkle" : ""}`}
         role="status"
       >
         <Icon as={active && !dirty ? Check : BellOff} size={24} />

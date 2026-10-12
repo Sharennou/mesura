@@ -15,21 +15,24 @@
   font-display: swap;
 }
 :root {
-  --ink: #0c0c10;
-  --volt: #d3f653;
-  --cobalt: #434fed;
+  color-scheme: dark;
+  --ink: #1b1b1b;
+  --surface: #2a2a2a;
+  --orange: #ff490f;
+  --periwinkle: #99b2f3;
   --white: #ffffff;
-  --paper: #f3f3ee;
-  --badge: #e2e2df;
-  --light: #bfc0c8;
-  --grid: #35353d;
-  --muted: #66666f;
+  --paper: var(--ink);
+  --badge: #3b3b3b;
+  --light: #b5b5b5;
+  --grid: #505050;
+  --muted: #b5b5b5;
+  --border: #555555;
   --nav-height: 70px;
   --action-height: 78px;
   font-family: Archivo, system-ui, sans-serif;
   font-weight: 600;
-  color: var(--ink);
-  background: var(--badge);
+  color: var(--white);
+  background: var(--ink);
   font-synthesis: none;
   font-variant-numeric: tabular-nums;
 }
@@ -78,7 +81,7 @@ select:focus-visible,
 textarea:focus-visible,
 summary:focus-visible,
 svg [tabindex]:focus-visible {
-  outline: 3px solid var(--cobalt);
+  outline: 3px solid var(--focus, var(--periwinkle));
   outline-offset: 4px;
 }
 h1:focus {
@@ -105,9 +108,8 @@ h3,
   letter-spacing: -0.035em;
 }
 h1 {
-  text-transform: uppercase;
-  font-size: 44px;
-  line-height: 0.98;
+  font-size: 40px;
+  line-height: 1.08;
 }
 h2 {
   font-size: 25px;
@@ -129,7 +131,7 @@ select {
   min-width: 0;
 }
 input[type="checkbox"] {
-  accent-color: var(--ink);
+  accent-color: var(--orange);
   width: 22px;
   height: 22px;
   flex-shrink: 0;
@@ -138,14 +140,19 @@ input[type="checkbox"] {
 input[type="date"],
 input[type="month"],
 input[type="time"] {
-  color-scheme: light;
+  color-scheme: inherit;
   max-width: 100%;
 }
 textarea {
   resize: vertical;
 }
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
 ::selection {
-  background: var(--volt);
+  background: var(--orange);
   color: var(--ink);
 }
 .app-shell {
@@ -156,12 +163,12 @@ textarea {
   position: relative;
 }
 .app-header {
-  height: 78px;
-  padding: 16px;
+  height: 88px;
+  padding: 16px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 2px solid var(--ink);
+  border-bottom: 0;
   background: var(--paper);
 }
 .brand {
@@ -170,12 +177,18 @@ textarea {
   padding: 0;
 }
 .brand-logo {
-  width: 100px;
-  height: 58px;
+  width: 176px;
+  height: 44px;
   display: block;
-  /* Le fichier original comporte de larges marges transparentes latérales. */
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
+}
+.auth-shell .app-header {
+  height: 112px;
+}
+.auth-shell .brand-logo {
+  width: 220px;
+  height: 55px;
 }
 .circle {
   width: 46px;
@@ -184,16 +197,17 @@ textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--ink);
+  border: 1px solid var(--border);
   border-radius: 50%;
-  background: var(--white);
+  background: var(--surface);
   position: relative;
 }
 .circle:hover {
-  background: var(--volt);
+  background: var(--orange);
+  color: var(--ink);
 }
 .main-content {
-  padding: 24px 16px
+  padding: 24px 20px
     calc(var(--nav-height) + env(safe-area-inset-bottom) + 32px);
 }
 .auth-shell .main-content {
@@ -287,22 +301,22 @@ textarea {
 .primary {
   width: 100%;
   height: 56px;
-  background: var(--ink);
-  color: var(--volt);
-  border: 2px solid var(--ink);
-  border-radius: 14px;
+  background: var(--orange);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   padding: 0 18px;
-  text-transform: uppercase;
+  text-transform: none;
   font-size: 22px;
-  letter-spacing: 0.015em;
+  letter-spacing: 0;
   line-height: 1.05;
 }
 .primary:hover {
-  color: var(--white);
+  color: var(--ink);
 }
 .primary:active {
   transform: translateY(1px);
@@ -315,9 +329,9 @@ textarea {
   width: 100%;
   min-height: 48px;
   padding: 10px 12px;
-  border: 2px solid var(--ink);
-  border-radius: 12px;
-  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -328,12 +342,13 @@ textarea {
   text-align: center;
 }
 .secondary:hover {
-  background: var(--volt);
+  background: var(--orange);
+  color: var(--ink);
 }
 .error-message {
-  border: 2px solid var(--cobalt);
-  border-radius: 10px;
-  background: var(--white);
+  border: 2px solid var(--periwinkle);
+  border-radius: 16px;
+  background: var(--surface);
   padding: 12px;
   display: flex;
   gap: 8px;
@@ -343,11 +358,11 @@ textarea {
   margin-top: 16px;
 }
 .error-message svg {
-  color: var(--cobalt);
+  color: var(--periwinkle);
 }
 .connection-banner {
-  background: var(--volt);
-  border-bottom: 2px solid var(--ink);
+  background: var(--orange);
+  border-bottom: 1px solid var(--border);
   display: flex;
   gap: 8px;
   padding: 10px 16px;
@@ -367,7 +382,7 @@ textarea {
 .skip-link {
   position: fixed;
   top: -100px;
-  background: var(--volt);
+  background: var(--orange);
   padding: 14px;
   z-index: 100;
 }
@@ -387,9 +402,9 @@ caption {
   margin-bottom: 12px;
 }
 .plain-card {
-  border: 2px solid var(--ink);
-  border-radius: 14px;
-  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--surface);
   padding: 16px;
   margin: 16px 0;
 }
@@ -421,9 +436,9 @@ caption {
 .field-label > select,
 .password-field > input {
   min-height: 48px;
-  border: 2px solid var(--ink);
-  border-radius: 10px;
-  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
   padding: 10px 12px;
   width: 100%;
   font-size: 14px;
@@ -482,9 +497,9 @@ caption {
 }
 .development-mail {
   padding: 12px;
-  border: 2px solid var(--ink);
-  border-radius: 12px;
-  background: var(--volt);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--orange);
   margin-bottom: 16px;
 }
 .development-mail p {
@@ -562,8 +577,8 @@ select {
   min-height: 44px;
 }
 .secondary.primary {
-  background: var(--ink);
-  color: var(--volt);
+  background: var(--orange);
+  color: var(--ink);
   font-size: 20px;
 }
 
@@ -580,3 +595,44 @@ select {
 }
 
 /* Outils: native disclosure controls remain keyboard and screen-reader accessible. */
+
+/* Somévo: explicit foregrounds on every light/accent surface. Nested form
+   controls retain their own dark surface and readable foreground. */
+.connection-banner,
+.development-mail,
+.skip-link {
+  color: var(--ink);
+  --muted: var(--ink);
+  --light: var(--ink);
+  --focus: var(--ink);
+  --border: color-mix(in srgb, var(--ink) 25%, transparent);
+  color-scheme: light;
+}
+.field-label > input,
+.field-label > select,
+.password-field > input {
+  color: var(--white);
+  --muted: #b5b5b5;
+  color-scheme: dark;
+}
+.primary,
+.secondary {
+  border-radius: 999px;
+}
+.primary,
+.secondary.primary {
+  border-color: transparent;
+}
+.primary:disabled,
+.secondary.primary:disabled {
+  background: var(--badge);
+  color: #b5b5b5;
+}
+.error-message {
+  border-color: var(--periwinkle);
+}
+@media (hover: hover) {
+  .primary:hover:not(:disabled) {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--orange) 25%, transparent);
+  }
+}

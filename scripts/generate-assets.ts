@@ -3,23 +3,32 @@ import sharp from "sharp";
 import { generateEntryStyles } from "./entry-styles";
 import { APP_NAME } from "../shared/config";
 mkdirSync("public", { recursive: true });
-// Match the original logo's displayed crop, with transparent 2× and 3× assets.
+// Supplied artwork is kept intact in the PNG sources. Only frame and encode
+// display sizes here; never redraw the symbol or the accented wordmark.
 for (const scale of [2, 3])
-  await sharp("src/assets/mesura-logo.png")
-    .resize(100 * scale, 58 * scale, { fit: "cover", position: "centre" })
+  await sharp("src/assets/somevo-logo.png")
+    .extract({ left: 222, top: 200, width: 1500, height: 375 })
+    .resize(220 * scale, 55 * scale)
     .webp({ quality: 90, alphaQuality: 100, smartSubsample: true, effort: 6 })
-    .toFile(`src/assets/mesura-logo${scale === 3 ? "@3x" : ""}.webp`);
+    .toFile(`src/assets/somevo-logo${scale === 3 ? "@3x" : ""}.webp`);
 const basePath = process.env.VITE_BASE_PATH || "/";
 if (!basePath.startsWith("/") || !basePath.endsWith("/"))
   throw new Error("VITE_BASE_PATH doit commencer et finir par /.");
-const svg =
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#D7FF3F"/><rect x="90" y="90" width="332" height="332" rx="76" fill="#0C0C10"/><path d="M161 345V166h62l47 99 44-99h39v179M161 217h36M161 269h36M161 321h36" fill="none" stroke="#D7FF3F" stroke-width="28" stroke-linejoin="round"/></svg>';
-writeFileSync("public/icon.svg", svg);
+// The original square has enough breathing room for maskable app icons.
 for (const size of [192, 512])
-  await sharp(Buffer.from(svg))
+  await sharp("src/assets/somevo-icon.png")
     .resize(size, size)
     .png()
     .toFile(`public/icon-${size}.png`);
+await sharp("src/assets/somevo-icon.png")
+  .resize(180, 180)
+  .png()
+  .toFile("public/apple-touch-icon.png");
+await sharp("src/assets/somevo-icon.png")
+  .extract({ left: 250, top: 220, width: 780, height: 780 })
+  .resize(64, 64)
+  .png()
+  .toFile("public/favicon.png");
 writeFileSync(
   "public/manifest.webmanifest",
   JSON.stringify(
@@ -32,8 +41,8 @@ writeFileSync(
       start_url: `${basePath}#measure`,
       scope: basePath,
       display: "standalone",
-      background_color: "#F3F3EE",
-      theme_color: "#D7FF3F",
+      background_color: "#1B1B1B",
+      theme_color: "#1B1B1B",
       icons: [192, 512].map((size) => ({
         src: `${basePath}icon-${size}.png`,
         sizes: `${size}x${size}`,
@@ -47,7 +56,7 @@ writeFileSync(
 );
 writeFileSync(
   "public/app-config.js",
-  `self.MESURA_CONFIG = ${JSON.stringify({ name: APP_NAME, basePath, version: String(Date.now()) })};\n`,
+  `self.SOMEVO_CONFIG = ${JSON.stringify({ name: APP_NAME, basePath, version: String(Date.now()) })};\n`,
 );
 
 generateEntryStyles();

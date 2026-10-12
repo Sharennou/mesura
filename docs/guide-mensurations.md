@@ -21,7 +21,7 @@ Ce guide est une adaptation pour le suivi à domicile, sans diagnostic ni interp
 | Cou                        | Sous le larynx, perpendiculaire à l’axe du cou, tête droite.                                                              | [AR 600–9, 28 juin 2013](https://api.army.mil/e2/c/downloads/566071.pdf), annexe B–4.a. Seul le repère anatomique est repris.                                  |
 | Abdomen                    | Au nombril, ruban horizontal, fin d’expiration normale.                                                                   | AR 600–9, annexe B–4.b ; repère appliqué ici à toute personne, sans seuil ni calcul militaire.                                                                 |
 
-Pour la poitrine et les épaules, Mesura propose une lecture en **fin d’expiration normale** afin de fixer une consigne reproductible pour ce suivi. Il s’agit d’une adaptation explicite : ANSUR II lit ces deux tours au maximum d’une respiration calme. Les arrondis militaires, seuils, extrapolations et procédures réservées aux examinateurs ne sont pas repris.
+Pour la poitrine et les épaules, Somévo propose une lecture en **fin d’expiration normale** afin de fixer une consigne reproductible pour ce suivi. Il s’agit d’une adaptation explicite : ANSUR II lit ces deux tours au maximum d’une respiration calme. Les arrondis militaires, seuils, extrapolations et procédures réservées aux examinateurs ne sont pas repris.
 
 Les blocs « À éviter » et « Bien mesurer à chaque séance » ont été retirés. Les consignes de placement, de posture et de lecture utiles restent dans les trois étapes de chaque fiche. La lecture en millimètres permet une saisie au dixième de centimètre si le ruban le permet ; elle ne garantit pas une exactitude clinique de 0,1 cm.
 

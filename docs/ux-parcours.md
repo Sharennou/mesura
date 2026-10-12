@@ -1,6 +1,6 @@
-# Mesura — parcours mobiles corrigés
+# Somévo — parcours mobiles corrigés
 
-Travail du 5 octobre 2026, sur la version locale React / TypeScript / Vite et Fastify / SQLite. Les changements concernent l’interface et son état de navigation. Aucun schéma, compte, mesure, photo ou consentement de production n’a été modifié. La palette `#D3F653` / `#434FED`, Archivo, le logo, les contours et les ombres existants sont conservés.
+Travail du 5 octobre 2026, sur la version locale React / TypeScript / Vite et Fastify / SQLite. Les changements concernent l’interface et son état de navigation. Aucun schéma, compte, mesure, photo ou consentement de production n’a été modifié. Lors de ce travail, la palette, Archivo et les logos existants ont été conservés. La nouvelle identité Somévo du 12 octobre remplace ensuite cette présentation ; voir les [décisions d’interface](decisions-interface.md).
 
 ## Diagnostic priorisé
 
@@ -36,7 +36,7 @@ Les accès **Comparer deux périodes** et **Bilan mensuel** suivent le repère p
 
 **Bilan mensuel.** Mois choisi visible, nombre d’entrées et jours renseignés, évolutions disponibles, notes uniquement si présentes. Les indicateurs sans valeur calculable sont omis. Mois vide : « Ajouter une mesure », « Choisir un autre mois » et accès aux mois renseignés. Le lien vers l’historique applique le mois choisi.
 
-**Rappels.** Séquence : 1. jours et heure ; 2. notifications ; 3. confirmation. Fuseau détecté pour un nouveau rappel, réglage discret possible ; un fuseau déjà enregistré est conservé. Un canal indisponible est désactivé. Le consentement Mesura et la permission du navigateur sont expliqués séparément. Les libellés reflètent l’état : autoriser, activer sur cet appareil, disponible ou bloqué. Les horaires peuvent être enregistrés sans envoi actif. Aucun prochain rappel n’est présenté lorsque le rappel est désactivé. Un rappel déjà actif sur un autre appareil n’est pas désactivé simplement parce que le navigateur courant n’a pas d’abonnement. Aucun canal supplémentaire n’a été développé.
+**Rappels.** Séquence : 1. jours et heure ; 2. notifications ; 3. confirmation. Fuseau détecté pour un nouveau rappel, réglage discret possible ; un fuseau déjà enregistré est conservé. Un canal indisponible est désactivé. Le consentement Somévo et la permission du navigateur sont expliqués séparément. Les libellés reflètent l’état : autoriser, activer sur cet appareil, disponible ou bloqué. Les horaires peuvent être enregistrés sans envoi actif. Aucun prochain rappel n’est présenté lorsque le rappel est désactivé. Un rappel déjà actif sur un autre appareil n’est pas désactivé simplement parce que le navigateur courant n’a pas d’abonnement. Aucun canal supplémentaire n’a été développé.
 
 **Mon espace.** Menu Profil, Objectifs, Mesures favorites, Rappels, Données et confidentialité, Informations du service. Le formulaire du profil s’ouvre depuis ce menu. Export, gestion des consentements, suppression de compte, sessions et déconnexion restent disponibles. Les actions destructrices conservent leurs confirmations.
 
@@ -46,7 +46,7 @@ Les accès **Comparer deux périodes** et **Bilan mensuel** suivent le repère p
 
 Serveur isolé : `http://127.0.0.1:5182`. Données dans `.runtime/ux-preview/`, distinctes du dossier de données habituel et de Supabase.
 
-Comptes fictifs : `vide@mesura.example.test`, `premiere@mesura.example.test`, `suivi@mesura.example.test`. Mot de passe de test commun : `ParcoursMesura!2026`. La connexion conduit directement à Mesures.
+Comptes fictifs : `vide@mesura.example.test`, `premiere@mesura.example.test`, `suivi@mesura.example.test`. Mot de passe de test commun : `ParcoursSomévo!2026`. La connexion conduit directement à Mesures.
 
 Préparation reproductible : `npx tsx scripts/ux-preview.ts` après le lancement d’un serveur local de développement sur 5182 / 3012 avec `DATA_DIR=.runtime/ux-preview`, `VITE_DEPLOYMENT=local`, SMTP et VAPID vides. Les captures et l’aperçu statique sont dans `.runtime/ux-captures/` et `.runtime/ux-review.html`. Les captures peuvent être régénérées par les tests mobiles.
 

@@ -40,7 +40,7 @@ function getCloud() {
             },
           },
         );
-        window.dispatchEvent(new Event("mesura:auth-ready"));
+        window.dispatchEvent(new Event("somevo:auth-ready"));
         return client;
       })
       .catch((error) => {
@@ -146,12 +146,12 @@ function useCloudSession() {
         if (active) setValue({ data: null, isPending: false });
       }
     };
-    window.addEventListener("mesura:auth-ready", connect);
+    window.addEventListener("somevo:auth-ready", connect);
     if (hasCloudSession() || clientPromise) void connect();
     return () => {
       active = false;
       unsubscribe?.();
-      window.removeEventListener("mesura:auth-ready", connect);
+      window.removeEventListener("somevo:auth-ready", connect);
     };
   }, []);
   return value;

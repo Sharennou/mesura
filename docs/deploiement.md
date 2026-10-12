@@ -1,4 +1,4 @@
-# Publication gratuite de Mesura
+# Publication gratuite de Somévo
 
 ## Architecture
 
@@ -21,7 +21,7 @@ npx supabase functions deploy mesura-api --no-verify-jwt
 
 Ou depuis le tableau de bord :
 
-1. SQL Editor : exécuter dans l’ordre les fichiers de `supabase/migrations/` : `20261005000100_mesura.sql`, `20261005000200_jobs.sql`, `20261005000300_push.sql`, puis `20261005000400_email_optional.sql`. Ces migrations sont additives et ne suppriment aucune table existante. Elles créent les tables Mesura, le bucket privé, les contrôles de session, les transactions et le planificateur.
+1. SQL Editor : exécuter dans l’ordre les fichiers de `supabase/migrations/` : `20261005000100_mesura.sql`, `20261005000200_jobs.sql`, `20261005000300_push.sql`, puis `20261005000400_email_optional.sql`. Ces migrations sont additives et ne suppriment aucune table existante. Elles créent les tables Somévo, le bucket privé, les contrôles de session, les transactions et le planificateur.
 2. Exécuter `npm run bundle:cloud`. Edge Functions → nouvelle fonction `mesura-api` → coller `.runtime/mesura-api.ts` comme `index.ts` et déployer. Désactiver « Verify JWT » dans les réglages de la fonction. Ce réglage permet l’emploi des nouvelles clés publiques ; les opérations privées restent protégées par `Auth.getUser`, le contrôle de la session en base.
 3. Vérifier `https://duselqsuvkwbwkhmljkh.supabase.co/functions/v1/mesura-api/health` : réponse `{"status":"ok"}`. Une requête anonyme à `/account` doit répondre 401, et la clé publique ne doit pouvoir lire aucune ligne de compte ni aucun fichier photo.
 

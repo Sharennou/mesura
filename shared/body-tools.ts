@@ -1,3 +1,4 @@
+import { APP_NAME } from "./config.ts";
 import type { Entry } from "./types.ts";
 import { bmi, ratio, number } from "./calculations.ts";
 
@@ -155,7 +156,7 @@ export function adultEligibility(
   if (age < min || (max !== undefined && age > max))
     return max === undefined
       ? "Les repères adultes ne sont pas appliqués avant 18 ans."
-      : `Calcul automatique réservé à ${min}–${max} ans dans cette version de Mesura (âge à la séance : ${age} ans).`;
+      : `Calcul automatique réservé à ${min}–${max} ans dans cette version de ${APP_NAME} (âge à la séance : ${age} ans).`;
   return null;
 }
 function heightEligibility(entry: Entry): string | null {

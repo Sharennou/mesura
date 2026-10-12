@@ -1,14 +1,14 @@
 {
   "id": "/",
-  "name": "Mesura",
-  "short_name": "Mesura",
+  "name": "Somévo",
+  "short_name": "Somévo",
   "description": "Vos mesures, votre rythme. Un repère à la fois.",
   "lang": "fr",
   "start_url": "/#measure",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#F3F3EE",
-  "theme_color": "#D7FF3F",
+  "background_color": "#1B1B1B",
+  "theme_color": "#1B1B1B",
   "icons": [
     {
       "src": "/icon-192.png",

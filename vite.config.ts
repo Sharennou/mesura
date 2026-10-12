@@ -17,12 +17,12 @@ export default defineConfig({
         const logoAsset = Object.values(bundle).find(
           (asset) =>
             asset.type === "asset" &&
-            asset.fileName.match(/mesura-logo-[^/]+\.webp$/),
+            asset.fileName.match(/somevo-logo-[^/]+\.webp$/),
         );
         const retinaAsset = Object.values(bundle).find(
           (asset) =>
             asset.type === "asset" &&
-            asset.fileName.match(/mesura-logo@3x-[^/]+\.webp$/),
+            asset.fileName.match(/somevo-logo@3x-[^/]+\.webp$/),
         );
         if (!logoAsset || !retinaAsset)
           throw new Error("Logo assets missing from the public entry.");
@@ -53,7 +53,7 @@ export default defineConfig({
       name: "application-name",
       transformIndexHtml: (html: string) =>
         html.replace(
-          "Mesura — Votre repère du jour",
+          "Somévo — Votre repère du jour",
           `${APP_NAME} — Votre repère du jour`,
         ),
     },

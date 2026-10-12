@@ -4,11 +4,13 @@
 
 ## Identité visuelle
 
-Les accents ont été légèrement adoucis : vert `#D3F653` et bleu `#434FED`. Appliquer cette palette aux surfaces et accents sans baisser l’opacité des textes.
+L’identité **Somévo**, avec l’accent sur le é, remplace la marque précédente. Palette : fond charbon `#1B1B1B`, cartes graphite `#2A2A2A`, actions/états actifs/progression orange `#FF490F`, suivi et informations clés bleu pervenche `#99B2F3`, texte principal blanc `#FFFFFF`, secondaire gris `#B5B5B5`. Les surfaces orange, pervenche et blanches portent du texte charbon. Les contours neutres servent à distinguer les champs et les surfaces.
 
-Conserver l’interface mobile existante : police Archivo locale, palette centralisée, contours et ombres sans flou. Tous les textes visibles sont en français. Le logo fourni est conservé dans `src/assets/mesura-logo.png`.
+Conserver Archivo locale et les parcours mobiles. Cartes arrondies, boutons en pilule, espacement confortable, suppression des anciennes ombres dures. Le fond reste sombre y compris après une sauvegarde. Les plages IMC conservent leurs bornes et leur repère numérique, avec couleurs de la marque et contour de sélection.
 
-Le nom textuel est centralisé dans `shared/config.ts` ; le logo contient aussi le nom et doit être remplacé séparément lors d’un changement de marque.
+Le logo complet fourni est conservé sans retouche dans `src/assets/somevo-logo.png`, le symbole seul dans `src/assets/somevo-icon.png`. Le premier apparaît dans l’accueil et les en-têtes, le second dans les icônes PWA, Apple et le favicon PNG. Le script d’assets recadre uniquement les marges du logo complet et du favicon et produit les tailles adaptées ; il ne redessine ni le S ni le mot « omévo ».
+
+Le nom affiché est centralisé dans `shared/config.ts`. Les identifiants techniques historiques (base, API, protocole de requête, versions des données et URL Pages) restent compatibles pour préserver les comptes. Les anciens caches publics sont nettoyés par le nouveau service worker. Identité préparée localement, non publiée.
 
 ## Textes et éléments retirés
 

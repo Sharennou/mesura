@@ -1,6 +1,6 @@
 # Analyse approfondie : dossier scientifique et règles de calcul
 
-Version des règles : `mesura-tools-v2`, mise à jour du catalogue le 9 octobre 2026, avec lecture des contextes `mesura-tools-v1`. Consultation des sources : **6 octobre 2026**. Les tests vérifient les équations et les règles logicielles ; ils ne constituent pas une validation clinique de Mesura.
+Version des règles : `mesura-tools-v2`, mise à jour du catalogue le 9 octobre 2026, avec lecture des contextes `mesura-tools-v1`. Consultation des sources : **6 octobre 2026**. Les tests vérifient les équations et les règles logicielles ; ils ne constituent pas une validation clinique de Somévo.
 
 ## Organisation et portée
 
@@ -12,7 +12,7 @@ Les calculs sont exécutés dans le navigateur, sans appel à un service de calc
 
 - **Recommandations** : NICE pour l’utilisation conjointe de l’IMC et du rapport tour de taille/hauteur chez l’adulte ; HAS pour les limites du dépistage anthropométrique ; OMS pour les protocoles et différences de populations.
 - **Équation prédictive** : Mifflin–St Jeor, étudiée dans des populations spécifiques. Aucun résultat individuel garanti, diagnostic ou intervalle de confiance ajouté.
-- **Choix Mesura** : restrictions d’âge, équation explicite, hauteur sauvegardée dans chaque séance, protocole explicite et comparaison de séances compatibles. La situation déclarée n’est plus collectée ni utilisée ; la hauteur peut être utilisée sans date de mesure connue, mais une date connue postérieure à la séance reste exclue. Ces règles conservatrices ne constituent pas des recommandations officielles supplémentaires.
+- **Choix Somévo** : restrictions d’âge, équation explicite, hauteur sauvegardée dans chaque séance, protocole explicite et comparaison de séances compatibles. La situation déclarée n’est plus collectée ni utilisée ; la hauteur peut être utilisée sans date de mesure connue, mais une date connue postérieure à la séance reste exclue. Ces règles conservatrices ne constituent pas des recommandations officielles supplémentaires.
 
 ## Calculs
 
@@ -23,7 +23,7 @@ Les calculs sont exécutés dans le navigateur, sans appel à un service de calc
 | Taille/hanches existant  | tour de taille cm / tour de hanches cm                           | Sans unité, descriptif sans catégorie universelle                               |
 | DER masculine / féminine | 10 × poids kg + 6,25 × hauteur cm − 5 × âge en années + 5 / −161 | kcal/jour, entier ; aucun facteur d’activité ni objectif alimentaire            |
 
-L’âge correspond aux années révolues à la date de séance. Pour une naissance le 29 février, l’année supplémentaire est comptée au 1er mars dans une année non bissextile (convention calendaire de Mesura). Les bornes incluent tous les âges révolus de 19 à 78 ans pour la DER. Elles s’appuient sur les populations des travaux retenus et ne sont pas des frontières biologiques. Une extension exige une validation applicable.
+L’âge correspond aux années révolues à la date de séance. Pour une naissance le 29 février, l’année supplémentaire est comptée au 1er mars dans une année non bissextile (convention calendaire de Somévo). Les bornes incluent tous les âges révolus de 19 à 78 ans pour la DER. Elles s’appuient sur les populations des travaux retenus et ne sont pas des frontières biologiques. Une extension exige une validation applicable.
 
 La carte porte uniquement le titre « Tour de taille / hauteur », sans phrase introductive sur l’adiposité ni alerte de protocole. Le rapport brut utilise `waist` et `Entry.height`, sans autre mensuration dédiée. Les contextes historiques inconnus restent conservés sans être requalifiés. Les repères de classification restent affichés seulement pour les contextes conformes.
 
@@ -62,7 +62,7 @@ Contrôle des corrections : notices originales indexées par Europe PMC pour les
 - Cloud : adaptation idempotente du compte JSON ; les mesures retirées sont masquées dans les parcours et les exports, sans effacer les valeurs brutes sauvegardées. Une correction d’une séance conserve ces anciennes valeurs en stockage. Aucune migration de table Postgres nécessaire. Les API maintiennent le consentement, la propriété des données, l’idempotence et la suppression du contexte corporel au retrait du suivi.
 - Versions : les nouvelles séances utilisent `mesura-tools-v2`. Les contextes v1 restent lisibles, avec leurs protocoles et autres métadonnées originales, mais sont évalués par les règles v2 (sans condition de situation ni obligation de date de hauteur). Leurs résultats disponibles peuvent donc changer. Les formules restent identiques ; aucun résultat dérivé n’est persisté. L’export distingue version de contexte et version actuelle de calcul.
 - Exports JSON/ZIP : `schemaVersion: 4`, contexte et valeurs des outils actifs ; CSV : sept colonnes historiques conservées dans le même ordre, puis colonnes de traçabilité et de version des outils actifs. Les notes conservent la protection contre l’injection de formules CSV. Les champs obsolètes sont exclus ; les valeurs brutes retirées restent sauvegardées en stockage.
-- Mesura ne possède pas d’import utilisateur dans cette version. Le chargement des anciens comptes/base et le round-trip JSON sont couverts ; aucun import fictif n’a été ajouté. Les restaurations de sauvegardes conservent les nouveaux champs avec les données du compte.
+- Somévo ne possède pas d’import utilisateur dans cette version. Le chargement des anciens comptes/base et le round-trip JSON sont couverts ; aucun import fictif n’a été ajouté. Les restaurations de sauvegardes conservent les nouveaux champs avec les données du compte.
 
 Une hauteur valide est reprise dans la séance même lorsque sa date de mesure est inconnue. Une date connue postérieure à la séance empêche les calculs qui utilisent cette hauteur. La provenance reste enregistrée, sans bloc de données dans les cartes. Les poids et tours ne sont jamais cherchés dans une autre séance. La comparaison RTH exige des protocoles NICE compatibles.
 

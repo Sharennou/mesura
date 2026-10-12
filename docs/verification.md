@@ -116,3 +116,16 @@ Validation de cet ajustement : compilations locale et cloud, 150 tests unitaires
 - Six exécutions ciblées passent sous Chromium à 390/360 px : compte réel complet, inscription avec cible et inscription avec changement vers le suivi sans cible. Hauteur décimale, validation par question, naissance future refusée, sélection au clavier, réponses conservées après retour/échec réseau, effacement du départ et de la cible lors d’un changement de mesure, consentement explicite et sauvegarde atomique vérifiés.
 - Les deux parcours dédiés à l’inscription passent également sous WebKit mobile. Chaque étape est contrôlée à 320, 360, 390, 430 et 768 px, sans débordement, avec champs de 52 px minimum, boutons de 44 px et contrôles axe WCAG. Les captures des questions de hauteur, de sexe et d’objectif ont été inspectées. Les transitions gardent les textes opaques et respectent la préférence de réduction des mouvements.
 - Le parcours Safari complet passe l’inscription puis rencontre le sélecteur de 24 px du guide des mesures, déjà signalé le 9 octobre ; ce contrôle extérieur à l’inscription n’est pas modifié. Aucun essai sur appareil physique ni aucune publication effectués.
+
+## Identité Somévo — 12 octobre 2026
+
+Vérifications locales de la nouvelle identité, sans publication ni modification de données de production :
+
+- Compilation TypeScript/Vite locale et avec `VITE_DEPLOYMENT=supabase VITE_BASE_PATH=/mesura/` : réussies ; contrôle TypeScript de la fonction Edge : réussi.
+- 148 tests unitaires/API/cloud/SQL : réussis. Le marqueur historique de requête reste accepté et les données existantes restent lisibles.
+- 30 parcours Playwright à 390 et 360 px : validés, avec recontrôle ciblé de la première saisie aux deux largeurs après ajustement des marges. Le champ de tour de taille reste au-dessus de la barre d’enregistrement à 360 × 800. Les parcours incluent inscription de 320 px à la tablette, consentement, brouillons, sauvegarde, correction, comparaison, favoris, export, suppression et rappels simulés.
+- 36 vues supplémentaires (accueil et 11 écrans privés à 360, 390 et 1440 px) : aucune violation Axe WCAG A/AA détectée, aucun débordement horizontal ni erreur JavaScript. Les contrastes des badges, champs et cartes sélectionnées ont été corrigés ; le focus reste distinct sur les surfaces claires.
+- Bundle sous `/mesura/`, prérendu, chemins des assets, service worker et callbacks Auth simulés aux deux largeurs : réussis.
+- Vérification du nom accentué dans le HTML, le manifest et les notifications, des dimensions favicon/Apple/PWA, de l’identité binaire des deux sources PNG fournies et du nettoyage limité aux anciens caches publics : réussie.
+
+Les captures et le relevé complémentaire sont dans `.runtime/somevo-review/` (non versionnés). Ces contrôles en navigateur ne constituent ni un essai sur téléphone physique ni une validation des notifications réelles des prestataires. Les mesures de performance antérieures à la nouvelle identité restent historiques.

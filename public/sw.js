@@ -1,7 +1,8 @@
 importScripts("./app-config.js");
-const BASE = self.MESURA_CONFIG.basePath || "/";
-const CACHE_PREFIX = `mesura-shell-${BASE}-`;
-const CACHE = `${CACHE_PREFIX}${self.MESURA_CONFIG.version}`;
+const BASE = self.SOMEVO_CONFIG.basePath || "/";
+const CACHE_PREFIX = `somevo-shell-${BASE}-`;
+const LEGACY_CACHE_PREFIX = `mesura-shell-${BASE}-`;
+const CACHE = `${CACHE_PREFIX}${self.SOMEVO_CONFIG.version}`;
 self.addEventListener("install", (event) =>
   event.waitUntil(
     caches
@@ -11,6 +12,8 @@ self.addEventListener("install", (event) =>
           BASE,
           `${BASE}icon-192.png`,
           `${BASE}icon-512.png`,
+          `${BASE}favicon.png`,
+          `${BASE}apple-touch-icon.png`,
           `${BASE}fonts/Archivo-display-fr.woff2`,
           `${BASE}fonts/Archivo-ui-fr.woff2`,
         ]),
@@ -25,7 +28,12 @@ self.addEventListener("activate", (event) =>
       .then((keys) =>
         Promise.all(
           keys
-            .filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE)
+            .filter(
+              (key) =>
+                (key.startsWith(CACHE_PREFIX) ||
+                  key.startsWith(LEGACY_CACHE_PREFIX)) &&
+                key !== CACHE,
+            )
             .map((key) => caches.delete(key)),
         ),
       )
@@ -74,7 +82,7 @@ self.addEventListener("push", (event) => {
     payload = event.data?.json() || {};
   } catch {}
   event.waitUntil(
-    self.registration.showNotification(self.MESURA_CONFIG.name, {
+    self.registration.showNotification(self.SOMEVO_CONFIG.name, {
       body: "Votre rendez-vous de mesures vous attend.",
       icon: `${BASE}icon-192.png`,
       badge: `${BASE}icon-192.png`,

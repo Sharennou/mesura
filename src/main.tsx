@@ -30,7 +30,7 @@ if (
 }
 if ("serviceWorker" in navigator) {
   window.addEventListener(
-    "mesura:interactive",
+    "somevo:interactive",
     () => {
       const register = () =>
         navigator.serviceWorker

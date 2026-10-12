@@ -81,7 +81,7 @@ for (const mode of modes) {
           errors,
           hydrationMarks: await page.evaluate(() =>
             performance
-              .getEntriesByName("mesura:interactive")
+              .getEntriesByName("somevo:interactive")
               .map((entry) => entry.startTime),
           ),
         },
@@ -172,10 +172,10 @@ for (const mode of modes) {
     if (report.runtimeError)
       throw new Error(JSON.stringify(report.runtimeError));
     const interactive = report.audits["user-timings"].details.items.find(
-      (item: { name: string }) => item.name === "mesura:interactive",
+      (item: { name: string }) => item.name === "somevo:interactive",
     );
     if (!interactive)
-      throw new Error("Lighthouse n’a pas observé l’hydratation de Mesura.");
+      throw new Error("Lighthouse n’a pas observé l’hydratation de Somévo.");
     const lcp = report.audits["lcp-breakdown-insight"].details.items.find(
       (item: { type: string }) => item.type === "node",
     );

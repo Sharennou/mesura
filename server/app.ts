@@ -47,6 +47,7 @@ import { onboardingSchema } from "../shared/onboarding";
 import { DEFAULT_VISIBLE, retiredValues } from "../shared/catalog";
 import {
   APP_NAME,
+  API_CLIENT_ID,
   APP_SLUG,
   CONSENT_TEXTS,
   CONSENT_VERSION,
@@ -120,7 +121,7 @@ export async function buildApp() {
         fail("Origine de la requête non autorisée.", 403);
       if (
         !req.url.startsWith("/api/auth/") &&
-        req.headers["x-requested-with"] !== APP_NAME
+        req.headers["x-requested-with"] !== API_CLIENT_ID
       )
         fail("Protection de la requête manquante.", 403);
     }

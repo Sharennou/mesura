@@ -117,3 +117,9 @@ Le démarrage affiche maintenant une question à la fois, avec progression, cart
 ## Performance — 12 octobre 2026, non publiée
 
 Voir [le diagnostic, les corrections et les six rapports locaux](performance.md). La dernière version contrôlée atteint 100 dans les quatre catégories Lighthouse sur trois mobiles et trois ordinateurs, avec CLS nul. Le formulaire réel est contrôlé après hydratation, y compris sur réseau/CPU ralentis ; sessions, callbacks et liens directs restent protégés. GitHub Pages annonce un cache HTTP de 600 s ; aucun réglage de faux en-tête ni changement d’hébergement n’a été ajouté. La publication attend l’autorisation du propriétaire ; réaliser ensuite trois nouveaux rapports PSI par format et compléter les résultats. Ne pas présenter les résultats locaux comme des scores PSI de production.
+
+## Identité Somévo — 12 octobre 2026
+
+Nouvelle identité appliquée localement aux écrans, titres, textes de rappel, exports et configuration PWA. Sources des logos : `src/assets/somevo-logo.png` et `src/assets/somevo-icon.png`. `scripts/generate-assets.ts` produit les WebP de 440/660 px, favicon PNG 64 px, icône Apple 180 px et icônes PWA 192/512 px. `src/styles/entry.css` reste généré depuis la feuille principale : ne pas le modifier à la main.
+
+La base SQLite `mesura.sqlite`, les ressources Supabase, les identifiants de contexte des outils, le marqueur de requête `API_CLIENT_ID` et l’URL `/mesura/` restent inchangés pour assurer la continuité des comptes. Le nom visible doit toujours provenir de `APP_NAME` (Somévo), jamais du marqueur technique. Le service worker supprime ses anciens caches publics lors de l’activation. Aucune migration de données ni publication réalisée.

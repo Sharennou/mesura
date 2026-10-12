@@ -1,4 +1,4 @@
-name: Publier Mesura sur GitHub Pages
+name: Publier Somévo sur GitHub Pages
 
 on:
   push:

@@ -115,16 +115,19 @@ export function LinkCard({
   title,
   description,
   onClick,
-  cobalt = false,
+  periwinkle = false,
 }: {
   icon: LucideIcon;
   title: string;
   description: string;
   onClick: () => void;
-  cobalt?: boolean;
+  periwinkle?: boolean;
 }) {
   return (
-    <button className={`link-card ${cobalt ? "cobalt" : ""}`} onClick={onClick}>
+    <button
+      className={`link-card ${periwinkle ? "periwinkle" : ""}`}
+      onClick={onClick}
+    >
       <span className="link-card-icon">
         <Icon as={icon} size={24} />
       </span>

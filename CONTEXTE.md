@@ -1,8 +1,8 @@
-# Contexte de Mesura
+# Contexte de Somévo
 
 Dernière mise à jour : 12 octobre 2026.
 
-Mesura est une application web de suivi corporel conçue pour le téléphone, entièrement en français. Le projet existe déjà et est publié : les prochaines modifications doivent prolonger cette application et ses données réelles.
+Somévo est une application web de suivi corporel conçue pour le téléphone, entièrement en français. Le projet existe déjà et est publié : les prochaines modifications doivent prolonger cette application et ses données réelles.
 
 ## Documents à lire
 
@@ -29,7 +29,7 @@ Mesura est une application web de suivi corporel conçue pour le téléphone, en
 - Favoris ordonnés par glisser-déposer, à la souris ou au doigt, avec commande au clavier.
 - Fonction photo retirée, à l’exception de la photo de profil, avec retrait des options d’export d’images. Nouveaux envois de photos de mesures refusés ; anciennes données conservées privées jusqu’au nettoyage habituel.
 - Les rappels proposés sont hebdomadaires, avec plusieurs jours possibles et une heure commune.
-- Nom centralisé dans `shared/config.ts`. Source du logo dans `src/assets/mesura-logo.png`, versions WebP 2×/3× régénérées pour l’affichage. Archivo WOFF2 local : faces d’affichage et d’interface ; source TTF conservée hors du répertoire publié.
+- Identité Somévo : nom accentué centralisé dans `shared/config.ts`, palette charbon/graphite/orange/pervenche, cartes arrondies et boutons en pilule. Logos fournis dans `src/assets/somevo-logo.png` et `src/assets/somevo-icon.png` ; WebP d’en-tête, favicon PNG et icônes installables régénérés au build. Archivo WOFF2 locale conservée. Les identifiants techniques historiques restent compatibles avec les données et l’API déployées. Refonte préparée localement, non publiée.
 - Optimisation du 12 octobre préparée localement : vrai formulaire public prérendu avec CSS critique, hydratation séparée, SDK Supabase et écrans privés à la demande. Les sessions et `/account` restent vérifiés avant l’accès privé. Six audits Lighthouse locaux finaux donnent 100 dans les quatre catégories, minimum et médiane 100 à chaque format. Ce ne sont pas des rapports PageSpeed du site publié ; publication et trois PSI par format attendent l’autorisation.
 
 Ces documents décrivent la version actuelle. Pour un travail futur, les instructions nouvelles du propriétaire et le code effectivement présent prennent priorité sur une information documentaire devenue obsolète. Mettre à jour le contexte après une modification du parcours ou du déploiement. Ne jamais y enregistrer de mots de passe, clés privées, jetons ou données personnelles d’utilisateurs.

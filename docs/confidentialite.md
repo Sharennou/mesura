@@ -46,7 +46,7 @@ Décrire **[hébergeur, SMTP, pays, transferts et garanties]**, **[durées confi
 
 ## Conditions à publier
 
-Mesura fournit des repères descriptifs ; les calculs ne constituent pas un diagnostic. Les objectifs sont personnels et les projections conditionnelles. La réception d’une notification n’est pas garantie à la seconde.
+Somévo fournit des repères descriptifs ; les calculs ne constituent pas un diagnostic. Les objectifs sont personnels et les projections conditionnelles. La réception d’une notification n’est pas garantie à la seconde.
 
 La personne protège son accès, utilise ses propres données et respecte formats et limites. Elle peut supprimer son compte. Compléter **[conditions d’accès, âge, support, disponibilité, responsabilités, paiements éventuels, modifications et droit applicable]**. La facturation n’est pas implémentée.
 

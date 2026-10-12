@@ -13,7 +13,7 @@ import {
   publicCloudAccount,
   type CloudAccount,
 } from "../../../shared/cloud-domain.ts";
-import { APP_NAME, APP_SLUG } from "../../../shared/config.ts";
+import { APP_NAME, APP_SLUG, API_CLIENT_ID } from "../../../shared/config.ts";
 import { nextOccurrences } from "../../../shared/recurrence.ts";
 import type { Capabilities } from "../../../shared/types.ts";
 
@@ -457,7 +457,7 @@ Deno.serve(async (req) => {
     }
     if (
       !["GET", "HEAD"].includes(req.method) &&
-      req.headers.get("x-requested-with") !== APP_NAME
+      req.headers.get("x-requested-with") !== API_CLIENT_ID
     )
       cloudFail("Requête non autorisée.", 403);
     const user = await authenticate(req);
