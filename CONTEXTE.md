@@ -1,6 +1,6 @@
 # Contexte de Mesura
 
-Dernière mise à jour : 8 octobre 2026.
+Dernière mise à jour : 12 octobre 2026.
 
 Mesura est une application web de suivi corporel conçue pour le téléphone, entièrement en français. Le projet existe déjà et est publié : les prochaines modifications doivent prolonger cette application et ses données réelles.
 
@@ -22,7 +22,7 @@ Mesura est une application web de suivi corporel conçue pour le téléphone, en
 - Refonte UX en développement : [diagnostic et validation](docs/ux-parcours.md), états d’analyse selon les données, détail distinct de l’édition, retours et brouillons conservés en mémoire. Cette session n’est pas publiée.
 - Compte obligatoire, aucune donnée fictive dans les comptes ordinaires, aucune confirmation d’email à l’inscription.
 - Compte de développement dédié autorisé par le propriétaire : « Développement · données fictives », 32 entrées et 415 valeurs injectées par `scripts/seed-development-account.ts`, dont deux séances complètes pour les cinq outils. Identifiants privés dans `.runtime`, jamais dans la documentation.
-- Après inscription : connexion immédiate, puis formulaire concis avec hauteur, naissance, choix explicite du sexe utilisé pour les calculs et objectif. Aucun titre « Données pour les outils », texte d’aide, question de situation, date de hauteur ou protocole dans l’inscription. Les nouvelles séances reprennent les données du profil et les repères des guides NICE/RFM. Le bloc « Données pour les outils » est retiré de Mesures ; aucune situation déclarée n’est collectée ni utilisée dans les calculs. Les anciens contextes sont conservés, hors champ de situation désormais ignoré.
+- Après inscription : connexion immédiate, puis une question par écran avec progression et retour conservant les réponses. Hauteur, naissance, sexe (cartes de choix, dont « Je préfère ne pas répondre »), objectif (cartes), puis autorisation de suivi. Une cible ajoute trois questions distinctes : mesure, départ, cible ; le suivi sans cible les évite. Validation à chaque étape et sauvegarde unique à la fin. Aucun titre « Données pour les outils », question de situation, date de hauteur ou protocole dans l’inscription. Les nouvelles séances reprennent les données du profil et les repères des guides NICE/RFM. Le bloc « Données pour les outils » est retiré de Mesures ; aucune situation déclarée n’est collectée ni utilisée dans les calculs. Les anciens contextes sont conservés, hors champ de situation désormais ignoré. Ce nouveau parcours est préparé localement, non publié.
 - Nouveaux comptes : poids, tour de taille et hanches seulement à la saisie. Les autres mesures, dont le tour spécifique RFM, s’ajoutent dans « Personnaliser » les favoris. Les favoris des comptes existants sont conservés.
 - Historique en bas de Mesures ; guide en trois étapes courtes, sans « À éviter » ni « Bien mesurer à chaque séance », avec sources. Un lien « Guide » à droite de chaque mensuration ouvre sa fiche ; le menu déroulant est conservé. Aucun guide pour le poids.
 - Favoris ordonnés par glisser-déposer, à la souris ou au doigt, avec commande au clavier.

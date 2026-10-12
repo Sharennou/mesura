@@ -118,14 +118,19 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
     .click();
   await expect(page.getByRole("navigation")).toHaveCount(0);
   await expect(
-    page.getByRole("heading", { name: "Votre point de départ.", exact: true }),
+    page.getByRole("heading", {
+      name: "Quelle est votre taille ?",
+      exact: true,
+    }),
   ).toBeVisible();
-  await expect(page.getByRole("checkbox")).toHaveCount(1);
+  await expect(page.getByRole("checkbox")).toHaveCount(0);
   await expect(page.getByRole("navigation")).toHaveCount(0);
+  await page.getByRole("button", { name: "Continuer", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("taille");
   await page.getByLabel("Votre hauteur en cm").fill("175,5");
+  await page.getByRole("button", { name: "Continuer", exact: true }).click();
   await expect(page.getByLabel("Date de naissance")).toHaveValue("");
-  await expect(page.getByLabel("Sexe")).toHaveValue("");
-  await expect(page.getByRole("status")).toHaveCount(0);
+  await expect(page.getByLabel("Votre hauteur en cm")).toHaveCount(0);
   await expect(
     page.getByText("Données pour les outils", { exact: true }),
   ).toHaveCount(0);
@@ -139,27 +144,51 @@ test("compte réel : accessibilité, consentement, sauvegarde, correction, expor
   await expect(
     page.getByLabel("Protocole de la mesure spécifique RFM"),
   ).toHaveCount(0);
-  await expect(page.locator("form small")).toHaveCount(0);
-  await page.getByLabel("Votre objectif").selectOption("observe");
-  await page.getByRole("checkbox").check();
-  await page.getByRole("button", { name: "Commencer mon suivi" }).click();
+  await page.getByRole("button", { name: "Continuer", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Votre point de départ.", exact: true }),
+    page.getByRole("heading", { name: "Quand êtes-vous né·e ?", exact: true }),
   ).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText("date de naissance");
   expect(
     (await (await page.request.get("/api/account")).json()).profile
       .onboardingCompleted,
   ).toBe(false);
   await page.getByLabel("Date de naissance").fill(birthDate);
-  await page.getByLabel("Sexe").selectOption("female");
-  await page.getByLabel("Votre objectif").selectOption("observe");
+  await page.getByRole("button", { name: "Continuer", exact: true }).click();
+  await expect(page.getByRole("radio", { checked: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Continuer", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("Choisissez une réponse");
+  await page.getByRole("radio", { name: "Féminin", exact: true }).check();
+  await page.getByRole("button", { name: "Continuer", exact: true }).click();
+  await page
+    .getByRole("radio", { name: "Suivre mon évolution", exact: true })
+    .check();
+  await page.getByRole("button", { name: "Continuer", exact: true }).click();
+  await expect(page.getByRole("progressbar")).toHaveAttribute(
+    "aria-valuemax",
+    "5",
+  );
+  await page.getByRole("button", { name: "Commencer mon suivi" }).click();
+  await expect(page.getByRole("alert")).toContainText("autorisation de suivi");
   await page.getByRole("checkbox").check();
   await page.route("**/api/onboarding", (route) => route.abort());
   await page.getByRole("button", { name: "Commencer mon suivi" }).click();
   await expect(page.getByRole("alert")).toContainText("connexion");
-  await expect(page.getByLabel("Votre hauteur en cm")).toHaveValue("175,5");
+  await page.getByRole("button", { name: "Question précédente" }).click();
+  await expect(
+    page.getByRole("radio", { name: "Suivre mon évolution", exact: true }),
+  ).toBeChecked();
+  await page.getByRole("button", { name: "Question précédente" }).click();
+  await expect(
+    page.getByRole("radio", { name: "Féminin", exact: true }),
+  ).toBeChecked();
+  await page.getByRole("button", { name: "Question précédente" }).click();
   await expect(page.getByLabel("Date de naissance")).toHaveValue(birthDate);
-  await expect(page.getByLabel("Sexe")).toHaveValue("female");
+  await page.getByRole("button", { name: "Question précédente" }).click();
+  await expect(page.getByLabel("Votre hauteur en cm")).toHaveValue("175,5");
+  for (let index = 0; index < 4; index++)
+    await page.getByRole("button", { name: "Continuer", exact: true }).click();
+  await expect(page.getByRole("checkbox")).toBeChecked();
   expect(
     (await (await page.request.get("/api/account")).json()).consents.body,
   ).toBe(false);

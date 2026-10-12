@@ -1,6 +1,6 @@
 # Produit et parcours
 
-État au 6 octobre 2026. Point d’entrée : [CONTEXTE.md](../CONTEXTE.md).
+État au 12 octobre 2026. Point d’entrée : [CONTEXTE.md](../CONTEXTE.md).
 
 ## Objectif
 
@@ -12,7 +12,7 @@ Le visiteur voit le formulaire de création de compte ou de connexion. Les liens
 
 L’inscription ouvre directement une session, sans email de confirmation. Le minimum de mot de passe actuel est de six caractères. La récupération du mot de passe conserve son lien par email.
 
-Le formulaire « Votre point de départ » pose uniquement les questions de hauteur, naissance, sexe et objectif, puis demande l’autorisation du suivi corporel en une case. La hauteur, la naissance et une réponse au champ « Sexe » sont obligatoires ; « Non renseigné » reste possible. Le titre « Données pour les outils », les paragraphes d’introduction, les textes d’aide, l’âge calculé, la situation, la date de mesure de la hauteur et les protocoles sont absents de l’inscription. Le profil reprend les champs personnels dans un seul formulaire, sans section « Données pour les outils ». La date de mesure de la hauteur et le choix de protocole ne sont plus demandés. La situation déclarée est entièrement retirée. Les nouvelles séances reprennent le profil et les repères définis par les guides du catalogue ; aucune date de hauteur n’est inventée. Ces informations sont sauvegardées ensemble en local comme dans le cloud ; aucun poids, mesure, note ou objectif fictif n’est ajouté. Les autorisations de rappels sont demandées à leur utilisation.
+Le parcours « Votre point de départ » pose une seule question par écran : hauteur, naissance, sexe, objectif, puis autorisation du suivi corporel en une case. La progression est visible et le retour conserve les réponses. La hauteur, la naissance et un choix de sexe sont obligatoires ; la carte « Je préfère ne pas répondre » permet de conserver le sexe non renseigné. L’objectif se choisit également par cartes : suivre son évolution sans cible ou viser/maintenir une cible. Dans ce dernier cas, trois questions distinctes demandent la mesure, le départ et la cible. Chaque réponse est validée avant de continuer ; une erreur réseau à la sauvegarde conserve les réponses pour réessayer. Le titre « Données pour les outils », l’âge calculé, la situation, la date de mesure de la hauteur et les protocoles sont absents de l’inscription. Le profil reprend les champs personnels dans un seul formulaire, sans section « Données pour les outils ». La date de mesure de la hauteur et le choix de protocole ne sont plus demandés. La situation déclarée est entièrement retirée. Les nouvelles séances reprennent le profil et les repères définis par les guides du catalogue ; aucune date de hauteur n’est inventée. Ces informations sont sauvegardées ensemble à la dernière étape en local comme dans le cloud ; aucun poids, mesure, note ou objectif fictif n’est ajouté. Les autorisations de rappels sont demandées à leur utilisation. Le parcours par questions du 12 octobre est préparé localement, non publié.
 
 ## Mesures et Analyse
 

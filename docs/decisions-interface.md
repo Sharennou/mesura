@@ -1,6 +1,6 @@
 # Décisions d’interface validées
 
-État au 8 octobre 2026. Ces décisions résultent des demandes du propriétaire. Elles servent à éviter de réintroduire des éléments retirés.
+État au 12 octobre 2026. Ces décisions résultent des demandes du propriétaire. Elles servent à éviter de réintroduire des éléments retirés.
 
 ## Identité visuelle
 
@@ -66,3 +66,7 @@ Retirer le bloc « Données pour les outils » de Mesures. Les nouvelles séance
 ## Tour de taille / hauteur — ajustement du 8 octobre 2026
 
 La carte porte seulement « Tour de taille / hauteur ». Retirer sa phrase introductive sur l’adiposité et l’alerte « Mesurez le tour de taille […] Le protocole actuel est différent ou inconnu ». Le rapport utilise le tour de taille normal. Les protocoles historiques restent conservés et les règles d’affichage des classifications sont inchangées.
+
+## Inscription — une question à la fois, 12 octobre 2026
+
+La nouvelle demande remplace le formulaire de démarrage regroupé : afficher une seule question à chaque étape, avec une progression visible, un bouton « Continuer » et un retour conservant les réponses. Proposer des cartes de choix pour le sexe et l’objectif, dont la possibilité de ne pas renseigner le sexe. Garder une saisie précise de la hauteur et de la naissance. Une cible ajoute des écrans distincts pour la mesure, le départ et la cible ; le suivi sans cible les évite. L’autorisation de suivi reste explicite à la dernière étape. Valider chaque réponse avant de continuer et sauvegarder les données ensemble à la fin, en conservant les réponses après un échec réseau. Identité visuelle existante et animation discrète respectant la réduction des mouvements. Implémentation locale, non publiée.

@@ -20,7 +20,7 @@ Validation : compilation locale et GitHub Pages, **149 tests de calculs / API / 
 - Playwright à 390 × 844 et 360 × 800 : navigation, débordements, axe WCAG, compte / connexion immédiate, saisie, sauvegarde, rechargement, correction, note comme texte, export et suppression.
 - Connexion obligatoire au premier affichage, aucun accès aux écrans de suivi pendant la vérification de session, liens directs protégés, confirmation email supprimée, compte initial vide et retour au formulaire après déconnexion ou suppression.
 - Compilation cloud sous `/mesura/` : formulaire de compte, bascule vers la connexion, rechargement, protection des liens directs et portée du service worker.
-- Démarrage après inscription : hauteur et naissance obligatoires, choix explicite d’équation, questions sans texte d’aide ni champs de situation/date de hauteur/protocole, cible ou suivi sans cible, une autorisation de suivi, conservation des champs après échec, transaction sans activation partielle et reprise sans afficher le démarrage une deuxième fois.
+- Démarrage après inscription : une question par écran, hauteur et naissance obligatoires, cartes pour le choix explicite d’équation et l’objectif, cible ou suivi sans cible, progression et retour conservant les réponses. Départ et cible séparés, une autorisation de suivi finale, conservation des réponses après échec, transaction sans activation partielle et reprise sans afficher le démarrage une deuxième fois. Aucun champ de situation/date de hauteur/protocole.
 - Profil : naissance et sexe/équation visibles sans panneau à ouvrir, âge recalculé, parcours du clavier, contrôles axe, modification persistante après rechargement et reprise dans les nouvelles séances. API locale et cloud : rejet atomique des dates impossibles/futures et équations inconnues ; réponse explicitement inconnue ou sans équation acceptée ; naissance et équation obligatoires ; renseignements complémentaires omis acceptés sans effacement des préférences existantes. Les profils et séances existants restent compatibles.
 - Compatibilité des anciens callbacks du bundle cloud : confirmation email dans un navigateur neuf sans vérificateur PKCE, validation de session auprès d’Auth, nettoyage des jetons dans l’URL, objectif enregistré, lien expiré et séparation du parcours de récupération. Ces réponses Auth sont simulées ; elles ne constituent pas un test d’envoi d’email externe.
 - Session révoquée : une réponse API 401 ferme la session courante et rend le formulaire accessible, y compris après rechargement. Une erreur 403 ou réseau conserve la session et permet de réessayer ou de revenir explicitement à la connexion. Ces trois cas sont vérifiés dans le bundle cloud à 390 et 360 px ; la fermeture Auth est limitée à `scope: local` pour préserver les autres appareils. Le script de données fictives ferme également uniquement sa propre session.
@@ -63,7 +63,6 @@ Docker, email externe et réception Web Push sur téléphone ne sont pas déclar
 
 Un premier passage mobile a révélé les libellés de formulaire à raccourcir ; ils ont été corrigés. Le passage complet final utilise des sources stables, sans modification ni recompilation simultanée du serveur de test.
 
-
 ## Inscription et guides — vérification du 8 octobre 2026
 
 - Compilations locale et cloud, 150 tests unitaires/API/cloud/SQL et contrôle TypeScript de la fonction Edge réussis.
@@ -71,7 +70,6 @@ Un premier passage mobile a révélé les libellés de formulaire à raccourcir 
 - Les liens « Guide » ouvrent la bonne fiche à la souris et au clavier, placent le focus sur son titre et conservent le brouillon ; le menu déroulant reste utilisable. Captures mobiles, contrôles axe et vérification du débordement réussis.
 - Réglages des outils accessibles dans le profil ; nouveaux champs intégrés dans le parcours au clavier. Les données et favoris existants restent compatibles.
 - `npm run test:pages` : chemins GitHub Pages et démarrage cloud complet vérifiés à 390/360 px, avec Auth simulé. Aucune publication effectuée.
-
 
 ### Inscription simplifiée — ajustement du 8 octobre 2026
 
@@ -107,3 +105,10 @@ Validation de cet ajustement : compilations locale et cloud, 150 tests unitaires
 - La sauvegarde du profil ne transmet plus de date de mesure cachée. Les anciennes métadonnées restent compatibles ; une modification de hauteur efface sa date antérieure via les règles API existantes, sans changer les séances déjà sauvegardées.
 - Compilation et 148 tests unitaires/API/cloud/SQL réussis. Huit parcours ciblés passent sous Chromium à 390/360 px. Le formulaire de démarrage et une vérification ciblée du profil passent sous WebKit mobile de 320 à 768 px, avec sauvegarde, rechargement et ancien profil.
 - Le parcours Safari complet, avec service workers bloqués pour permettre l’interception réseau, dépasse les contrôles du profil mais révèle un sélecteur de 24 px dans le guide des mesures. Ce contrôle extérieur au profil reste à corriger. Aucune publication effectuée.
+
+### Inscription par étapes — 12 octobre 2026
+
+- Compilations locale et cloud `/mesura/` réussies ; 148 tests unitaires/API/cloud/SQL réussis. Les vérifications des chemins Pages et des callbacks Auth simulés passent à 390/360 px avec le nouveau parcours.
+- Six exécutions ciblées passent sous Chromium à 390/360 px : compte réel complet, inscription avec cible et inscription avec changement vers le suivi sans cible. Hauteur décimale, validation par question, naissance future refusée, sélection au clavier, réponses conservées après retour/échec réseau, effacement du départ et de la cible lors d’un changement de mesure, consentement explicite et sauvegarde atomique vérifiés.
+- Les deux parcours dédiés à l’inscription passent également sous WebKit mobile. Chaque étape est contrôlée à 320, 360, 390, 430 et 768 px, sans débordement, avec champs de 52 px minimum, boutons de 44 px et contrôles axe WCAG. Les captures des questions de hauteur, de sexe et d’objectif ont été inspectées. Les transitions gardent les textes opaques et respectent la préférence de réduction des mouvements.
+- Le parcours Safari complet passe l’inscription puis rencontre le sélecteur de 24 px du guide des mesures, déjà signalé le 9 octobre ; ce contrôle extérieur à l’inscription n’est pas modifié. Aucun essai sur appareil physique ni aucune publication effectués.

@@ -81,25 +81,39 @@ try {
     await page.goto(`http://127.0.0.1:4178/mesura/#${fragment}`);
     await expect(
       page.getByRole("heading", {
-        name: "Votre point de départ.",
+        name: "Quelle est votre taille ?",
         exact: true,
       }),
     ).toBeVisible();
     assert.ok(reads > 0);
     assert.equal(new URL(page.url()).hash, "");
     await expect(page.getByRole("navigation")).toHaveCount(0);
+    const next = () =>
+      page.getByRole("button", { name: "Continuer", exact: true }).click();
     await page.getByLabel("Votre hauteur en cm").fill("172");
+    await next();
     const toolProfile = {
       birthDate: "1996-01-01",
       equation: width === 390 ? "female" : "unspecified",
     };
     await page.getByLabel("Date de naissance").fill(toolProfile.birthDate);
+    await next();
     await page
-      .getByLabel("Sexe utilisé pour les calculs")
-      .selectOption(toolProfile.equation);
-    await page.getByLabel("Votre objectif").selectOption("target");
+      .getByRole("radio", {
+        name: width === 390 ? "Féminin" : "Je préfère ne pas répondre",
+        exact: true,
+      })
+      .check();
+    await next();
+    await page
+      .getByRole("radio", { name: "Viser ou maintenir une cible", exact: true })
+      .check();
+    await next();
+    await next();
     await page.getByLabel("Mon départ").fill("80");
+    await next();
     await page.getByLabel("Ma cible").fill("75");
+    await next();
     await page.getByRole("checkbox").check();
     await page.screenshot({
       path: `.runtime/onboarding-${width}.png`,

@@ -1,6 +1,6 @@
 # État technique et reprise du travail
 
-État au 8 octobre 2026 ; dernière évolution fonctionnelle publiée : `860762e`, rappels hebdomadaires fixes.
+État au 12 octobre 2026 ; dernière évolution fonctionnelle publiée : `860762e`, rappels hebdomadaires fixes.
 
 ## Déploiement actuel
 
@@ -20,21 +20,21 @@ Le service SMTP Auth Brevo ne configure pas automatiquement les rappels email de
 
 ## Organisation du code
 
-| Chemin                                           | Responsabilité                                         |
-| ------------------------------------------------ | ------------------------------------------------------ |
-| `src/App.tsx`                                    | Session, accès aux écrans, démarrage et navigation     |
-| `src/screens/Account.tsx`                        | Inscription, connexion et récupération                 |
-| `src/screens/OnboardingScreen.tsx`               | Hauteur, naissance, sexe des calculs et objectif après inscription |
-| `src/screens/Measure.tsx`, `Analysis.tsx`        | Mesures et analyse                                     |
-| `src/screens/ProfileScreen.tsx`                  | Pseudo, données des outils et photo de profil |
-| `src/screens/Reminder.tsx`                       | Jours hebdomadaires, heure et canal                    |
-| `src/api.ts`, `src/cloud-auth.ts`                | Adaptation entre API locale et cloud                   |
-| `shared/config.ts`, `shared/types.ts`            | Nom, consentements, constantes et contrats             |
-| `shared/calculations.ts`, `shared/recurrence.ts` | Calculs et calendrier partagé entre affichage et envoi |
-| `shared/cloud-domain.ts`                         | Mutations cloud et validation des données              |
-| `server/`                                        | Version native Fastify / Better Auth / SQLite          |
-| `supabase/functions/mesura-api/index.ts`         | API et tâches Edge                                     |
-| `.github/workflows/pages.yml`                    | Compilation et publication du bundle                   |
+| Chemin                                           | Responsabilité                                                                      |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `src/App.tsx`                                    | Session, accès aux écrans, démarrage et navigation                                  |
+| `src/screens/Account.tsx`                        | Inscription, connexion et récupération                                              |
+| `src/screens/OnboardingScreen.tsx`               | Questions successives, choix par cartes, objectif et consentement après inscription |
+| `src/screens/Measure.tsx`, `Analysis.tsx`        | Mesures et analyse                                                                  |
+| `src/screens/ProfileScreen.tsx`                  | Pseudo, données des outils et photo de profil                                       |
+| `src/screens/Reminder.tsx`                       | Jours hebdomadaires, heure et canal                                                 |
+| `src/api.ts`, `src/cloud-auth.ts`                | Adaptation entre API locale et cloud                                                |
+| `shared/config.ts`, `shared/types.ts`            | Nom, consentements, constantes et contrats                                          |
+| `shared/calculations.ts`, `shared/recurrence.ts` | Calculs et calendrier partagé entre affichage et envoi                              |
+| `shared/cloud-domain.ts`                         | Mutations cloud et validation des données                                           |
+| `server/`                                        | Version native Fastify / Better Auth / SQLite                                       |
+| `supabase/functions/mesura-api/index.ts`         | API et tâches Edge                                                                  |
+| `.github/workflows/pages.yml`                    | Compilation et publication du bundle                                                |
 
 Les paramètres publics sont dans `shared/cloud-config.ts`. Ne pas ajouter de secret dans cette documentation, dans les sources frontend ou dans Git.
 
@@ -102,9 +102,12 @@ Prévisualisation locale séparée : `http://127.0.0.1:5182`, base `.runtime/ux-
 
 Formules, restrictions et références : [dossier scientifique](outils-scientifiques.md). L’inscription et le profil exposent directement la naissance (âge calculé) et le sexe, sans nouveau champ de stockage ni modification rétroactive des séances. Voir les résultats actualisés dans [vérifications](verification.md). Publier l’API avant le frontend. Aucune publication ni migration des données de production effectuée pendant cette évolution.
 
-
 ## Inscription et Mesures — 8 octobre 2026, non publié
 
 Le démarrage impose hauteur, naissance et choix du sexe. Le formulaire a été simplifié à la demande : aucun titre de bloc ou texte d’aide, situation, date de hauteur ni protocole. La validation partagée est stricte sur `/onboarding`, mais les profils existants gardent leur compatibilité. Les nouveaux comptes utilisent uniquement `waist` et `hips` comme favoris, en plus de la carte de poids. Les anciennes valeurs non favorites des mesures actives restent éditables. Chaque mensuration possède un accès direct à sa fiche du guide ; le poids est exclu.
 
 Les préférences supplémentaires sont facultatives dans le JSON du profil et dans le contrat de démarrage ; aucune migration SQL supplémentaire n’est nécessaire. Les nouvelles séances reprennent le profil et les repères des guides du catalogue ; le formulaire « Données pour les outils » est retiré de Mesures. Les séances anciennes et les brouillons conservent leur contexte, dont les protocoles inconnus, hors situation désormais ignorée. Les règles v2 lisent aussi les contextes v1. Les réponses des API et les exports au schéma 3 ne renvoient plus le champ de situation. Aucune nouvelle migration SQL ni purge des comptes réels n’a été exécutée. Les cartes d’analyse conservent uniquement « Comprendre le calcul » et le sélecteur affiche la date en toutes lettres, sans identifiant ni texte dessous. Les scripts de comptes fictifs et les vérifications des callbacks cloud ont été adaptés au contrat obligatoire. Voir [les vérifications du 8 octobre](verification.md).
+
+## Inscription — 12 octobre 2026, non publiée
+
+Le démarrage affiche maintenant une question à la fois, avec progression, cartes de choix pour le sexe et l’objectif, et retour conservant les réponses. La hauteur et les valeurs de cible utilisent une saisie numérique avec unité visible. Le suivi sans cible compte cinq étapes ; une cible en compte huit, avec mesure, départ et cible séparés. Validation par étape, navigation au clavier et sauvegarde unique après l’autorisation explicite. Le contrat `/onboarding` et les données des comptes existants sont inchangés. Les parcours Playwright et le script de vérification des callbacks cloud suivent ce nouveau parcours. Aucune publication effectuée.
