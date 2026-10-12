@@ -11,7 +11,8 @@ self.addEventListener("install", (event) =>
           BASE,
           `${BASE}icon-192.png`,
           `${BASE}icon-512.png`,
-          `${BASE}fonts/Archivo-variable.ttf`,
+          `${BASE}fonts/Archivo-display-fr.woff2`,
+          `${BASE}fonts/Archivo-ui-fr.woff2`,
         ]),
       )
       .then(() => self.skipWaiting()),

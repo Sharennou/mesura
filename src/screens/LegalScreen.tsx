@@ -1,3 +1,4 @@
+import "../styles.css";
 import { useApp } from "../context";
 import { PageTitle } from "../components";
 import { CONSENT_VERSION, APP_NAME } from "../../shared/config";

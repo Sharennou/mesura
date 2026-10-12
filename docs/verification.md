@@ -1,5 +1,9 @@
 # Vérifications
 
+## Démarrage et performance — 12 octobre 2026
+
+Compilation cloud `/mesura/`, 148 tests unitaires/API/cloud/SQL et contrôle TypeScript de la fonction Edge réussis. Les 30 parcours mobiles complets passent à 390/360 px, avec axe, clavier et contrôles de session. Les quatre parcours ciblés public/configuration et le bundle cloud sont également revérifiés après la correction du retour vers une URL sans fragment. Les quatre parcours WebKit ciblés d’accès public, attente de configuration et inscription passent. Six audits Lighthouse locaux finaux donnent 100 dans les quatre catégories, minimum et médiane 100 dans chaque format, avec CLS nul. [Rapports, métriques, poids et limites](performance.md). La publication et les mesures PSI de production attendent l’autorisation ; aucun 100 PSI publié n’est revendiqué.
+
 ## Automatisé
 
 Les jeux de données des tests sont fictifs ; l’application ne contient aucune donnée de démonstration. Les tests d’API utilisent une base temporaire supprimée à la fin. Chaque format mobile démarre son propre serveur sur les ports 5181 / 3011, avec une base isolée dans `.runtime/e2e-*` et sans email externe. Ils créent puis suppriment leur compte de test. Ils ne réutilisent pas le serveur ni les données personnelles de développement.

@@ -1,53 +1,9 @@
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  ChevronRight,
-  Info,
-  Minus,
-  Plus,
-  X,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight, Check, ChevronRight, Minus, Plus, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { delta, number } from "../shared/calculations";
-import { useApp } from "./context";
-export function Icon({
-  as: Component,
-  size = 20,
-}: {
-  as: LucideIcon;
-  size?: number;
-}) {
-  return <Component aria-hidden="true" size={size} strokeWidth={1.9} />;
-}
-export function PageTitle({
-  title,
-  eyebrow,
-  back = true,
-  children,
-}: {
-  title: string;
-  eyebrow?: string;
-  back?: boolean;
-  children?: ReactNode;
-}) {
-  const { back: goBack } = useApp();
-  return (
-    <div className="page-heading">
-      {eyebrow && <p className="eyebrow">{eyebrow}</p>}
-      <div className="heading-row">
-        {back && (
-          <button className="circle back" aria-label="Revenir" onClick={goBack}>
-            <Icon as={ArrowLeft} />
-          </button>
-        )}
-        <h1 tabIndex={-1}>{title}</h1>
-        {children}
-      </div>
-    </div>
-  );
-}
+import { Icon, Button } from "./ui";
+export { Icon, Button, PageTitle, ErrorMessage } from "./ui";
+import type { LucideIcon } from "lucide-react";
 export function ActionBar({
   children,
   disabled,
@@ -74,28 +30,6 @@ export function ActionBar({
         {!busy && <Icon as={ArrowRight} />}
       </button>
     </div>
-  );
-}
-export function Button({
-  children,
-  onClick,
-  className = "",
-  disabled = false,
-}: {
-  children: ReactNode;
-  onClick?: () => void;
-  className?: string;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      className={`secondary ${className}`}
-      onClick={onClick}
-      disabled={disabled}
-    >
-      {children}
-    </button>
   );
 }
 export function Badge({
@@ -132,14 +66,6 @@ export function Progress({ value }: { value: number }) {
       <div style={{ width: `${value}%` }} />
     </div>
   );
-}
-export function ErrorMessage({ children }: { children?: ReactNode }) {
-  return children ? (
-    <div className="error-message" role="alert">
-      <Icon as={Info} />
-      <span>{children}</span>
-    </div>
-  ) : null;
 }
 export function Empty({
   title,

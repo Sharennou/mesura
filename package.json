@@ -20,7 +20,8 @@
     "check": "npm run build && npm test",
     "seed:dev": "tsx scripts/seed-development-account.ts",
     "push:keys": "web-push generate-vapid-keys",
-    "format": "prettier --write src server shared scripts tests *.ts *.json *.html docs README.md"
+    "format": "prettier --write src server shared scripts tests *.ts *.json *.html docs README.md",
+    "audit:performance": "tsx scripts/audit-performance.ts"
   },
   "dependencies": {
     "@fastify/helmet": "13.1.1",
@@ -55,8 +56,10 @@
     "@types/react-dom": "19.3.0",
     "@types/web-push": "3.6.4",
     "@vitejs/plugin-react": "6.1.1",
-    "concurrently": "10.0.5",
+    "concurrently": "10.0.6",
     "deno": "2.9.6",
+    "lighthouse": "13.5.0",
+    "postcss": "8.5.28",
     "prettier": "3.9.9",
     "tsx": "4.23.15",
     "typescript": "7.0.2",

@@ -20,6 +20,8 @@ Le service SMTP Auth Brevo ne configure pas automatiquement les rappels email de
 
 ## Organisation du code
 
+Le démarrage public optimisé est décrit dans [performance.md](performance.md) : `src/main.tsx` amorce `src/hydrate.tsx`, `src/PublicEntry.tsx` réutilise le formulaire pour le prérendu de compilation, `src/PrivateScreens.tsx` charge les écrans à la demande et `scripts/entry-styles.ts` génère le CSS public. Les WOFF2 sont versionnés ; `scripts/optimize-fonts.py` permet de les régénérer à partir de `assets/fonts/Archivo-variable.ttf` sans ajouter Python au déploiement.
+
 | Chemin                                           | Responsabilité                                                                      |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------- |
 | `src/App.tsx`                                    | Session, accès aux écrans, démarrage et navigation                                  |
@@ -111,3 +113,7 @@ Les préférences supplémentaires sont facultatives dans le JSON du profil et d
 ## Inscription — 12 octobre 2026, non publiée
 
 Le démarrage affiche maintenant une question à la fois, avec progression, cartes de choix pour le sexe et l’objectif, et retour conservant les réponses. La hauteur et les valeurs de cible utilisent une saisie numérique avec unité visible. Le suivi sans cible compte cinq étapes ; une cible en compte huit, avec mesure, départ et cible séparés. Validation par étape, navigation au clavier et sauvegarde unique après l’autorisation explicite. Le contrat `/onboarding` et les données des comptes existants sont inchangés. Les parcours Playwright et le script de vérification des callbacks cloud suivent ce nouveau parcours. Aucune publication effectuée.
+
+## Performance — 12 octobre 2026, non publiée
+
+Voir [le diagnostic, les corrections et les six rapports locaux](performance.md). La dernière version contrôlée atteint 100 dans les quatre catégories Lighthouse sur trois mobiles et trois ordinateurs, avec CLS nul. Le formulaire réel est contrôlé après hydratation, y compris sur réseau/CPU ralentis ; sessions, callbacks et liens directs restent protégés. GitHub Pages annonce un cache HTTP de 600 s ; aucun réglage de faux en-tête ni changement d’hébergement n’a été ajouté. La publication attend l’autorisation du propriétaire ; réaliser ensuite trois nouveaux rapports PSI par format et compléter les résultats. Ne pas présenter les résultats locaux comme des scores PSI de production.

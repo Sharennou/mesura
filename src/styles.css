@@ -1,8 +1,16 @@
 @font-face {
   font-family: Archivo;
-  src: url("/fonts/Archivo-variable.ttf") format("truetype");
-  font-weight: 100 900;
-  font-stretch: 62% 125%;
+  src: url("/fonts/Archivo-display-fr.woff2") format("woff2");
+  font-weight: 900;
+  font-stretch: 75%;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Archivo;
+  src: url("/fonts/Archivo-ui-fr.woff2") format("woff2");
+  font-weight: 600 900;
+  font-stretch: 100%;
   font-style: normal;
   font-display: swap;
 }
@@ -433,6 +441,7 @@ textarea {
   gap: 10px;
 }
 .stepper button {
+  font-stretch: 75%;
   height: 52px;
   border: 2px solid var(--ink);
   border-radius: 12px;
@@ -1034,6 +1043,7 @@ caption {
   gap: 5px;
 }
 .indicator-main strong {
+  font-stretch: 75%;
   font-size: 44px;
   line-height: 1;
   font-variation-settings:
@@ -1150,6 +1160,7 @@ caption {
   flex: 1;
 }
 .link-card strong {
+  font-stretch: 75%;
   font-size: 18px;
   font-weight: 900;
   font-variation-settings:
@@ -1574,6 +1585,7 @@ caption {
   margin-top: 22px;
 }
 .time-card > input {
+  font-stretch: 75%;
   display: block;
   background: transparent;
   border: 0;
@@ -1820,6 +1832,7 @@ caption {
   letter-spacing: 0.035em;
 }
 .comparison-values strong {
+  font-stretch: 75%;
   font-size: 38px;
   display: block;
   font-variation-settings:
@@ -1891,6 +1904,7 @@ caption {
   gap: 6px;
 }
 .monthly-values strong {
+  font-stretch: 75%;
   color: var(--ink);
   font-size: 24px;
   font-weight: 900;

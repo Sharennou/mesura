@@ -1,10 +1,18 @@
 import { createAuthClient } from "better-auth/react";
 import { APP_NAME, APP_SLUG } from "../shared/config";
 import { CLOUD } from "./deployment";
-import { cloudAuthClient, cloudEndpoint, cloudHeaders } from "./cloud-auth";
+import {
+  cloudAuthClient,
+  cloudEndpoint,
+  cloudHeaders,
+  cloudPublicHeaders,
+} from "./cloud-auth";
 const localAuthClient = CLOUD
   ? null
-  : createAuthClient({ baseURL: window.location.origin });
+  : createAuthClient({
+      baseURL:
+        typeof window === "undefined" ? undefined : window.location.origin,
+    });
 export const authClient = (
   CLOUD ? cloudAuthClient : localAuthClient
 ) as NonNullable<typeof localAuthClient>;
@@ -24,7 +32,10 @@ export async function apiResponse(
   headers.set("X-Timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
   if (options.body && !(options.body instanceof FormData))
     headers.set("Content-Type", "application/json");
-  if (CLOUD) await cloudHeaders(headers);
+  if (CLOUD) {
+    if (path === "/config") cloudPublicHeaders(headers);
+    else await cloudHeaders(headers);
+  }
   let response: Response;
   try {
     response = await fetch(CLOUD ? `${cloudEndpoint}${path}` : `/api${path}`, {

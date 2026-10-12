@@ -1,4 +1,12 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Bell,
   Ruler,
@@ -9,7 +17,9 @@ import {
 } from "lucide-react";
 import type { AccountData, Capabilities, Entry } from "../shared/types";
 import { APP_NAME } from "../shared/config";
-import logo from "./assets/mesura-logo.png";
+import logo from "./assets/mesura-logo.webp";
+import logoRetina from "./assets/mesura-logo@3x.webp";
+import { hasCloudSession } from "./cloud-auth";
 import { api, useSession, authClient } from "./api";
 import { CLOUD } from "./deployment";
 import { emptyAccountData } from "./account-data";
@@ -20,25 +30,15 @@ import {
   type MeasurementDraft,
   type EditingDraft,
 } from "./context";
-import { Icon } from "./components";
-import { MeasureScreen, SuccessScreen } from "./screens/Measure";
-import { AnalysisScreen } from "./screens/Analysis";
-import {
-  AccountScreen,
-  PrivacyScreen,
-  ProfileScreen,
-  LegalScreen,
-} from "./screens/Account";
-import { ReminderScreen } from "./screens/Reminder";
-import {
-  HistoryScreen,
-  CompareScreen,
-  MonthlyScreen,
-  GoalScreen,
-  FavoritesScreen,
-} from "./screens/Explore";
+import { Icon } from "./ui";
+import { AccountScreen } from "./screens/Account";
 import { useModalFocus } from "./useModalFocus";
-import { OnboardingScreen } from "./screens/OnboardingScreen";
+const PrivateScreens = lazy(() => import("./PrivateScreens"));
+const LegalScreen = lazy(() =>
+  import("./screens/LegalScreen").then((module) => ({
+    default: module.LegalScreen,
+  })),
+);
 const screens: Screen[] = [
   "measure",
   "analysis",
@@ -58,6 +58,11 @@ const screens: Screen[] = [
 ];
 export default function App() {
   useModalFocus();
+  useEffect(() => {
+    document.getElementById("root")?.removeAttribute("inert");
+    performance.mark("mesura:interactive");
+    window.dispatchEvent(new Event("mesura:interactive"));
+  }, []);
   const [route, setRoute] = useState<Screen>(() =>
     screens.includes(location.hash.slice(1) as Screen)
       ? (location.hash.slice(1) as Screen)
@@ -120,10 +125,6 @@ export default function App() {
         : route
       : "account";
   const mainRef = useRef<HTMLElement>(null);
-  const [sessionResolved, setSessionResolved] = useState(false);
-  useEffect(() => {
-    if (!isPending) setSessionResolved(true);
-  }, [isPending]);
   useEffect(() => {
     setDraft(null);
     setEditingDrafts({});
@@ -177,15 +178,22 @@ export default function App() {
       setAccountOwner(session.user.id);
     } else setCapabilities(await api<Capabilities>("/config"));
   }
+  const needsConfiguration = !CLOUD || canAccess || route === "legal";
   useEffect(() => {
-    api<Capabilities>("/config")
-      .then(setCapabilities)
-      .catch(() =>
-        setLoadError(
-          "Le serveur est indisponible. Réessayez dans quelques instants.",
-        ),
-      );
-  }, []);
+    if (!needsConfiguration) return;
+    const controller = new AbortController();
+    api<Capabilities>("/config", { signal: controller.signal })
+      .then((next) => {
+        if (!controller.signal.aborted) setCapabilities(next);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted)
+          setLoadError(
+            "Le serveur est indisponible. Réessayez dans quelques instants.",
+          );
+      });
+    return () => controller.abort();
+  }, [needsConfiguration]);
   useEffect(() => {
     const controller = new AbortController();
     if (canAccess && session && !isPending) {
@@ -248,7 +256,9 @@ export default function App() {
       screenPositions.current.set(routeRef.current, window.scrollY);
     };
     const change = () => {
-      const next = location.hash.slice(1) as Screen;
+      const next = (location.hash.slice(1) ||
+        history.state?.screen ||
+        "measure") as Screen;
       if (!screens.includes(next)) return;
       const state = history.state;
       const key =
@@ -298,9 +308,20 @@ export default function App() {
       onboarding: "Votre point de départ",
     };
     document.title = `${APP_NAME} — ${canAccess ? titles[screen] : screen === "legal" ? titles.legal : "Connexion"}`;
-    mainRef.current
-      ?.querySelector<HTMLElement>("h1")
-      ?.focus({ preventScroll: true });
+    const main = mainRef.current;
+    if (!main) return;
+    const focusHeading = () => {
+      const heading = main.querySelector<HTMLElement>("h1");
+      if (!heading || !heading.getClientRects().length) return false;
+      heading.focus({ preventScroll: true });
+      return true;
+    };
+    if (focusHeading()) return;
+    const observer = new MutationObserver(() => {
+      if (focusHeading()) observer.disconnect();
+    });
+    observer.observe(main, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, [screen, isPending, loading, accountOwner]);
   useEffect(() => {
     if (!message) return;
@@ -409,7 +430,15 @@ export default function App() {
             onClick={() => navigate(canAccess ? "measure" : "account")}
             aria-label={`${APP_NAME}, Mesures`}
           >
-            <img className="brand-logo" src={logo} alt="" />
+            <img
+              className="brand-logo"
+              src={logo}
+              srcSet={`${logo} 2x, ${logoRetina} 3x`}
+              width={100}
+              height={58}
+              fetchPriority="high"
+              alt=""
+            />
           </button>
           {canAccess && !isPending && !onboarding && (
             <div className="header-actions">
@@ -463,74 +492,52 @@ export default function App() {
           </div>
         )}
         <main ref={mainRef} id="main-content" className="main-content">
-          {isPending && (!sessionResolved || canAccess) ? (
-            <div className="loading" role="status">
-              Vérification de votre connexion…
-            </div>
-          ) : !canAccess ? (
-            screen === "legal" ? (
-              <LegalScreen />
+          <Suspense
+            fallback={
+              <div className="loading" role="status">
+                Votre écran se prépare…
+              </div>
+            }
+          >
+            {isPending && CLOUD && hasCloudSession() ? (
+              <div className="loading" role="status">
+                Vérification de votre connexion…
+              </div>
+            ) : !canAccess ? (
+              screen === "legal" ? (
+                <LegalScreen />
+              ) : (
+                <AccountScreen />
+              )
+            ) : loading || (accountOwner !== session?.user.id && !loadError) ? (
+              <div className="loading" role="status">
+                Votre espace se prépare…
+              </div>
+            ) : loadError ? (
+              <div className="empty">
+                <h1>Connexion interrompue</h1>
+                <p>Réessayez pour retrouver vos mesures.</p>
+                <button
+                  className="secondary"
+                  onClick={async () => {
+                    const result = await authClient.signOut();
+                    if (result.error) {
+                      setLoadError(
+                        "Impossible de fermer cette session. Vérifiez votre connexion et réessayez.",
+                      );
+                      return;
+                    }
+                    setLoadError("");
+                    navigate("account");
+                  }}
+                >
+                  Revenir à la connexion
+                </button>
+              </div>
             ) : (
-              <AccountScreen />
-            )
-          ) : loading || (accountOwner !== session?.user.id && !loadError) ? (
-            <div className="loading" role="status">
-              Votre espace se prépare…
-            </div>
-          ) : loadError ? (
-            <div className="empty">
-              <h1>Connexion interrompue</h1>
-              <p>Réessayez pour retrouver vos mesures.</p>
-              <button
-                className="secondary"
-                onClick={async () => {
-                  const result = await authClient.signOut();
-                  if (result.error) {
-                    setLoadError(
-                      "Impossible de fermer cette session. Vérifiez votre connexion et réessayez.",
-                    );
-                    return;
-                  }
-                  setLoadError("");
-                  navigate("account");
-                }}
-              >
-                Revenir à la connexion
-              </button>
-            </div>
-          ) : screen === "onboarding" ? (
-            <OnboardingScreen key={session?.user.id} />
-          ) : (
-            <>
-              {(screen === "measure" || (screen === "edit" && editing)) && (
-                <MeasureScreen
-                  key={`${session?.user.id}-${editing?.id ?? "new"}`}
-                />
-              )}
-              {screen === "edit" && !editing && (
-                <>
-                  <h1>Mesure indisponible</h1>
-                  <button className="secondary" onClick={back}>
-                    Revenir
-                  </button>
-                </>
-              )}
-              {screen === "analysis" && <AnalysisScreen />}
-              {screen === "success" && <SuccessScreen />}
-              {screen === "reminder" && <ReminderScreen />}
-              {screen === "account" && <ProfileScreen />}
-              {screen === "profile" && <ProfileScreen editingProfile />}
-              {screen === "privacy" && <PrivacyScreen />}
-              {(screen === "history" || screen === "entry") && (
-                <HistoryScreen />
-              )}
-              {screen === "compare" && <CompareScreen />}
-              {screen === "monthly" && <MonthlyScreen />}
-              {screen === "goal" && <GoalScreen />}
-              {screen === "favorites" && <FavoritesScreen />}
-              {screen === "legal" && <LegalScreen />}
-            </>
-          )}
+              <PrivateScreens />
+            )}
+          </Suspense>
         </main>
         {message && (
           <div className="toast" role="status">

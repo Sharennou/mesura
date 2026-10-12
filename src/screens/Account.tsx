@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { ArrowRight, Mail, ShieldCheck, Eye, EyeOff } from "lucide-react";
 import { useApp } from "../context";
-import { Button, ErrorMessage, Icon, PageTitle } from "../components";
+import { Button, ErrorMessage, Icon, PageTitle } from "../ui";
 import { api, authClient } from "../api";
 import { CLOUD } from "../deployment";
 import { appURL } from "../cloud-auth";
@@ -20,7 +20,9 @@ const authErrors: Record<string, string> = {
 };
 export function AccountScreen() {
   const { capabilities, navigate } = useApp();
-  const search = new URLSearchParams(location.search);
+  const search = new URLSearchParams(
+    typeof location === "undefined" ? "" : location.search,
+  );
   const [mode, setMode] = useState<"signup" | "signin" | "reset" | "newpass">(
     search.get("token") || (CLOUD && search.get("reset") === "1")
       ? "newpass"
@@ -284,6 +286,3 @@ export function AccountScreen() {
     </>
   );
 }
-export { ProfileScreen } from "./ProfileScreen";
-export { PrivacyScreen } from "./PrivacyScreen";
-export { LegalScreen } from "./LegalScreen";

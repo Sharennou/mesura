@@ -13,7 +13,7 @@ import fastifyStatic from "@fastify/static";
 import { fromNodeHeaders } from "better-auth/node";
 import { z } from "zod";
 import { DateTime } from "luxon";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { ZipArchive } from "archiver";
@@ -51,6 +51,7 @@ import {
   CONSENT_TEXTS,
   CONSENT_VERSION,
 } from "../shared/config";
+import { ENTRY_BOOTSTRAP } from "../shared/entry-bootstrap";
 import type { ConsentPurpose, Reminder } from "../shared/types";
 z.config(z.locales.fr());
 const dateSchema = z
@@ -79,7 +80,10 @@ export async function buildApp() {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          `'sha256-${createHash("sha256").update(ENTRY_BOOTSTRAP).digest("base64")}'`,
+        ],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "blob:", "data:"],
         fontSrc: ["'self'"],

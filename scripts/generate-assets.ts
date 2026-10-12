@@ -1,7 +1,14 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import sharp from "sharp";
+import { generateEntryStyles } from "./entry-styles";
 import { APP_NAME } from "../shared/config";
 mkdirSync("public", { recursive: true });
+// Match the original logo's displayed crop, with transparent 2× and 3× assets.
+for (const scale of [2, 3])
+  await sharp("src/assets/mesura-logo.png")
+    .resize(100 * scale, 58 * scale, { fit: "cover", position: "centre" })
+    .webp({ quality: 90, alphaQuality: 100, smartSubsample: true, effort: 6 })
+    .toFile(`src/assets/mesura-logo${scale === 3 ? "@3x" : ""}.webp`);
 const basePath = process.env.VITE_BASE_PATH || "/";
 if (!basePath.startsWith("/") || !basePath.endsWith("/"))
   throw new Error("VITE_BASE_PATH doit commencer et finir par /.");
@@ -42,3 +49,5 @@ writeFileSync(
   "public/app-config.js",
   `self.MESURA_CONFIG = ${JSON.stringify({ name: APP_NAME, basePath, version: String(Date.now()) })};\n`,
 );
+
+generateEntryStyles();

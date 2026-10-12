@@ -1,4 +1,4 @@
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 import Fastify from "fastify";
 import staticFiles from "@fastify/static";
 import { resolve } from "node:path";
@@ -26,6 +26,8 @@ try {
     const page = await context.newPage();
     const errors: string[] = [];
     const missing: string[] = [];
+    const requests: string[] = [];
+    page.on("request", (r) => requests.push(r.url()));
     page.on("pageerror", (e) => errors.push(e.message));
     page.on("response", (r) => {
       if (r.url().startsWith("http://127.0.0.1") && r.status() >= 400)
@@ -44,6 +46,44 @@ try {
     );
     await page.goto(`http://127.0.0.1:4177${base}`);
     await page.getByLabel("Adresse email", { exact: true }).waitFor();
+    await page.waitForFunction(() => !document.getElementById("root")?.inert);
+    assert.equal(
+      requests.some((url) => url.includes("supabase.co")),
+      false,
+    );
+    const assets = requests.filter((url) => url.includes("/assets/"));
+    assert.equal(
+      assets.some((url) =>
+        /PrivateScreens|Measure-|Analysis-|Reminder-|Onboarding|tool-schemas|luxon/.test(
+          url,
+        ),
+      ),
+      false,
+    );
+    await page.keyboard.press("Tab");
+    assert.equal(
+      await page
+        .locator("input[autocomplete=nickname]")
+        .evaluate((node) => node === document.activeElement),
+      true,
+    );
+    await page.keyboard.press("Tab");
+    assert.equal(
+      await page
+        .getByLabel("Adresse email", { exact: true })
+        .evaluate((node) => node === document.activeElement),
+      true,
+    );
+    await page
+      .getByRole("button", { name: "conditions d’utilisation", exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "En toute transparence", exact: true }),
+    ).toBeFocused();
+    await page.getByRole("button", { name: "Revenir", exact: true }).click();
+    await expect(
+      page.getByRole("heading", { name: "Votre espace à vous.", exact: true }),
+    ).toBeVisible();
     assert.equal(await page.getByRole("navigation").count(), 0);
     assert.equal(await page.getByLabel("Poids", { exact: true }).count(), 0);
     assert.equal(

@@ -15,10 +15,16 @@ test("la connexion est obligatoire, y compris pendant le chargement et par lien 
   });
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await expect(
-    page.getByText("Vérification de votre connexion…"),
+    page.getByRole("heading", { name: "Votre espace à vous.", exact: true }),
   ).toBeVisible();
   await expect(page.getByLabel("Poids", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("navigation")).toHaveCount(0);
+  await page
+    .getByLabel("Adresse email", { exact: true })
+    .fill("public@example.test");
+  await expect(
+    page.getByRole("button", { name: "Créer mon espace", exact: true }),
+  ).toBeEnabled();
   releaseSession();
   await expect(
     page.getByRole("button", { name: "Créer mon espace", exact: true }),
@@ -71,6 +77,7 @@ test("la connexion est obligatoire, y compris pendant le chargement et par lien 
     ).toBe(true);
   }
   expect((await page.request.get("/api/account")).status()).toBe(401);
+  await page.goto("/");
   await page
     .getByRole("button", { name: "conditions d’utilisation", exact: true })
     .click();
@@ -81,6 +88,9 @@ test("la connexion est obligatoire, y compris pendant le chargement et par lien 
     }),
   ).toBeVisible();
   await expect(page.getByRole("navigation")).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: "En toute transparence", exact: true }),
+  ).toBeFocused();
   await page.getByRole("button", { name: "Revenir", exact: true }).click();
   await expect(page.getByLabel("Adresse email", { exact: true })).toBeVisible();
   expect(
@@ -90,6 +100,46 @@ test("la connexion est obligatoire, y compris pendant le chargement et par lien 
         .analyze()
     ).violations,
   ).toEqual([]);
+});
+
+test("le formulaire public reste utilisable pendant une configuration lente", async ({
+  page,
+}) => {
+  let releaseConfig!: () => void;
+  const configReady = new Promise<void>((resolve) => {
+    releaseConfig = resolve;
+  });
+  await page.route("**/api/config", async (route) => {
+    await configReady;
+    await route.continue();
+  });
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: "Votre espace à vous.", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByLabel("Adresse email", { exact: true })
+    .fill("public@example.test");
+  await page
+    .getByLabel("Mot de passe", { exact: true })
+    .fill("Test-public!2026");
+  await page
+    .getByRole("button", { name: "Afficher le mot de passe", exact: true })
+    .click();
+  await expect(
+    page.getByLabel("Mot de passe", { exact: true }),
+  ).toHaveAttribute("type", "text");
+  await page
+    .getByRole("button", { name: "Déjà un compte ? Me connecter", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Content de vous revoir.", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Adresse email", { exact: true })).toHaveValue(
+    "public@example.test",
+  );
+  await expect(page.getByLabel("Poids", { exact: true })).toHaveCount(0);
+  releaseConfig();
 });
 
 test("compte réel : accessibilité, consentement, sauvegarde, correction, export et suppression", async ({

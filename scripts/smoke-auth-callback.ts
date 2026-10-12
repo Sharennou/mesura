@@ -38,6 +38,52 @@ const encode = (v: unknown) =>
   Buffer.from(JSON.stringify(v)).toString("base64url");
 const access = `${encode({ alg: "HS256", typ: "JWT" })}.${encode({ sub: user.id, exp: Math.floor(Date.now() / 1000) + 3600 })}.test-only`;
 try {
+  // A fresh public visit loads no Auth SDK or configuration. Its first signup
+  // still starts Auth, saves the session, and verifies the private account.
+  const fresh = await browser.newContext({ serviceWorkers: "block" });
+  const signup = await fresh.newPage();
+  const signupRequests: string[] = [];
+  signup.on("request", (r) => signupRequests.push(r.url()));
+  await signup.route("**/auth/v1/signup**", (r) => {
+    assert.equal(r.request().postDataJSON().email, "parcours@example.test");
+    return r.fulfill({
+      json: {
+        access_token: access,
+        refresh_token: "test-refresh",
+        expires_in: 3600,
+        token_type: "bearer",
+        user,
+      },
+    });
+  });
+  await signup.route("**/functions/v1/mesura-api/config", (r) =>
+    r.fulfill({ json: caps }),
+  );
+  await signup.route("**/functions/v1/mesura-api/account", (r) => {
+    assert.equal(r.request().headers().authorization, `Bearer ${access}`);
+    return r.fulfill({
+      json: publicCloudAccount(emptyCloudAccount("Mon espace", "Europe/Paris")),
+    });
+  });
+  await signup.goto("http://127.0.0.1:4178/mesura/");
+  await expect(signup.locator("#root")).not.toHaveAttribute("inert", "");
+  assert.equal(
+    signupRequests.some((url) => url.includes("supabase.co")),
+    false,
+  );
+  await signup.getByLabel("Adresse email", { exact: true }).fill(user.email);
+  await signup.getByLabel("Mot de passe", { exact: true }).fill("Test!2026");
+  await signup.getByRole("checkbox").check();
+  await signup
+    .getByRole("button", { name: "Créer mon espace", exact: true })
+    .click();
+  await expect(
+    signup.getByRole("heading", {
+      name: "Quelle est votre taille ?",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await fresh.close();
   for (const width of [390, 360]) {
     const context = await browser.newContext({
       viewport: { width, height: 844 },
